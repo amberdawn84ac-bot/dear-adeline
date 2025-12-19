@@ -19,6 +19,8 @@ export default async function DashboardPage() {
         .eq('id', user.id)
         .single();
 
+    console.log('Dashboard user profile role:', profile?.role);
+
     // Redirect based on role
     if (profile?.role === 'admin') {
         redirect('/dashboard/admin');
