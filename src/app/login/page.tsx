@@ -43,8 +43,17 @@ export default function LoginPage() {
                 });
                 console.log('Supabase sign-in response:', { data, error });
 
-                if (error) throw error;
-                router.push('/dashboard');
+                if (error) {
+                    console.error('Supabase sign-in error:', error);
+                    throw error;
+                }
+
+                if (data.user) {
+                    console.log('Login successful! Redirecting to /dashboard...');
+                    router.push('/dashboard');
+                } else {
+                    console.warn('Login returned no user data.');
+                }
             } else {
                 // Signup
                 if (password !== confirmPassword) {
