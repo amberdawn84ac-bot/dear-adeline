@@ -13,11 +13,15 @@ export default async function DashboardPage() {
     }
 
     // Get user profile
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
+
+    if (profileError) {
+        console.error('Profile fetch error:', profileError);
+    }
 
     console.log('Dashboard user profile role:', profile?.role);
 
