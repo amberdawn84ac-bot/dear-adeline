@@ -213,11 +213,11 @@ export default function DashboardClient({
 
     return (
         <div className="min-h-screen flex bg-[var(--cream)]">
-            {/* Mobile Nav Overlay */}
-            {mobileMenuOpen && (
+            {/* Sidebar Overlay */}
+            {sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 md:hidden"
-                    onClick={() => setMobileMenuOpen(false)}
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    onClick={() => setSidebarOpen(false)}
                 />
             )}
 
@@ -438,6 +438,12 @@ export default function DashboardClient({
                     </div>
                 </div>
             </main>
+
+            {/* Debug Overlay - Temporary */}
+            <div className="fixed bottom-4 right-4 z-50 bg-black/80 text-white p-3 rounded-lg text-xs font-mono shadow-xl border border-white/20">
+                <p>User: {user.email}</p>
+                <p>Role: {profile?.role || 'null'}</p>
+            </div>
         </div>
     );
 }
