@@ -46,6 +46,7 @@ interface DashboardClientProps {
         dashboard_theme: { primary: string; mode: string } | null;
         grade_level: string | null;
         state_standards: string | null;
+        role: string;
     } | null;
     studentSkills: Array<{
         id: string;
@@ -212,11 +213,11 @@ export default function DashboardClient({
 
     return (
         <div className="min-h-screen flex bg-[var(--cream)]">
-            {/* Sidebar Overlay */}
-            {sidebarOpen && (
+            {/* Mobile Nav Overlay */}
+            {mobileMenuOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-                    onClick={() => setSidebarOpen(false)}
+                    className="fixed inset-0 bg-black/50 z-40 md:hidden"
+                    onClick={() => setMobileMenuOpen(false)}
                 />
             )}
 
