@@ -25,23 +25,25 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const [debugStatus, setDebugStatus] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setMessage('');
         setLoading(true);
+        setDebugStatus('Starting login...');
 
         const supabase = createClient();
 
         try {
             if (isLogin) {
-                console.log('Login attempt started for:', email);
+                setDebugStatus(`Sending request to Supabase... (Domain: ${window.location.origin})`);
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email,
                     password,
                 });
-                console.log('Supabase sign-in response:', { data, error });
+                setDebugStatus(error ? `Error: ${error.message}` : 'Success! Redirecting...');
 
                 if (error) {
                     console.error('Supabase sign-in error:', error);
@@ -266,6 +268,11 @@ export default function LoginPage() {
                                     </>
                                 )}
                             </button>
+                            {debugStatus && (
+                                <p className="text-[10px] text-center text-slate-400 mt-2 font-mono">
+                                    Status: {debugStatus}
+                                </p>
+                            )}
                         </form>
 
                         <div className="mt-6 pt-6 border-t border-[var(--cream-dark)] text-center">
