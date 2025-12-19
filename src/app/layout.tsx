@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     title: "Dear Adeline | Personalized AI-Powered Learning",
     description: "Where every student's journey is uniquely their own.",
     type: "website",
-    url: "https://dearadeline.co",
+    url: "https://dearadeline.vercel.app",
   },
 };
 
