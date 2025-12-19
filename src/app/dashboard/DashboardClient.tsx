@@ -440,17 +440,6 @@ export default function DashboardClient({
                     </div>
                 </div>
             </main>
-
-            {/* Debug Overlay - FINAL VERSION (V4) */}
-            <div className="fixed bottom-4 right-4 z-50 bg-green-600 text-white p-4 rounded-lg text-xs font-mono shadow-2xl border-2 border-white animate-pulse max-w-sm">
-                <p className="font-bold border-b border-white/20 mb-2">DEBUG INFO (V4)</p>
-                <p>Email: {user.email}</p>
-                <p className="truncate text-[10px]">ID: {user.id}</p>
-                <p>Role: {profile?.role || 'null'}</p>
-                {profileError && <p className="text-red-300 mt-1">Error: {JSON.stringify(profileError)}</p>}
-                <p className="mt-2 pt-2 border-t border-white/10 font-bold text-yellow-200">PROJECT URL CHECK:</p>
-                <p className="truncate text-[10px] break-all">{process.env.NEXT_PUBLIC_SUPABASE_URL}</p>
-            </div>
         </div>
     );
 }
