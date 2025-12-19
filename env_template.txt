@@ -1,0 +1,12 @@
+# Supabase Configuration
+# Get these from your Supabase Dashboard -> Project Settings -> API
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+
+# Anthropic API Key
+# Get this from console.anthropic.com
+ANTHROPIC_API_KEY=y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
+
+# App Configuration
+NEXT_PUBLIC_APP_URL=http://localhost:3000
