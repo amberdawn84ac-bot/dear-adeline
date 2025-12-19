@@ -9,12 +9,6 @@ export async function middleware(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser();
 
-    if (user) {
-        console.log('Middleware Path:', request.nextUrl.pathname, 'User:', user.email);
-    } else {
-        console.log('Middleware Path:', request.nextUrl.pathname, 'No user');
-    }
-
     // Protected routes that require authentication
     const protectedRoutes = ['/dashboard', '/portfolio', '/library', '/tracker', '/api'];
     const isProtectedRoute = protectedRoutes.some(route =>
@@ -53,7 +47,6 @@ export async function middleware(request: NextRequest) {
 
     // Role-based access control
     if (user && (isAdminRoute || isTeacherRoute)) {
-        console.log('Middleware: Checking role for', user.email);
         const { data: profile } = await supabase
             .from('profiles')
             .select('role')
@@ -71,15 +64,11 @@ export async function middleware(request: NextRequest) {
             role = fallback?.role;
         }
 
-        console.log('Middleware: Resolved Role:', role, 'for Path:', request.nextUrl.pathname);
-
         if (isAdminRoute && role !== 'admin') {
-            console.log('Middleware: Unauthorized Admin access, redirecting to /dashboard');
             return NextResponse.redirect(new URL('/dashboard', request.url));
         }
 
         if (isTeacherRoute && role !== 'teacher' && role !== 'admin') {
-            console.log('Middleware: Unauthorized Teacher access, redirecting to /dashboard');
             return NextResponse.redirect(new URL('/dashboard', request.url));
         }
     }
