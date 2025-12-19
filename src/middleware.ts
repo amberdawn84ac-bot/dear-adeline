@@ -53,17 +53,33 @@ export async function middleware(request: NextRequest) {
 
     // Role-based access control
     if (user && (isAdminRoute || isTeacherRoute)) {
+        console.log('Middleware: Checking role for', user.email);
         const { data: profile } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
 
-        if (isAdminRoute && profile?.role !== 'admin') {
+        let role = profile?.role;
+
+        if (!role) {
+            const { data: fallback } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('email', user.email)
+                .maybeSingle();
+            role = fallback?.role;
+        }
+
+        console.log('Middleware: Resolved Role:', role, 'for Path:', request.nextUrl.pathname);
+
+        if (isAdminRoute && role !== 'admin') {
+            console.log('Middleware: Unauthorized Admin access, redirecting to /dashboard');
             return NextResponse.redirect(new URL('/dashboard', request.url));
         }
 
-        if (isTeacherRoute && profile?.role !== 'teacher' && profile?.role !== 'admin') {
+        if (isTeacherRoute && role !== 'teacher' && role !== 'admin') {
+            console.log('Middleware: Unauthorized Teacher access, redirecting to /dashboard');
             return NextResponse.redirect(new URL('/dashboard', request.url));
         }
     }
