@@ -25,36 +25,31 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
-    const [debugStatus, setDebugStatus] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setMessage('');
         setLoading(true);
-        setDebugStatus('Starting login...');
 
         const supabase = createClient();
 
         try {
             if (isLogin) {
-                setDebugStatus(`Sending request to Supabase... (Domain: ${window.location.origin})`);
+                // Login
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email,
                     password,
                 });
-                setDebugStatus(error ? `Error: ${error.message}` : 'Success! Redirecting...');
 
                 if (error) {
-                    console.error('Supabase sign-in error:', error);
                     throw error;
                 }
 
                 if (data.user) {
-                    console.log('Login successful! Redirecting to /dashboard...');
                     router.push('/dashboard');
                 } else {
-                    console.warn('Login returned no user data.');
+                    // Login returned no user data.
                 }
             } else {
                 // Signup
@@ -268,11 +263,6 @@ export default function LoginPage() {
                                     </>
                                 )}
                             </button>
-                            {debugStatus && (
-                                <p className="text-[10px] text-center text-slate-400 mt-2 font-mono">
-                                    Status: {debugStatus}
-                                </p>
-                            )}
                         </form>
 
                         <div className="mt-6 pt-6 border-t border-[var(--cream-dark)] text-center">
