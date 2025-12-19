@@ -13,16 +13,14 @@ export default async function DashboardPage() {
     }
 
     // Get user profile - try ID first, then Email as fallback
-    console.log('Fetching profile for ID:', user.id, 'Email:', user.email);
-    let { data: profile, error: profileError } = await supabase
+    let { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
 
-    if (!profile && !profileError) {
-        console.log('Profile not found by ID, trying Email fallback...');
-        const { data: fallbackProfile, error: fallbackError } = await supabase
+    if (!profile) {
+        const { data: fallbackProfile } = await supabase
             .from('profiles')
             .select('*')
             .eq('email', user.email)
@@ -30,21 +28,8 @@ export default async function DashboardPage() {
 
         if (fallbackProfile) {
             profile = fallbackProfile;
-            console.log('Profile found via Email fallback');
         }
-        profileError = fallbackError;
     }
-
-    if (profileError) {
-        console.error('Profile fetch error details:', {
-            code: profileError.code,
-            message: profileError.message,
-            details: profileError.details,
-            hint: profileError.hint
-        });
-    }
-
-    console.log('Dashboard user profile role resolved to:', profile?.role || 'null');
 
     // Redirect based on role
     if (profile?.role === 'admin') {
