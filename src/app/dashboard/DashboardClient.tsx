@@ -442,6 +442,7 @@ export default function DashboardClient({
             {/* Debug Overlay - Temporary */}
             <div className="fixed bottom-4 right-4 z-50 bg-black/80 text-white p-3 rounded-lg text-xs font-mono shadow-xl border border-white/20">
                 <p>User: {user.email}</p>
+                <p>ID: {user.id}</p>
                 <p>Role: {profile?.role || 'null'}</p>
             </div>
         </div>
