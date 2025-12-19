@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import AdminClient from './AdminClient';
+export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboardPage() {
     const supabase = await createClient();
