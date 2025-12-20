@@ -9,10 +9,21 @@ const anthropic = new Anthropic({
 const SYSTEM_PROMPT = `You are an AI admin assistant for the Dear Adeline educational platform. You help admins manage the platform through natural language commands.
 
 You can perform the following actions:
-1. ADD projects to the library (art, farm, or science categories)
+1. ADD projects to the library (9 modern tracks)
 2. UPDATE user roles (student, teacher, admin)
 3. ADD new skills
 4. QUERY information about users, projects, or skills
+
+The 9 Modern Tracks are:
+1. God's Creation & Science
+2. Health/Naturopathy
+3. Food Systems
+4. Government/Economics
+5. Justice
+6. Discipleship
+7. History
+8. English/Lit
+9. Math
 
 When asked to perform an action, you should:
 1. Parse the intent clearly
@@ -22,7 +33,7 @@ When asked to perform an action, you should:
 For ADD project requests, extract:
 - title
 - description  
-- category (art/farm/science)
+- category (One of the 9 tracks above MUST be used exactly)
 - difficulty (beginner/intermediate/advanced)
 - instructions (if provided)
 - materials (if provided)
@@ -93,7 +104,8 @@ Current Platform State:
         });
 
         const contentBlock = response.content[0];
-        let responseText = contentBlock.type === 'text' ? contentBlock.text : '';
+        const initialAiText = contentBlock.type === 'text' ? contentBlock.text : '';
+        let responseText = initialAiText;
 
         // Check for action patterns and execute them
         let actionTaken = false;
@@ -102,12 +114,26 @@ Current Platform State:
         const addProjectMatch = message.toLowerCase().match(/add.*(?:project|activity).*(?:about|called|named|titled)\s+["']?([^"']+)["']?/i);
         if (addProjectMatch) {
             const title = addProjectMatch[1];
-            let category: 'art' | 'farm' | 'science' = 'art';
+            let category = "God's Creation & Science";
 
-            if (message.toLowerCase().includes('farm') || message.toLowerCase().includes('garden') || message.toLowerCase().includes('animal')) {
-                category = 'farm';
-            } else if (message.toLowerCase().includes('science') || message.toLowerCase().includes('experiment')) {
-                category = 'science';
+            if (message.toLowerCase().includes('farm') || message.toLowerCase().includes('garden') || message.toLowerCase().includes('food') || message.toLowerCase().includes('animal')) {
+                category = 'Food Systems';
+            } else if (message.toLowerCase().includes('science') || message.toLowerCase().includes('creation') || message.toLowerCase().includes('nature')) {
+                category = "God's Creation & Science";
+            } else if (message.toLowerCase().includes('health') || message.toLowerCase().includes('body') || message.toLowerCase().includes('naturopathy')) {
+                category = 'Health/Naturopathy';
+            } else if (message.toLowerCase().includes('gov') || message.toLowerCase().includes('econ') || message.toLowerCase().includes('money')) {
+                category = 'Government/Economics';
+            } else if (message.toLowerCase().includes('justice') || message.toLowerCase().includes('law')) {
+                category = 'Justice';
+            } else if (message.toLowerCase().includes('bible') || message.toLowerCase().includes('faith') || message.toLowerCase().includes('disciple')) {
+                category = 'Discipleship';
+            } else if (message.toLowerCase().includes('history') || message.toLowerCase().includes('past')) {
+                category = 'History';
+            } else if (message.toLowerCase().includes('english') || message.toLowerCase().includes('lit') || message.toLowerCase().includes('read')) {
+                category = 'English/Lit';
+            } else if (message.toLowerCase().includes('math') || message.toLowerCase().includes('number') || message.toLowerCase().includes('calculat')) {
+                category = 'Math';
             }
 
             await supabase.from('library_projects').insert({
@@ -154,11 +180,15 @@ Current Platform State:
             const skillName = addSkillMatch[1];
             let category = 'electives';
 
-            if (message.toLowerCase().includes('math')) category = 'math';
-            else if (message.toLowerCase().includes('science')) category = 'science';
-            else if (message.toLowerCase().includes('english') || message.toLowerCase().includes('ela')) category = 'ela';
-            else if (message.toLowerCase().includes('art')) category = 'fine_arts';
-            else if (message.toLowerCase().includes('tech')) category = 'technology';
+            if (message.toLowerCase().includes('math')) category = 'Mathematics';
+            else if (message.toLowerCase().includes('science') || message.toLowerCase().includes('creation')) category = 'God\'s Creation & Science';
+            else if (message.toLowerCase().includes('health') || message.toLowerCase().includes('naturopathy')) category = 'Health & Naturopathy';
+            else if (message.toLowerCase().includes('food') || message.toLowerCase().includes('farm')) category = 'Food Systems';
+            else if (message.toLowerCase().includes('gov') || message.toLowerCase().includes('econ')) category = 'Government & Economics';
+            else if (message.toLowerCase().includes('justice')) category = 'Justice';
+            else if (message.toLowerCase().includes('disciple') || message.toLowerCase().includes('faith')) category = 'Discipleship';
+            else if (message.toLowerCase().includes('history')) category = 'History';
+            else if (message.toLowerCase().includes('english') || message.toLowerCase().includes('lit') || message.toLowerCase().includes('read')) category = 'English & Literature';
 
             await supabase.from('skills').insert({
                 name: skillName.charAt(0).toUpperCase() + skillName.slice(1),
@@ -168,6 +198,54 @@ Current Platform State:
 
             actionTaken = true;
             responseText = `✅ I've added a new skill called "${skillName}" in the ${category} category worth 0.25 credits. Students can now earn this skill!`;
+        }
+
+        // Pattern: Change Visual Style
+        const styleMatch = message.toLowerCase().match(/(?:change|update|set).*?(?:size|color|font|theme|visual)/i);
+        if (styleMatch) {
+            const { data: currentSettings } = await supabase
+                .from('app_settings')
+                .select('value')
+                .eq('key', 'theme')
+                .maybeSingle();
+
+            let newSettings = currentSettings?.value || {
+                primaryColor: '#87A878',
+                fontSize: '16px',
+                fontFamily: 'Inter'
+            };
+
+            // Simple heuristic mapping
+            if (message.toLowerCase().includes('font size') || message.toLowerCase().includes('text size')) {
+                const sizeMatch = message.match(/(\d+)(?:px|pt)?/);
+                if (sizeMatch) {
+                    newSettings.fontSize = `${sizeMatch[1]}px`;
+                    responseText = `✅ I've updated the global text size to ${newSettings.fontSize}.`;
+                }
+            }
+
+            if (message.toLowerCase().includes('color') || message.toLowerCase().includes('primary')) {
+                const hexMatch = message.match(/#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})/);
+                if (hexMatch) {
+                    newSettings.primaryColor = hexMatch[0];
+                    responseText = `✅ I've updated the primary brand color to ${hexMatch[0]}.`;
+                } else if (message.toLowerCase().includes('blue')) {
+                    newSettings.primaryColor = '#3b82f6';
+                    responseText = `✅ I've updated the primary brand color to Blue.`;
+                } else if (message.toLowerCase().includes('terracotta')) {
+                    newSettings.primaryColor = '#C4826E';
+                    responseText = `✅ I've updated the primary brand color to Terracotta.`;
+                }
+            }
+
+            if (responseText === initialAiText) {
+                responseText = "I understand you want to change the visual style, but I need more specifics (like a color hex code or specific pixel size).";
+            } else {
+                await supabase
+                    .from('app_settings')
+                    .upsert({ key: 'theme', value: newSettings, updated_at: new Date().toISOString() });
+                actionTaken = true;
+            }
         }
 
         return NextResponse.json({

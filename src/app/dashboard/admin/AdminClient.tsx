@@ -29,7 +29,11 @@ import {
     BarChart3,
     X,
     Save,
-    AlertCircle
+    AlertCircle,
+    Scale,
+    Globe,
+    Calculator,
+    Heart
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -46,7 +50,7 @@ interface Project {
     id: string;
     title: string;
     description: string;
-    category: 'art' | 'farm' | 'science';
+    category: string;
     difficulty: string;
     credit_value: number;
 }
@@ -108,7 +112,7 @@ export default function AdminClient({
     const [newProject, setNewProject] = useState({
         title: '',
         description: '',
-        category: 'art' as 'art' | 'farm' | 'science',
+        category: "God's Creation & Science",
         difficulty: 'beginner',
         instructions: '',
         materials: '',
@@ -164,7 +168,7 @@ export default function AdminClient({
         setNewProject({
             title: '',
             description: '',
-            category: 'art',
+            category: "God's Creation & Science",
             difficulty: 'beginner',
             instructions: '',
             materials: '',
@@ -200,6 +204,15 @@ export default function AdminClient({
 
     const categoryIcon = (cat: string) => {
         switch (cat) {
+            case "God's Creation & Science": return <FlaskConical className="w-4 h-4" />;
+            case "Health/Naturopathy": return <Heart className="w-4 h-4" />;
+            case "Food Systems": return <Leaf className="w-4 h-4" />;
+            case "Government/Economics": return <BarChart3 className="w-4 h-4" />;
+            case "Justice": return <Scale className="w-4 h-4" />;
+            case "Discipleship": return <Sparkles className="w-4 h-4" />;
+            case "History": return <Globe className="w-4 h-4" />;
+            case "English/Lit": return <BookOpen className="w-4 h-4" />;
+            case "Math": return <Calculator className="w-4 h-4" />;
             case 'art': return <Palette className="w-4 h-4" />;
             case 'farm': return <Leaf className="w-4 h-4" />;
             case 'science': return <FlaskConical className="w-4 h-4" />;
@@ -456,8 +469,8 @@ export default function AdminClient({
                                                     </td>
                                                     <td className="p-4">
                                                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
-                                                                user.role === 'teacher' ? 'bg-blue-100 text-blue-700' :
-                                                                    'bg-green-100 text-green-700'
+                                                            user.role === 'teacher' ? 'bg-blue-100 text-blue-700' :
+                                                                'bg-green-100 text-green-700'
                                                             }`}>
                                                             {roleIcon(user.role)}
                                                             {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
@@ -520,12 +533,12 @@ export default function AdminClient({
                                 {filteredProjects.map((project) => (
                                     <div key={project.id} className="card">
                                         <div className="flex items-start justify-between mb-3">
-                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${project.category === 'art' ? 'bg-pink-100 text-pink-700' :
-                                                    project.category === 'farm' ? 'bg-green-100 text-green-700' :
-                                                        'bg-yellow-100 text-yellow-700'
+                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${project.category === 'English/Lit' ? 'bg-pink-100 text-pink-700' :
+                                                project.category === "God's Creation & Science" ? 'bg-green-100 text-green-700' :
+                                                    'bg-blue-100 text-blue-700'
                                                 }`}>
                                                 {categoryIcon(project.category)}
-                                                {project.category.charAt(0).toUpperCase() + project.category.slice(1)}
+                                                {project.category}
                                             </span>
                                             <div className="flex gap-1">
                                                 <button className="p-2 hover:bg-[var(--cream)] rounded-lg transition-colors">
@@ -710,12 +723,18 @@ export default function AdminClient({
                                 <label className="block text-sm font-medium mb-2">Category</label>
                                 <select
                                     value={newProject.category}
-                                    onChange={(e) => setNewProject(p => ({ ...p, category: e.target.value as 'art' | 'farm' | 'science' }))}
+                                    onChange={(e) => setNewProject(p => ({ ...p, category: e.target.value }))}
                                     className="input w-full"
                                 >
-                                    <option value="art">Art</option>
-                                    <option value="farm">Farm</option>
-                                    <option value="science">Science</option>
+                                    <option value="God's Creation & Science">God's Creation & Science</option>
+                                    <option value="Health/Naturopathy">Health/Naturopathy</option>
+                                    <option value="Food Systems">Food Systems</option>
+                                    <option value="Government/Economics">Government/Economics</option>
+                                    <option value="Justice">Justice</option>
+                                    <option value="Discipleship">Discipleship</option>
+                                    <option value="History">History</option>
+                                    <option value="English/Lit">English/Lit</option>
+                                    <option value="Math">Math</option>
                                 </select>
                             </div>
 
@@ -818,8 +837,8 @@ export default function AdminClient({
                                         key={role}
                                         onClick={() => handleUpdateUserRole(showEditUser.id, role)}
                                         className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-colors ${showEditUser.role === role
-                                                ? 'border-[var(--sage)] bg-[var(--sage-light)]'
-                                                : 'border-[var(--cream-dark)] hover:border-[var(--sage-light)]'
+                                            ? 'border-[var(--sage)] bg-[var(--sage-light)]'
+                                            : 'border-[var(--cream-dark)] hover:border-[var(--sage-light)]'
                                             }`}
                                     >
                                         {roleIcon(role)}
