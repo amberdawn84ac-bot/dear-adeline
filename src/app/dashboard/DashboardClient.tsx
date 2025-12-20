@@ -22,10 +22,19 @@ import {
     CheckCircle2,
     Loader2,
     Menu,
+    Plus,
     X,
     Home,
     Library,
-    User as UserIcon
+    User as UserIcon,
+    Heart,
+    Leaf,
+    FlaskConical,
+    Scale,
+    Globe,
+    Calculator,
+    Shield,
+    BarChart3
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -75,6 +84,12 @@ interface DashboardClientProps {
         messages: Message[];
         topic: string | null;
     } | null;
+    conversationHistory: Array<{
+        id: string;
+        title: string | null;
+        updated_at: string;
+        topic: string | null;
+    }>;
     learningGaps: Array<{
         id: string;
         skill_area: string;
@@ -92,6 +107,7 @@ export default function DashboardClient({
     allRequirements,
     portfolioItems,
     activeConversation,
+    conversationHistory,
     learningGaps,
     profileError,
 }: DashboardClientProps) {
@@ -122,6 +138,20 @@ export default function DashboardClient({
     const totalRequiredCredits = allRequirements.reduce((sum, req) => sum + req.required_credits, 0);
     const totalEarnedCredits = graduationProgress.reduce((sum, prog) => sum + prog.credits_earned, 0);
     const overallProgress = totalRequiredCredits > 0 ? (totalEarnedCredits / totalRequiredCredits) * 100 : 0;
+
+    const trackConfig: Record<string, { icon: any; color: string; badgeColor: string }> = {
+        "God's Creation & Science": { icon: FlaskConical, color: 'text-green-600', badgeColor: 'bg-green-100 text-green-700 border-green-200' },
+        "Health/Naturopathy": { icon: Heart, color: 'text-red-600', badgeColor: 'bg-red-100 text-red-700 border-red-200' },
+        "Food Systems": { icon: Leaf, color: 'text-orange-600', badgeColor: 'bg-orange-100 text-orange-700 border-orange-200' },
+        "Government/Economics": { icon: BarChart3, color: 'text-blue-600', badgeColor: 'bg-blue-100 text-blue-700 border-blue-200' },
+        "Justice": { icon: Scale, color: 'text-indigo-600', badgeColor: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+        "Discipleship": { icon: Sparkles, color: 'text-purple-600', badgeColor: 'bg-purple-100 text-purple-700 border-purple-200' },
+        "History": { icon: Globe, color: 'text-amber-600', badgeColor: 'bg-amber-100 text-amber-700 border-amber-200' },
+        "English/Lit": { icon: BookOpen, color: 'text-pink-600', badgeColor: 'bg-pink-100 text-pink-700 border-pink-200' },
+        "Math": { icon: Calculator, color: 'text-cyan-600', badgeColor: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
+    };
+
+    const earnedBadges = graduationProgress.filter(p => p.credits_earned >= 0.5); // Example threshold for a badge
 
     const speakText = (text: string) => {
         if ('speechSynthesis' in window) {
@@ -161,6 +191,11 @@ export default function DashboardClient({
                         name: profile?.display_name,
                         gradeLevel: profile?.grade_level,
                         skills: studentSkills.map(s => s.skill.name),
+                        graduationProgress: graduationProgress.map(p => ({
+                            track: p.requirement.name,
+                            earned: p.credits_earned,
+                            required: p.requirement.required_credits
+                        })),
                     },
                 }),
             });
@@ -247,29 +282,52 @@ export default function DashboardClient({
                         </div>
                     </div>
 
-                    <nav className="flex-1 p-4 space-y-1">
-                        <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[var(--sage-light)] text-[var(--sage-dark)] font-medium">
-                            <Home className="w-5 h-5" />
-                            <span>Dashboard</span>
+                    <nav className="flex-1 p-4 space-y-1 overflow-y-auto no-scrollbar">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-2">Navigation</p>
+                        <Link href="/dashboard" className="flex items-center gap-3 px-4 py-2 rounded-lg bg-[var(--sage-light)] text-[var(--sage-dark)] font-medium">
+                            <Home className="w-4 h-4" />
+                            <span className="text-sm">Dashboard</span>
                         </Link>
-                        <Link href="/portfolio" className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--cream)] transition-colors">
-                            <FolderOpen className="w-5 h-5" />
-                            <span>Portfolio</span>
+                        <Link href="/portfolio" className="flex items-center gap-3 px-4 py-2 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--cream)] transition-colors">
+                            <FolderOpen className="w-4 h-4" />
+                            <span className="text-sm">Portfolio</span>
                         </Link>
-                        <Link href="/library" className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--cream)] transition-colors">
-                            <Library className="w-5 h-5" />
-                            <span>Project Library</span>
+                        <Link href="/library" className="flex items-center gap-3 px-4 py-2 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--cream)] transition-colors">
+                            <Library className="w-4 h-4" />
+                            <span className="text-sm">Project Library</span>
                         </Link>
-                        <Link href="/tracker" className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--cream)] transition-colors">
-                            <GraduationCap className="w-5 h-5" />
-                            <span>Graduation Tracker</span>
+                        <Link href="/tracker" className="flex items-center gap-3 px-4 py-2 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--cream)] transition-colors">
+                            <GraduationCap className="w-4 h-4" />
+                            <span className="text-sm">Graduation Tracker</span>
                         </Link>
+
+                        <div className="mt-8">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-2">Learning History</p>
+                            <div className="space-y-1">
+                                {conversationHistory.map((chat) => (
+                                    <button
+                                        key={chat.id}
+                                        onClick={() => router.push(`/dashboard?chatId=${chat.id}`)}
+                                        className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg text-left transition-colors ${activeConversation?.id === chat.id ? 'bg-slate-100 text-slate-800' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}
+                                    >
+                                        <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-medium truncate">{chat.title || chat.topic || 'New Lesson'}</p>
+                                            <p className="text-[10px] opacity-50">{new Date(chat.updated_at).toLocaleDateString()}</p>
+                                        </div>
+                                    </button>
+                                ))}
+                                {conversationHistory.length === 0 && (
+                                    <p className="text-[10px] text-slate-400 italic px-4">No past lessons yet.</p>
+                                )}
+                            </div>
+                        </div>
                     </nav>
 
                     <div className="p-4 border-t border-[var(--cream-dark)] space-y-1">
                         <Link href="/settings" className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--cream)] transition-colors">
                             <Settings className="w-5 h-5" />
-                            <span>Settings</span>
+                            <span className="font-medium">Settings</span>
                         </Link>
                         <button
                             onClick={handleLogout}
@@ -283,7 +341,7 @@ export default function DashboardClient({
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col min-h-screen max-h-screen overflow-hidden">
+            <main className="flex-1 flex flex-col min-h-[100dvh] max-h-[100dvh] overflow-hidden">
                 <header className="lg:hidden sticky top-0 z-30 bg-white shadow-sm p-4 flex items-center justify-between">
                     <button onClick={() => setSidebarOpen(true)}>
                         <Menu className="w-6 h-6" />
@@ -297,8 +355,26 @@ export default function DashboardClient({
 
                 <div className="flex-1 overflow-y-auto p-4 lg:p-6 no-scrollbar">
                     <div className="grid grid-cols-12 gap-6 h-full">
+                        {/* Grade Level Onboarding Alert */}
+                        {!profile?.grade_level && (
+                            <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in">
+                                <div className="flex items-center gap-3 text-amber-800">
+                                    <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                                    <p className="text-sm">
+                                        <span className="font-semibold">Level Up Adeline!</span> Set your grade level in settings so Adeline can personalize your lessons to your exact pace.
+                                    </p>
+                                </div>
+                                <Link
+                                    href="/settings"
+                                    className="px-4 py-2 bg-amber-600 text-white rounded-full text-xs font-semibold hover:bg-amber-700 transition-colors whitespace-nowrap self-end sm:self-auto"
+                                >
+                                    Set Level
+                                </Link>
+                            </div>
+                        )}
+
                         {/* Chat Area */}
-                        <div className="col-span-12 lg:col-span-8 flex flex-col h-[600px] lg:h-[calc(100vh-120px)] bg-white rounded-2xl shadow-sm border border-[var(--cream-dark)] overflow-hidden">
+                        <div className="col-span-12 lg:col-span-8 flex flex-col h-[500px] md:h-[600px] lg:h-[calc(100vh-120px)] bg-white rounded-2xl shadow-sm border border-[var(--cream-dark)] overflow-hidden">
                             <div className="p-4 border-b border-[var(--cream-dark)]">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-[var(--sage-light)] flex items-center justify-center">
@@ -407,12 +483,39 @@ export default function DashboardClient({
                             <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
                                 <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
                                     <Trophy className="w-5 h-5 text-amber-500" />
+                                    Badges Earned
+                                </h3>
+                                <div className="grid grid-cols-4 gap-3">
+                                    {earnedBadges.map(badge => {
+                                        const config = trackConfig[badge.requirement.name];
+                                        if (!config) return null;
+                                        const Icon = config.icon;
+                                        return (
+                                            <div key={badge.id} className={`flex flex-col items-center gap-1 p-2 rounded-xl border ${config.badgeColor} transition-transform hover:scale-110 cursor-help group relative`} title={`${badge.requirement.name} Specialist`}>
+                                                <Icon className="w-6 h-6" />
+                                                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                                    {badge.requirement.name} Master
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {earnedBadges.length === 0 && (
+                                        <div className="col-span-4 py-4 text-center">
+                                            <p className="text-xs text-slate-400 italic">Work on projects to earn your first badge!</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
+                                <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
+                                    <Sparkles className="w-5 h-5 text-[var(--sage)]" />
                                     Skills Earned
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
                                     {studentSkills.map(s => (
                                         <span key={s.id} className="bg-amber-50 text-amber-700 text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-md border border-amber-100 flex items-center gap-1">
-                                            <Sparkles className="w-2.5 h-2.5" />
+                                            <CheckCircle2 className="w-2.5 h-2.5" />
                                             {s.skill.name}
                                         </span>
                                     ))}

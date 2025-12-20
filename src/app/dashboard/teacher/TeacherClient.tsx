@@ -35,6 +35,7 @@ interface Student {
     created_at: string;
     skills_earned: number;
     total_credits: number;
+    track_credits?: Record<string, number>;
     recent_work: Array<{ id: string; title: string; created_at: string }>;
 }
 

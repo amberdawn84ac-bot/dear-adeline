@@ -60,10 +60,20 @@ export default async function TeacherDashboardPage() {
             // Get graduation progress
             const { data: progress } = await supabase
                 .from('student_graduation_progress')
-                .select('credits_earned')
+                .select(`
+                    credits_earned,
+                    requirement:graduation_requirements(name)
+                `)
                 .eq('student_id', studentId);
 
             const totalCredits = progress?.reduce((sum, p) => sum + (p.credits_earned || 0), 0) || 0;
+            const trackCredits = (progress || []).reduce((acc: Record<string, number>, p: any) => {
+                const name = p.requirement?.name;
+                if (name) {
+                    acc[name] = (acc[name] || 0) + (p.credits_earned || 0);
+                }
+                return acc;
+            }, {});
 
             // Get recent portfolio items
             const { data: recentWork } = await supabase
@@ -82,6 +92,7 @@ export default async function TeacherDashboardPage() {
                 created_at: studentData.created_at,
                 skills_earned: skillsCount || 0,
                 total_credits: totalCredits,
+                track_credits: trackCredits,
                 recent_work: recentWork || [],
             };
         })
