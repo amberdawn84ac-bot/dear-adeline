@@ -131,7 +131,8 @@ export default function TeacherClient({
     const handleLogout = async () => {
         const supabase = createClient();
         await supabase.auth.signOut();
-        router.push('/');
+        router.push('/login');
+        router.refresh();
     };
 
     const handleInviteStudent = async () => {
