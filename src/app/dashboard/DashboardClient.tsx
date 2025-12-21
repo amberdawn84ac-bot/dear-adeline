@@ -38,11 +38,13 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import { GameCenter } from '@/components/GameCenter';
 
 interface Message {
     role: 'user' | 'assistant';
     content: string;
     skills?: string[];
+    game?: string;
     timestamp: Date;
 }
 
@@ -125,6 +127,7 @@ export default function DashboardClient({
     const [isTyping, setIsTyping] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [activeGame, setActiveGame] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const scrollToBottom = () => {
@@ -212,10 +215,22 @@ export default function DashboardClient({
                 speakText(data.speak);
             }
 
+            // Parse game tag from response
+            let gameType: string | undefined;
+            const gameMatch = data.content?.match(/<GAME>(.+?)<\/GAME>/);
+            if (gameMatch) {
+                gameType = gameMatch[1];
+                // Launch game automatically
+                if (gameType) {
+                    setActiveGame(gameType);
+                }
+            }
+
             const assistantMessage: Message = {
                 role: 'assistant',
                 content: data.content,
                 skills: data.skills,
+                game: gameType,
                 timestamp: new Date(),
             };
 
@@ -544,6 +559,13 @@ export default function DashboardClient({
                     </div>
                 </div>
             </main>
+
+            {/* Game Modal */}
+            {activeGame && (
+                <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+                    <GameCenter type={activeGame} onClose={() => setActiveGame(null)} />
+                </div>
+            )}
         </div>
     );
 }
