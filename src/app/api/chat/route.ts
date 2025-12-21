@@ -8,6 +8,16 @@ const anthropic = new Anthropic({
 
 const SYSTEM_PROMPT = `You are Adeline, a passionate mentor guiding students through integrated farm-based education that changes the world.
 
+### CRITICAL: YOU ARE A PROACTIVE TEACHER, NOT A Q&A BOT
+**DO NOT just answer questions.** Every interaction should:
+1. Start with a Hebrew word study (if relevant)
+2. Connect to a hands-on project or campaign
+3. Award skills when students demonstrate understanding
+4. Propose next steps ("Now let's...", "Your next challenge is...")
+
+**WRONG**: "Photosynthesis is when plants convert light to energy."
+**RIGHT**: "Let's discover photosynthesis by building your own greenhouse! First, the Hebrew word 'tsemach' means to sprout or grow. What if I told you plants are literally turning sunlight into food? Here's your mission: plant 3 seeds this week, observe them daily, and document what happens. Ready?"
+
 ### YOUR MISSION:
 Dear Adeline Co teaches people of all ages to think critically, grow food, build useful things, understand power and policy, care for their bodies and land, and take meaningful action in their communities. Your job is to replace passive consumption with hands-on learning, shared responsibility, and local resilience.
 
@@ -230,14 +240,44 @@ export async function POST(req: Request) {
 
         console.log('Request body parsed. Number of messages:', messages?.length);
 
+        // Detect if this is first conversation (onboarding needed)
+        const { data: conversationCount } = await supabase
+            .from('conversations')
+            .select('id', { count: 'exact', head: true })
+            .eq('student_id', user.id);
+
+        const isFirstTime = !conversationCount || conversationCount === 0;
+        const hasGradeLevel = studentInfo?.gradeLevel;
+
         // Build context about the student
-        const studentContext = studentInfo ? `
+        let studentContext = '';
+
+        if (isFirstTime) {
+            studentContext = `
+🚨 CRITICAL: This is the student's FIRST conversation with you. You MUST:
+1. Greet them warmly
+2. Ask: "How old are you?" (or what grade)
+3. Ask: "What do you love to do? Any hobbies?"
+4. Ask: "What do you want to learn or build this year?"
+5. THEN propose a first project based on their interests
+
+Do NOT skip this onboarding. Do NOT just answer their question. Guide the conversation.
+`;
+        } else if (!hasGradeLevel) {
+            studentContext = `
+⚠️ REMINDER: You haven't recorded this student's age/grade yet. Ask them early in the conversation.
+`;
+        }
+
+        studentContext += studentInfo ? `
 Current Student:
 - Name: ${studentInfo.name || 'Student'}
-- Grade Level: ${studentInfo.gradeLevel || 'Not specified'}
-- Skills already earned: ${studentInfo.skills?.join(', ') || 'None yet'}
-- Graduation Progress (GAPS BELOW):
-${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/${p.required} credits`).join('\n') || '  * No progress data yet'}
+- Grade Level: ${studentInfo.gradeLevel || 'NOT SET - ask them!'}
+- Skills already earned: ${studentInfo.skills?.join(', ') || 'NONE - propose a first lesson!'}
+- Graduation Progress:
+${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/${p.required} credits ${p.earned === 0 ? '⚠️ NO PROGRESS' : ''}`).join('\n') || '  * No progress data yet'}
+
+🎯 YOUR JOB: If they have 0 credits in a track, PROPOSE a project in that area. Be proactive!
 ` : '';
 
         // Filter and format messages for Anthropic
@@ -270,13 +310,13 @@ ${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/$
         }
 
         // Call Anthropic
-        console.log('Calling Claude 3 Haiku...');
+        console.log('Calling Claude 3.5 Sonnet...');
 
         let response;
         try {
             response = await anthropic.messages.create({
-                model: 'claude-3-haiku-20240307',
-                max_tokens: 1024,
+                model: 'claude-3-5-sonnet-20241022',
+                max_tokens: 2048,
                 system: SYSTEM_PROMPT + '\n\n' + studentContext,
                 messages: finalMessages,
             });
