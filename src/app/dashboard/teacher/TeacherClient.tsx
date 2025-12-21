@@ -325,6 +325,29 @@ export default function TeacherClient({
                                 </div>
                             </div>
 
+                            {/* Track Progress Breakdown */}
+                            <div className="mb-6">
+                                <h3 className="font-semibold mb-3">Learning Tracks Breakdown</h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {Object.entries(selectedStudent.track_credits || {}).map(([track, credits]) => (
+                                        <div key={track} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-xs font-medium text-slate-600 truncate mr-2">{track}</span>
+                                                <span className="text-xs font-bold text-slate-800">{credits.toFixed(1)}</span>
+                                            </div>
+                                            <div className="w-full bg-slate-200 rounded-full h-1 overflow-hidden">
+                                                <div className="bg-blue-500 h-full transition-all" style={{ width: `${Math.min((credits / 4.0) * 100, 100)}%` }} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(!selectedStudent.track_credits || Object.keys(selectedStudent.track_credits).length === 0) && (
+                                        <p className="col-span-2 text-xs text-slate-400 italic text-center py-4">
+                                            No track progress recorded yet.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
                             {/* Recent Work */}
                             <div className="mb-6">
                                 <h3 className="font-semibold mb-3">Recent Work</h3>
