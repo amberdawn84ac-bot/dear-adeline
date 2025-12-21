@@ -485,7 +485,7 @@ export default function DashboardClient({
                                     <Trophy className="w-5 h-5 text-amber-500" />
                                     Badges Earned
                                 </h3>
-                                <div className="grid grid-cols-4 gap-3">
+                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                                     {earnedBadges.map(badge => {
                                         const config = trackConfig[badge.requirement.name];
                                         if (!config) return null;

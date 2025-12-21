@@ -328,7 +328,7 @@ export default function TeacherClient({
                             {/* Track Progress Breakdown */}
                             <div className="mb-6">
                                 <h3 className="font-semibold mb-3">Learning Tracks Breakdown</h3>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {Object.entries(selectedStudent.track_credits || {}).map(([track, credits]) => (
                                         <div key={track} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                                             <div className="flex justify-between items-center mb-1">
