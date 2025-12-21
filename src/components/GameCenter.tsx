@@ -12,6 +12,47 @@ export function GameCenter({ type, onClose }: GameCenterProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [score, setScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
+    const audioContextRef = useRef<AudioContext | null>(null);
+
+    // Initialize Web Audio API
+    useEffect(() => {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        return () => {
+            audioContextRef.current?.close();
+        };
+    }, []);
+
+    // Play sound effect
+    const playSound = (frequency: number, duration: number = 0.1, type: OscillatorType = 'sine') => {
+        if (!audioContextRef.current) return;
+        const ctx = audioContextRef.current;
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+
+        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + duration);
+    };
+
+    // Victory sound
+    const playVictorySound = () => {
+        playSound(523, 0.15); // C
+        setTimeout(() => playSound(659, 0.15), 150); // E
+        setTimeout(() => playSound(784, 0.3), 300); // G
+    };
+
+    // Score sound
+    const playScoreSound = () => {
+        playSound(880, 0.05, 'square');
+    };
 
     useEffect(() => {
         if (type === 'pacman') {
@@ -50,6 +91,7 @@ export function GameCenter({ type, onClose }: GameCenterProps) {
             if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
                 const key = e.key.toLowerCase();
                 if (currentWord[typedSoFar.length] === key) {
+                    playScoreSound();
                     typedSoFar += key;
                     const typedWordEl = document.getElementById('typed-word');
                     if (typedWordEl) typedWordEl.textContent = typedSoFar;
@@ -58,6 +100,7 @@ export function GameCenter({ type, onClose }: GameCenterProps) {
                     if (typedSoFar === currentWord) {
                         wordCount++;
                         if (wordCount >= maxWords) {
+                            playVictorySound();
                             setGameOver(true);
                             return;
                         }
@@ -120,10 +163,12 @@ export function GameCenter({ type, onClose }: GameCenterProps) {
             if (e.key === 'Enter') {
                 const answer = (document.getElementById('code-input') as HTMLInputElement)?.value || '';
                 if (answer.trim() === challenges[currentChallenge].answer) {
+                    playScoreSound();
                     setScore(s => s + 100);
                     currentChallenge++;
 
                     if (currentChallenge >= challenges.length) {
+                        playVictorySound();
                         setGameOver(true);
                         return;
                     }
@@ -191,6 +236,7 @@ export function GameCenter({ type, onClose }: GameCenterProps) {
                 const dist = Math.hypot(player.x + tileSize / 2 - dot.x, player.y + tileSize / 2 - dot.y);
                 if (dist < 10) {
                     dots.splice(index, 1);
+                    playScoreSound();
                     setScore(s => s + 10);
                 }
             });
@@ -215,6 +261,7 @@ export function GameCenter({ type, onClose }: GameCenterProps) {
             ctx.fill();
 
             if (dots.length === 0) {
+                playVictorySound();
                 setGameOver(true);
                 return;
             }
