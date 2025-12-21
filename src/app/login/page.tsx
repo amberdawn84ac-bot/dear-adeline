@@ -26,6 +26,8 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
 
+    const [role, setRole] = useState<'student' | 'teacher'>('student');
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -47,9 +49,18 @@ export default function LoginPage() {
                 }
 
                 if (data.user) {
-                    router.push('/dashboard');
-                } else {
-                    // Login returned no user data.
+                    // Get profile to check role for redirection
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('role')
+                        .eq('id', data.user.id)
+                        .single();
+
+                    if (profile?.role === 'teacher' || profile?.role === 'admin') {
+                        router.push('/dashboard/teacher');
+                    } else {
+                        router.push('/dashboard');
+                    }
                 }
             } else {
                 // Signup
@@ -66,6 +77,9 @@ export default function LoginPage() {
                     password,
                     options: {
                         emailRedirectTo: `${window.location.origin}/auth/callback`,
+                        data: {
+                            role: role
+                        }
                     },
                 });
 
@@ -187,6 +201,34 @@ export default function LoginPage() {
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {!isLogin && (
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium">I am a...</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setRole('student')}
+                                            className={`py-2 px-4 rounded-xl text-sm font-medium border-2 transition-all ${role === 'student'
+                                                ? 'border-[var(--sage)] bg-[var(--sage-light)] text-[var(--sage-dark)]'
+                                                : 'border-[var(--cream-dark)] text-[var(--charcoal-light)] hover:border-[var(--sage-light)]'
+                                                }`}
+                                        >
+                                            Student
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setRole('teacher')}
+                                            className={`py-2 px-4 rounded-xl text-sm font-medium border-2 transition-all ${role === 'teacher'
+                                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                : 'border-[var(--cream-dark)] text-[var(--charcoal-light)] hover:border-[var(--blue-light, #dbeafe)]'
+                                                }`}
+                                        >
+                                            Teacher
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-sm font-medium mb-2">Email</label>
                                 <div className="relative">

@@ -23,7 +23,13 @@ import {
     Menu,
     X,
     ArrowLeft,
-    Gamepad2
+    Gamepad2,
+    Heart,
+    BarChart3,
+    Scale,
+    Globe,
+    BookOpen,
+    Calculator
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -32,7 +38,7 @@ interface Project {
     id: string;
     title: string;
     description: string;
-    category: 'art' | 'farm' | 'science' | 'game';
+    category: string;
     instructions: string;
     materials: string[];
     skills_awarded: string[];
@@ -58,30 +64,66 @@ interface LibraryClientProps {
     gradeLevel: string | null;
 }
 
-const categoryConfig = {
-    art: {
-        icon: Palette,
-        color: 'from-[var(--dusty-rose)] to-[var(--terracotta)]',
-        bgColor: 'bg-[var(--dusty-rose-light)]',
-        label: 'Art Projects',
-    },
-    farm: {
-        icon: Leaf,
-        color: 'from-[var(--sage)] to-[var(--sage-dark)]',
-        bgColor: 'bg-[var(--sage-light)]',
-        label: 'Farm Projects',
-    },
-    science: {
+const categoryConfig: Record<string, { icon: any; color: string; bgColor: string; label: string }> = {
+    'God\'s Creation & Science': {
         icon: FlaskConical,
-        color: 'from-[var(--gold)] to-[var(--terracotta)]',
-        bgColor: 'bg-[var(--gold-light)]',
-        label: 'Science Experiments',
+        color: 'from-green-500 to-green-600',
+        bgColor: 'bg-green-50',
+        label: 'Creation & Science',
     },
-    game: {
+    'Health/Naturopathy': {
+        icon: Heart,
+        color: 'from-red-500 to-red-600',
+        bgColor: 'bg-red-50',
+        label: 'Health & Wellness',
+    },
+    'Food Systems': {
+        icon: Leaf,
+        color: 'from-orange-500 to-orange-600',
+        bgColor: 'bg-orange-50',
+        label: 'Food Systems',
+    },
+    'Government/Economics': {
+        icon: BarChart3,
+        color: 'from-blue-500 to-blue-600',
+        bgColor: 'bg-blue-50',
+        label: 'Gov & Economics',
+    },
+    'Justice': {
+        icon: Scale,
+        color: 'from-indigo-500 to-indigo-600',
+        bgColor: 'bg-indigo-50',
+        label: 'Justice',
+    },
+    'Discipleship': {
+        icon: Sparkles,
+        color: 'from-purple-500 to-purple-600',
+        bgColor: 'bg-purple-50',
+        label: 'Discipleship',
+    },
+    'History': {
+        icon: Globe,
+        color: 'from-amber-500 to-amber-600',
+        bgColor: 'bg-amber-50',
+        label: 'History',
+    },
+    'English/Lit': {
+        icon: BookOpen,
+        color: 'from-pink-500 to-pink-600',
+        bgColor: 'bg-pink-50',
+        label: 'English & Literature',
+    },
+    'Math': {
+        icon: Calculator,
+        color: 'from-cyan-500 to-cyan-600',
+        bgColor: 'bg-cyan-50',
+        label: 'Mathematics',
+    },
+    'game': {
         icon: Gamepad2,
-        color: 'from-purple-400 to-purple-600',
-        bgColor: 'bg-purple-100',
-        label: 'Learning Games',
+        color: 'from-slate-400 to-slate-600',
+        bgColor: 'bg-slate-100',
+        label: 'Games',
     },
 };
 
@@ -98,7 +140,7 @@ export default function LibraryClient({
     gradeLevel,
 }: LibraryClientProps) {
     const router = useRouter();
-    const [selectedCategory, setSelectedCategory] = useState<'all' | 'art' | 'farm' | 'science' | 'game'>('all');
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);

@@ -25,7 +25,10 @@ import {
     LogOut,
     Menu,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    Leaf,
+    BarChart3,
+    Scale
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -70,27 +73,27 @@ interface TrackerClientProps {
 }
 
 const categoryIcons: Record<string, typeof BookOpen> = {
-    ela: BookOpen,
+    creation_science: FlaskConical,
+    health_naturopathy: Heart,
+    food_systems: Leaf,
+    gov_econ: BarChart3,
+    justice: Scale,
+    discipleship: Sparkles,
+    history: Globe,
+    english_lit: BookOpen,
     math: Calculator,
-    science: FlaskConical,
-    social_studies: Globe,
-    fine_arts: Palette,
-    world_languages: Languages,
-    technology: Monitor,
-    health_pe: Heart,
-    electives: Target,
 };
 
 const categoryColors: Record<string, string> = {
-    ela: 'from-blue-500 to-blue-600',
-    math: 'from-purple-500 to-purple-600',
-    science: 'from-green-500 to-green-600',
-    social_studies: 'from-orange-500 to-orange-600',
-    fine_arts: 'from-pink-500 to-pink-600',
-    world_languages: 'from-indigo-500 to-indigo-600',
-    technology: 'from-cyan-500 to-cyan-600',
-    health_pe: 'from-red-500 to-red-600',
-    electives: 'from-gray-500 to-gray-600',
+    creation_science: 'from-green-500 to-green-600',
+    health_naturopathy: 'from-red-500 to-red-600',
+    food_systems: 'from-orange-500 to-orange-600',
+    gov_econ: 'from-blue-500 to-blue-600',
+    justice: 'from-indigo-500 to-indigo-600',
+    discipleship: 'from-purple-500 to-purple-600',
+    history: 'from-amber-500 to-amber-600',
+    english_lit: 'from-pink-500 to-pink-600',
+    math: 'from-cyan-500 to-cyan-600',
 };
 
 export default function TrackerClient({

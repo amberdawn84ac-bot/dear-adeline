@@ -116,6 +116,97 @@ The 9 Tracks are the "voice"—what students experience. Behind the scenes, we t
 ### REMEMBER:
 Education should change the world, not just fill time. Your students are not preparing for life—they are LIVING it. Guide them to build, grow, investigate, create, and lead. Never do their work for them. Always guide discovery.`;
 
+// Helper function to detect alert conditions
+async function checkAndCreateAlerts(
+    supabase: any,
+    studentId: string,
+    recentMessages: { role: string; content: string }[],
+    aiResponse: string
+) {
+    try {
+        // Pattern 1: Repeated direct answer requests
+        const directAnswerPatterns = [
+            /just (give|tell) me the answer/i,
+            /what'?s the answer/i,
+            /just help me finish/i,
+            /do (it|this) for me/i,
+            /give me the solution/i
+        ];
+
+        let directAnswerCount = 0;
+        recentMessages.forEach(msg => {
+            if (directAnswerPatterns.some(pattern => pattern.test(msg.content))) {
+                directAnswerCount++;
+            }
+        });
+
+        if (directAnswerCount >= 3) {
+            const conversationSnippet = recentMessages.map(m => m.content).join('\n---\n');
+            await supabase.from('parent_alerts').insert({
+                student_id: studentId,
+                alert_type: 'direct_answers',
+                severity: 'medium',
+                title: 'Student Asking for Direct Answers',
+                message: `Your student has asked for direct answers 3 or more times in recent conversation. Adeline is guiding them to discover solutions independently, but they may need additional encouragement.`,
+                conversation_snippet: conversationSnippet
+            });
+            console.log('Alert created: direct_answers');
+        }
+
+        // Pattern 2: Inappropriate language
+        const inappropriatePatterns = [
+            /\b(damn|hell|crap|stupid|dumb|idiot)\b/i,
+        ];
+
+        const hasInappropriate = recentMessages.some(msg =>
+            inappropriatePatterns.some(pattern => pattern.test(msg.content))
+        );
+
+        if (hasInappropriate) {
+            const conversationSnippet = recentMessages.map(m => m.content).join('\n---\n');
+            await supabase.from('parent_alerts').insert({
+                student_id: studentId,
+                alert_type: 'inappropriate',
+                severity: 'high',
+                title: 'Inappropriate Language Detected',
+                message: `Your student used inappropriate language during their learning session. You may want to review the conversation and address this with them.`,
+                conversation_snippet: conversationSnippet
+            });
+            console.log('Alert created: inappropriate');
+        }
+
+        // Pattern 3: Off-topic manipulation (asking about video games, etc.)
+        const offTopicPatterns = [
+            /can we talk about (video games?|minecraft|fortnite|roblox)/i,
+            /let'?s chat about/i,
+            /tell me (a joke|something funny)/i
+        ];
+
+        let offTopicCount = 0;
+        recentMessages.forEach(msg => {
+            if (offTopicPatterns.some(pattern => pattern.test(msg.content))) {
+                offTopicCount++;
+            }
+        });
+
+        if (offTopicCount >= 3) {
+            const conversationSnippet = recentMessages.map(m => m.content).join('\n---\n');
+            await supabase.from('parent_alerts').insert({
+                student_id: studentId,
+                alert_type: 'manipulation',
+                severity: 'medium',
+                title: 'Student Attempting Off-Topic Conversations',
+                message: `Your student has repeatedly tried to steer the conversation away from learning. Adeline is redirecting them, but they may benefit from parental guidance on staying focused.`,
+                conversation_snippet: conversationSnippet
+            });
+            console.log('Alert created: manipulation');
+        }
+    } catch (error) {
+        console.error('Error creating alert:', error);
+        // Don't fail the chat request if alert creation fails
+    }
+}
+
 export async function POST(req: Request) {
     try {
 
@@ -206,6 +297,10 @@ ${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/$
         let speak: string | undefined;
 
         console.log('AI Response Content Length:', content.length);
+
+        // ALERT DETECTION: Check for concerning patterns in recent messages
+        const recentUserMessages = messages.filter((m: { role: string; content: string }) => m.role === 'user').slice(-5);
+        await checkAndCreateAlerts(supabase, user.id, recentUserMessages, content);
 
         // Extract <SPEAK> tag
         const speakMatch = content.match(/<SPEAK>(.*?)<\/SPEAK>/s);

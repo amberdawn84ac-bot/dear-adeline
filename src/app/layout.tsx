@@ -32,17 +32,47 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+import { createClient } from "@/lib/supabase/server";
+import { Providers } from "@/components/Providers";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const { data: settings } = await supabase
+    .from('app_settings')
+    .select('value')
+    .eq('key', 'theme')
+    .maybeSingle();
+
+  const theme = settings?.value as any || {
+    primaryColor: '#87A878',
+    fontSize: '16px'
+  };
+
   return (
     <html lang="en">
+      <head>
+        <style dangerouslySetInnerHTML={{
+          __html: `
+          :root {
+            --sage: ${theme.primaryColor};
+            --sage-dark: ${theme.primaryColor}; /* Simplification for now */
+            --font-size-base: ${theme.fontSize};
+          }
+          body {
+            font-size: var(--font-size-base);
+          }
+        `}} />
+      </head>
       <body
         className={`${outfit.variable} ${inter.variable} ${dancingScript.variable} antialiased`}
       >
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

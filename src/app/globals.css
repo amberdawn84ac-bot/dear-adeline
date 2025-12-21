@@ -15,18 +15,18 @@
   --charcoal-light: #4A5568;
   --gold: #D4AF37;
   --gold-light: #F0D878;
-  
+
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, var(--sage) 0%, var(--sage-dark) 100%);
   --gradient-warm: linear-gradient(135deg, var(--terracotta) 0%, var(--dusty-rose) 100%);
   --gradient-hero: linear-gradient(180deg, var(--cream) 0%, var(--cream-dark) 100%);
-  
+
   /* Shadows */
   --shadow-sm: 0 2px 8px rgba(45, 52, 54, 0.08);
   --shadow-md: 0 4px 16px rgba(45, 52, 54, 0.12);
   --shadow-lg: 0 8px 32px rgba(45, 52, 54, 0.16);
   --shadow-glow: 0 0 40px rgba(135, 168, 120, 0.3);
-  
+
   /* Fonts */
   --font-heading: 'Outfit', sans-serif;
   --font-body: 'Inter', sans-serif;
@@ -42,6 +42,7 @@
 html,
 body {
   max-width: 100vw;
+  min-height: 100dvh;
   overflow-x: hidden;
   font-family: var(--font-body);
   background: var(--cream);
@@ -49,7 +50,12 @@ body {
 }
 
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
   font-weight: 600;
   line-height: 1.2;
@@ -61,8 +67,15 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Animations */
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes fadeInUp {
@@ -70,6 +83,7 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -77,19 +91,39 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  0% {
+    background-position: -200% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
 }
 
 @keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
 }
 
 @keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .animate-float {
@@ -101,7 +135,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -347,11 +381,11 @@ h1, h2, h3, h4, h5, h6 {
   .section {
     padding: 4rem 1.5rem;
   }
-  
+
   h1 {
     font-size: 2.5rem !important;
   }
-  
+
   h2 {
     font-size: 2rem !important;
   }

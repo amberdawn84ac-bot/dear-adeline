@@ -22,9 +22,28 @@ import {
     X,
     Send,
     Loader2,
-    School
+    School,
+    AlertTriangle,
+    Bell
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useEffect } from 'react';
+
+interface Alert {
+    id: string;
+    student_id: string;
+    alert_type: string;
+    severity: 'low' | 'medium' | 'high';
+    title: string;
+    message: string;
+    conversation_snippet: string | null;
+    viewed_at: string | null;
+    created_at: string;
+    student: {
+        display_name: string | null;
+        email: string;
+    };
+}
 
 interface Student {
     id: string;
@@ -66,6 +85,48 @@ export default function TeacherClient({
     const [inviteLoading, setInviteLoading] = useState(false);
     const [inviteError, setInviteError] = useState('');
     const [inviteSuccess, setInviteSuccess] = useState('');
+    const [alerts, setAlerts] = useState<Alert[]>([]);
+    const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+
+    // Fetch alerts
+    useEffect(() => {
+        fetchAlerts();
+    }, []);
+
+    const fetchAlerts = async () => {
+        try {
+            const response = await fetch('/api/alerts');
+            if (response.ok) {
+                const data = await response.json();
+                setAlerts(data.alerts || []);
+            }
+        } catch (error) {
+            console.error('Error fetching alerts:', error);
+        }
+    };
+
+    const handleMarkAlertViewed = async (alertId: string) => {
+        try {
+            const response = await fetch('/api/alerts', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ alertId })
+            });
+            if (response.ok) {
+                fetchAlerts();
+                setSelectedAlert(null);
+            }
+        } catch (error) {
+            console.error('Error marking alert:', error);
+        }
+    };
+
+    const unviewedAlerts = alerts.filter(a => !a.viewed_at);
+    const getSeverityColor = (severity: string) => {
+        if (severity === 'high') return 'text-red-600 bg-red-50';
+        if (severity === 'medium') return 'text-orange-600 bg-orange-50';
+        return 'text-blue-600 bg-blue-50';
+    };
 
     const handleLogout = async () => {
         const supabase = createClient();
@@ -212,6 +273,42 @@ export default function TeacherClient({
                             />
                         </div>
                     </div>
+
+                    {/* Alerts Section */}
+                    {unviewedAlerts.length > 0 && (
+                        <div className="mb-6 p-4 bg-white rounded-xl shadow-md border-l-4 border-orange-500">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                    <Bell className="w-5 h-5 text-orange-600" />
+                                    <h3 className="font-semibold">Student Alerts ({unviewedAlerts.length})</h3>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                {unviewedAlerts.slice(0, 3).map((alert) => (
+                                    <div
+                                        key={alert.id}
+                                        onClick={() => setSelectedAlert(alert)}
+                                        className={`p-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${getSeverityColor(alert.severity)}`}
+                                    >
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <p className="font-medium text-sm">{alert.title}</p>
+                                                <p className="text-xs mt-1 opacity-75">
+                                                    {alert.student.display_name || alert.student.email} • {new Date(alert.created_at).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                            <ChevronRight className="w-4 h-4 mt-1 flex-shrink-0" />
+                                        </div>
+                                    </div>
+                                ))}
+                                {unviewedAlerts.length > 3 && (
+                                    <p className="text-xs text-slate-500 text-center pt-2">
+                                        +{unviewedAlerts.length - 3} more alerts
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Students Grid */}
                     {filteredStudents.length > 0 ? (
@@ -455,6 +552,61 @@ export default function TeacherClient({
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Alert Detail Modal */}
+            {selectedAlert && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-start justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-lg ${getSeverityColor(selectedAlert.severity)}`}>
+                                    <AlertTriangle className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold">{selectedAlert.title}</h2>
+                                    <p className="text-sm text-slate-500">
+                                        {selectedAlert.student.display_name || selectedAlert.student.email} • {new Date(selectedAlert.created_at).toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                            <button onClick={() => setSelectedAlert(null)}>
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="mb-6">
+                            <h3 className="font-semibold mb-2">Details</h3>
+                            <p className="text-slate-700">{selectedAlert.message}</p>
+                        </div>
+
+                        {selectedAlert.conversation_snippet && (
+                            <div className="mb-6">
+                                <h3 className="font-semibold mb-2">Conversation Snippet</h3>
+                                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 max-h-64 overflow-y-auto">
+                                    <pre className="text-sm text-slate-700 whitespace-pre-wrap font-sans">
+                                        {selectedAlert.conversation_snippet}
+                                    </pre>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => handleMarkAlertViewed(selectedAlert.id)}
+                                className="btn-primary flex-1"
+                            >
+                                Mark as Viewed
+                            </button>
+                            <button
+                                onClick={() => setSelectedAlert(null)}
+                                className="btn-secondary flex-1"
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

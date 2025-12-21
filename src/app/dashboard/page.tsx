@@ -72,6 +72,13 @@ export default async function DashboardPage() {
         .order('created_at', { ascending: false })
         .limit(5);
 
+    // Get conversation history
+    const { data: conversationHistory } = await supabase
+        .from('conversations')
+        .select('id, title, updated_at, topic')
+        .eq('student_id', user.id)
+        .order('updated_at', { ascending: false });
+
     // Get active conversation
     const { data: activeConversation } = await supabase
         .from('conversations')
@@ -80,7 +87,7 @@ export default async function DashboardPage() {
         .eq('is_active', true)
         .order('updated_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
     // Get learning gaps
     const { data: learningGaps } = await supabase
@@ -98,6 +105,7 @@ export default async function DashboardPage() {
             allRequirements={allRequirements || []}
             portfolioItems={portfolioItems || []}
             activeConversation={activeConversation}
+            conversationHistory={conversationHistory || []}
             learningGaps={learningGaps || []}
         />
     );
