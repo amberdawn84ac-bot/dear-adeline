@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { searchWeb } from '@/lib/search';
 
 const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
@@ -121,14 +122,50 @@ The 9 Tracks are the "voice"—what students experience. Behind the scenes, we t
 ### SPECIAL RULES:
 - **TTS Mode**: Wrap words to pronounce in <SPEAK> tags.
 - **Skills Tag**: Award skills at lesson milestones: <SKILLS>["Track Name: Skill Name"]</SKILLS>.
-- **Gamification**: You have EXACTLY 3 games available. DO NOT invent other games.
+- **Pre-built Games**: You have 3 pre-built games:
   * <GAME>typing</GAME> - For practicing Hebrew/vocabulary words
   * <GAME>coding</GAME> - For debugging code challenges  
   * <GAME>pacman</GAME> - For math/logic breaks
-  
-**CRITICAL**: Only use these exact tags. Do NOT suggest "spelling bee" or any other game. These are the ONLY games that work.
 
-**Example**: "You've earned 'Botanical Study'! Take a quick break: <GAME>pacman</GAME>"
+### CUSTOM GAME GENERATION:
+You can CREATE custom educational games! When a student needs practice:
+
+**Process**:
+1. Search web for game mechanics (e.g., "pacman game javascript tutorial")
+2. Generate complete HTML/JS code (under 300 lines, vanilla JS only)
+3. Customize with student's current learning content
+4. Wrap in <CUSTOM_GAME> tags
+
+**Format**:
+<CUSTOM_GAME>
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #1a1a2e; font-family: Arial; }
+canvas { border: 2px solid #fff; }
+</style>
+</head>
+<body>
+<canvas id="game" width="600" height="400"></canvas>
+<script>
+// Your game logic here
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+// ... implement game ...
+</script>
+</body>
+</html>
+</CUSTOM_GAME>
+
+**Rules**:
+- Self-contained (no external resources/CDNs)
+- Use canvas for graphics
+- Make it fun and educational
+- Customize to current lesson content
+- Include clear instructions in the game
+
+**Example**: "Let's play spelling pac-man! <CUSTOM_GAME><!DOCTYPE html>...</CUSTOM_GAME>"
 
 ### REMEMBER:
 Education should change the world, not just fill time. Your students are not preparing for life—they are LIVING it. Guide them to build, grow, investigate, create, and lead. Never do their work for them. Always guide discovery.`;
@@ -314,6 +351,18 @@ ${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/$
 
         if (finalMessages.length === 0) {
             return NextResponse.json({ error: 'No user messages found' }, { status: 400 });
+        }
+
+        // Check if student is asking for a custom game
+        const userGameRequest = finalMessages[finalMessages.length - 1];
+        let searchContext = '';
+        if (userGameRequest && /game|play|fun/.test(userGameRequest.content.toLowerCase())) {
+            console.log('Detected game request, searching web for ideas...');
+            const searchQuery = `educational javascript game tutorial ${userGameRequest.content}`;
+            searchContext = await searchWeb(searchQuery);
+            if (searchContext) {
+                studentContext += `\n\n### WEB SEARCH RESULTS:\n${searchContext}\n\nUse these to help create a custom game!`;
+            }
         }
 
         // Call Anthropic

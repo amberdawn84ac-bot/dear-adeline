@@ -39,6 +39,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import { GameCenter } from '@/components/GameCenter';
+import { SandboxedGame } from '@/components/SandboxedGame';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -128,6 +129,7 @@ export default function DashboardClient({
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [activeGame, setActiveGame] = useState<string | null>(null);
+    const [customGameHtml, setCustomGameHtml] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const scrollToBottom = () => {
@@ -215,15 +217,21 @@ export default function DashboardClient({
                 speakText(data.speak);
             }
 
-            // Parse game tag from response
+            // Parse game tags from response
             let gameType: string | undefined;
             const gameMatch = data.content?.match(/<GAME>(.+?)<\/GAME>/);
             if (gameMatch) {
                 gameType = gameMatch[1];
-                // Launch game automatically
                 if (gameType) {
                     setActiveGame(gameType);
                 }
+            }
+
+            // Parse custom game HTML
+            const customGameMatch = data.content?.match(/<CUSTOM_GAME>([\s\S]+?)<\/CUSTOM_GAME>/);
+            if (customGameMatch) {
+                const gameHtml = customGameMatch[1].trim();
+                setCustomGameHtml(gameHtml);
             }
 
             const assistantMessage: Message = {
@@ -560,11 +568,18 @@ export default function DashboardClient({
                 </div>
             </main>
 
-            {/* Game Modal */}
+            {/* Game Modals */}
             {activeGame && (
                 <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
                     <GameCenter type={activeGame} onClose={() => setActiveGame(null)} />
                 </div>
+            )}
+
+            {customGameHtml && (
+                <SandboxedGame
+                    htmlContent={customGameHtml}
+                    onClose={() => setCustomGameHtml(null)}
+                />
             )}
         </div>
     );
