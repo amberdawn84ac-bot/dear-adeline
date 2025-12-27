@@ -147,8 +147,8 @@ export default function DashboardClient({
                 {
                     role: 'assistant',
                     content: profile?.display_name
-                        ? `Peace be with you, ${profile.display_name}. What shall we build or discover together today?`
-                        : "Peace be with you. I am Adeline, your learning companion. What shall we discover together today?",
+                        ? `Hello, ${profile.display_name}. I'm Adeline! What shall we build or discover together today?`
+                        : "Hello! I am Adeline, your learning companion. What shall we discover together today?",
                     timestamp: new Date(),
                 },
             ]);
