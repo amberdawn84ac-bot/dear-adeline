@@ -117,6 +117,7 @@ export default function TrackerClient({
     const [localRequirements, setLocalRequirements] = useState<Requirement[]>(requirements);
     const [discovering, setDiscovering] = useState(false);
     const [publishing, setPublishing] = useState(false);
+    const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
     const isAdmin = profile?.role === 'admin';
     const hasPersistentRequirements = requirements.length > 0;
     const complianceMode = !!profile?.state_standards;
