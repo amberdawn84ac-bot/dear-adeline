@@ -198,8 +198,9 @@ ${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/$
         }
 
         // 4. Call Anthropic
+        console.log('Calling Anthropic API with model: claude-3-5-sonnet-20240620');
         const response = await anthropic.messages.create({
-            model: 'claude-3-5-sonnet-20241022',
+            model: 'claude-3-5-sonnet-20240620',
             max_tokens: 2048,
             system: SYSTEM_PROMPT + '\n\n' + studentContext,
             messages: finalMessages,
@@ -329,10 +330,18 @@ ${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/$
     } catch (error: any) {
         console.error('--- Chat API Error ---');
         console.error('Error Message:', error.message);
+        console.error('Error Name:', error.name);
         console.error('Stack Trace:', error.stack);
-        if (error.response) {
-            console.error('Anthropic API Error Response:', JSON.stringify(error.response, null, 2));
+        if (error.status) {
+            console.error('HTTP Status:', error.status);
         }
-        return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });
+        if (error.error) {
+            console.error('Anthropic Error Details:', JSON.stringify(error.error, null, 2));
+        }
+        return NextResponse.json({
+            error: 'Internal server error',
+            details: error.message,
+            apiError: error.error || null
+        }, { status: 500 });
     }
 }
