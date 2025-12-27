@@ -50,7 +50,7 @@ Tone: "A life-mentor speaking a singular, powerful vision of the child's purpose
 
     try {
         const response = await anthropic.messages.create({
-            model: 'claude-3-5-sonnet-20241022',
+            model: 'claude-3-sonnet-20240229',
             max_tokens: 1500,
             messages: [{ role: 'user', content: prompt }],
             system: "You only output raw JSON. Do not include markdown code blocks. Return a single object representing the child's unique blueprint."

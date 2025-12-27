@@ -198,9 +198,9 @@ ${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/$
         }
 
         // 4. Call Anthropic
-        console.log('Calling Anthropic API with model: claude-3-5-sonnet-20241022');
+        console.log('Calling Anthropic API with model: claude-3-sonnet-20240229');
         const response = await anthropic.messages.create({
-            model: 'claude-3-5-sonnet-20241022',
+            model: 'claude-3-sonnet-20240229',
             max_tokens: 2048,
             system: SYSTEM_PROMPT + '\n\n' + studentContext,
             messages: finalMessages,
