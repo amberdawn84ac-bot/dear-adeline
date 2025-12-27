@@ -130,13 +130,17 @@ export default function DashboardClient({
     const router = useRouter();
     const [messages, setMessages] = useState<Message[]>([]);
     const [isClient, setIsClient] = useState(false);
-    const [showOnboarding, setShowOnboarding] = useState(() => {
+    const [showOnboarding, setShowOnboarding] = useState(false);
+
+    useEffect(() => {
         if (profile) {
-            return profile.role === 'student' && (!profile.grade_level || !profile.state_standards);
+            const needsOnboarding = profile.role === 'student' && (!profile.grade_level || !profile.state_standards);
+            setShowOnboarding(needsOnboarding);
+        } else {
+            const isStudent = (user.user_metadata?.role || 'student') === 'student';
+            setShowOnboarding(isStudent);
         }
-        // Fallback to user metadata if profile hasn't loaded yet
-        return (user.user_metadata?.role || 'student') === 'student';
-    });
+    }, [profile, user.user_metadata?.role]);
 
     useEffect(() => {
         setIsClient(true);
@@ -147,8 +151,8 @@ export default function DashboardClient({
                 {
                     role: 'assistant',
                     content: profile?.display_name
-                        ? `Hello, ${profile.display_name}. I'm Adeline! What shall we build or discover together today?`
-                        : "Hello! I am Adeline, your learning companion. What shall we discover together today?",
+                        ? `Hello there, ${profile.display_name}. I'm Adeline! I was just thinking that "wisdom is like a garden; if it is not cultivated, it cannot be harvested." What shall we build or discover together today, dear?`
+                        : "Hello! I am Adeline, your learning companion. I always say that a curious mind is the best tool on the farm. What shall we discover together today, dear?",
                     timestamp: new Date(),
                 },
             ]);

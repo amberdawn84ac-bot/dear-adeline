@@ -24,8 +24,8 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
     const [data, setData] = useState({
         display_name: '',
         grade_level: '',
-        state_standards: 'oklahoma',
-        city: 'Nowata'
+        state_standards: '',
+        city: ''
     });
 
     const isStepValid = () => {
@@ -52,7 +52,6 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
             .from('profiles')
             .upsert({
                 id: userId,
-                email: data.email || undefined, // Include email if available
                 display_name: data.display_name,
                 grade_level: data.grade_level,
                 state_standards: data.state_standards,
