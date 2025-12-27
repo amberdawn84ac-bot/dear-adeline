@@ -105,7 +105,7 @@ export function CodingGame({ onComplete, customPuzzles }: CodingGameProps) {
                     </div>
                 </div>
 
-                {status === 'success' && currentPuzzleIndex < PUZZLES.length - 1 ? (
+                {status === 'success' && currentPuzzleIndex < puzzles.length - 1 ? (
                     <button
                         onClick={nextPuzzle}
                         className="w-full bg-[var(--ochre)] text-white py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-widest shadow-xl hover:brightness-110 active:scale-95 transition-all"

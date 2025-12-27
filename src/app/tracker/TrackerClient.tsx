@@ -113,6 +113,7 @@ export default function TrackerClient({
     const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
     const [blueprint, setBlueprint] = useState<any>(null);
     const [loadingBlueprint, setLoadingBlueprint] = useState(true);
+    const complianceMode = !!profile?.state_standards;
 
     useEffect(() => {
         const fetchBlueprint = async () => {
