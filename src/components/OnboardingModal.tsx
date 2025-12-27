@@ -63,6 +63,18 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
             }, { onConflict: 'id' });
 
         if (!error) {
+            // Auto-seed starter projects for new students
+            try {
+                await fetch('/api/projects/seed-starter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId })
+                });
+            } catch (seedError) {
+                console.error('Error seeding starter projects:', seedError);
+                // Don't block onboarding if seeding fails
+            }
+
             onComplete(data);
         } else {
             console.error('Error saving onboarding data:', error);

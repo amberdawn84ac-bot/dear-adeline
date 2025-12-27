@@ -319,22 +319,6 @@ export default function LibraryClient({
                                 Hands-on projects that earn skills toward graduation
                             </p>
                         </div>
-                        {projects.length === 0 && (
-                            <button
-                                onClick={handleSeedProjects}
-                                disabled={seeding}
-                                className="px-6 py-3 bg-[var(--forest)] text-white rounded-2xl font-bold text-sm shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group"
-                            >
-                                {seeding ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <>
-                                        <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                                        Fill Library with Real Projects
-                                    </>
-                                )}
-                            </button>
-                        )}
                     </div>
 
                     {/* Category Cards */}
