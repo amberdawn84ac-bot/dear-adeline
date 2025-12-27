@@ -198,7 +198,6 @@ ${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/$
         }
 
         // 4. Call Anthropic
-        const anthropic = new Anthropic({ apiKey });
         const response = await anthropic.messages.create({
             model: 'claude-3-5-sonnet-latest',
             max_tokens: 2048,
