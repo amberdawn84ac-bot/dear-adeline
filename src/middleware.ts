@@ -1,46 +1,60 @@
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-    const supabase = await createClient();
+    let response = NextResponse.next({
+        request: {
+            headers: request.headers,
+        },
+    });
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll() {
+                    return request.cookies.getAll();
+                },
+                setAll(cookiesToSet) {
+                    cookiesToSet.forEach(({ name, value, options }) =>
+                        request.cookies.set(name, value)
+                    );
+                    response = NextResponse.next({
+                        request: {
+                            headers: request.headers,
+                        },
+                    });
+                    cookiesToSet.forEach(({ name, value, options }) =>
+                        response.cookies.set(name, value, options)
+                    );
+                },
+            },
+        }
+    );
+
+    const { data: { user } } = await supabase.auth.getUser();
 
     // Protected routes that require authentication
-    const protectedRoutes = ['/dashboard', '/portfolio', '/library', '/tracker', '/api'];
+    const protectedRoutes = ['/dashboard', '/portfolio', '/library', '/tracker'];
     const isProtectedRoute = protectedRoutes.some(route =>
         request.nextUrl.pathname.startsWith(route)
     );
 
-    // Admin-only routes
-    const adminRoutes = ['/dashboard/admin', '/api/admin'];
-    const isAdminRoute = adminRoutes.some(route =>
-        request.nextUrl.pathname.startsWith(route)
-    );
+    // Admin & Teacher Routes
+    const isAdminRoute = request.nextUrl.pathname.startsWith('/dashboard/admin') || request.nextUrl.pathname.startsWith('/api/admin');
+    const isTeacherRoute = request.nextUrl.pathname.startsWith('/dashboard/teacher') || request.nextUrl.pathname.startsWith('/api/teacher');
 
-    // Teacher-only routes
-    const teacherRoutes = ['/dashboard/teacher', '/api/teacher'];
-    const isTeacherRoute = teacherRoutes.some(route =>
-        request.nextUrl.pathname.startsWith(route)
-    );
-
-    // If accessing protected route without auth
-    if (isProtectedRoute && !user) {
-        // Handle API routes differently - return 401 instead of redirect
-        if (request.nextUrl.pathname.startsWith('/api/')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
+    // 1. Unauthenticated user trying to access protected route
+    if (!user && isProtectedRoute) {
         const url = request.nextUrl.clone();
         url.pathname = '/login';
         url.searchParams.set('redirect', request.nextUrl.pathname);
         return NextResponse.redirect(url);
     }
 
-    // If authenticated and accessing login, redirect to appropriate dashboard based on role
+    // 2. Authenticated user hitting /login
     if (user && request.nextUrl.pathname === '/login') {
         const { data: profile } = await supabase
             .from('profiles')
@@ -49,17 +63,11 @@ export async function middleware(request: NextRequest) {
             .maybeSingle();
 
         const role = profile?.role || 'student';
-
-        if (role === 'admin') {
-            return NextResponse.redirect(new URL('/dashboard/admin', request.url));
-        } else if (role === 'teacher') {
-            return NextResponse.redirect(new URL('/dashboard/teacher', request.url));
-        } else {
-            return NextResponse.redirect(new URL('/dashboard', request.url));
-        }
+        const dashboard = role === 'admin' ? '/dashboard/admin' : role === 'teacher' ? '/dashboard/teacher' : '/dashboard';
+        return NextResponse.redirect(new URL(dashboard, request.url));
     }
 
-    // Role-based access control
+    // 3. Role-based checks
     if (user && (isAdminRoute || isTeacherRoute)) {
         const { data: profile } = await supabase
             .from('profiles')
@@ -67,27 +75,13 @@ export async function middleware(request: NextRequest) {
             .eq('id', user.id)
             .maybeSingle();
 
-        let role = profile?.role;
-
-        if (!role) {
-            const { data: fallback } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('email', user.email)
-                .maybeSingle();
-            role = fallback?.role;
-        }
-
+        const role = profile?.role;
         if (isAdminRoute && role !== 'admin') {
             return NextResponse.redirect(new URL('/dashboard', request.url));
         }
-
-        // if (isTeacherRoute && role !== 'teacher' && role !== 'admin') {
-        //     return NextResponse.redirect(new URL('/dashboard', request.url));
-        // }
     }
 
-    return NextResponse.next();
+    return response;
 }
 
 export const config = {
@@ -96,7 +90,8 @@ export const config = {
         '/portfolio/:path*',
         '/library/:path*',
         '/tracker/:path*',
-        '/api/:path*',
+        '/api/admin/:path*',
+        '/api/teacher/:path*',
         '/login',
     ],
 };

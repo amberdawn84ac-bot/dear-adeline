@@ -330,7 +330,7 @@ export default function LoginPage() {
                                     </div>
                                     <button
                                         onClick={() => {
-                                            setEmail('admin@dearadeline.com');
+                                            setEmail('amber@dearadeline.co');
                                             // Focus password field
                                         }}
                                         className="w-full py-3 rounded-xl border-2 border-purple-100 text-purple-600 font-bold text-sm hover:bg-purple-50 hover:border-purple-200 transition-all flex items-center justify-center gap-2"

@@ -4,9 +4,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { searchWeb } from '@/lib/search';
 
-const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const anthropic = null; // Replaced by per-request instance
 
 const SYSTEM_PROMPT = `You are Adeline, the AI Mentor for Dear Adeline Academy.
 
@@ -163,14 +161,25 @@ export async function POST(req: Request) {
     try {
         console.log('--- Chat API Request Start ---');
 
-        if (!process.env.ANTHROPIC_API_KEY) {
+        const apiKey = (process.env.ANTHROPIC_API_KEY || '').trim();
+        if (!apiKey) {
             console.error('CRITICAL: ANTHROPIC_API_KEY is not set');
             return NextResponse.json({ error: 'AI Service configuration error' }, { status: 500 });
         }
 
+        const anthropic = new Anthropic({ apiKey });
+
         const supabase = await createClient();
         const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+        if (authError) {
+            console.error('Auth Error in Chat API:', authError);
+        }
+
+        if (!user) {
+            console.warn('Unauthorized access attempt to Chat API');
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
         const body = await req.json();
         console.log('Request Body:', JSON.stringify(body, null, 2));
