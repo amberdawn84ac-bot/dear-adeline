@@ -4,7 +4,6 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { searchWeb } from '@/lib/search';
 
-const anthropic = null; // Replaced by per-request instance
 
 const SYSTEM_PROMPT = `You are Adeline, the heartbeat of Dear Adeline Academy.
 
