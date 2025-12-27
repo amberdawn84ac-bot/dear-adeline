@@ -37,14 +37,17 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
     };
 
     const handleNext = () => {
+        console.log('handleNext called, current step:', step);
         if (step < 4) {
             setStep(step + 1);
         } else {
+            console.log('Final step, calling handleSave');
             handleSave();
         }
     };
 
     const handleSave = async () => {
+        console.log('handleSave called with data:', data);
         setSaving(true);
         const supabase = createClient();
 
