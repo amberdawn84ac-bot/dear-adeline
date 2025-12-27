@@ -48,7 +48,7 @@ Tone: "Prophetic, encouraging, high-call, and rejection of the generic."
 
     try {
         const response = await anthropic.messages.create({
-            model: 'claude-3-sonnet-20240229',
+            model: 'claude-3-haiku-20240307',
             max_tokens: 1500,
             messages: [{ role: 'user', content: prompt }],
             system: "You only output valid JSON. Return a single object representing the graduation mission roadmap."

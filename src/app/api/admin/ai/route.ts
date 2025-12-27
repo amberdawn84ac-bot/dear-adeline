@@ -90,7 +90,7 @@ Current Platform State:
 
         // Call Anthropic
         const response = await anthropic.messages.create({
-            model: 'claude-3-sonnet-20240229',
+            model: 'claude-3-haiku-20240307',
             max_tokens: 1024,
             system: SYSTEM_PROMPT + '\n\n' + context,
             messages: [
