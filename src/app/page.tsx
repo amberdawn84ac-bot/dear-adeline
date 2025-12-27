@@ -1,7 +1,5 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
 import {
   Sparkles,
   BookOpen,
@@ -11,304 +9,289 @@ import {
   Leaf,
   FlaskConical,
   MessageCircle,
-  CheckCircle2,
   ArrowRight,
-  Users,
   Brain,
-  Trophy,
-  ChevronDown,
-  Menu,
-  X,
-  Heart,
-  BarChart3,
   Scale,
   Globe,
   Calculator,
-  Gamepad2,
-  Clock,
-  Star
+  Plus
 } from 'lucide-react';
 
-const tracks = [
-  {
-    name: "God's Creation & Science",
-    icon: FlaskConical,
-    description: "Explore the wonder of nature, biology, and the design of the universe.",
-    color: "from-green-500 to-green-600",
-    bgColor: "bg-green-50",
-    skills: ["Nature Observation", "Physics", "Created Order"]
-  },
-  {
-    name: "Health/Naturopathy",
-    icon: Heart,
-    description: "Understanding body systems and the power of natural healing.",
-    color: "from-red-500 to-red-600",
-    bgColor: "bg-red-50",
-    skills: ["Wellness", "Nutrition", "Herbal Studies"]
-  },
-  {
-    name: "Food Systems",
-    icon: Leaf,
-    description: "From seed to table—gardening, agriculture, and sustainability.",
-    color: "from-orange-500 to-orange-600",
-    bgColor: "bg-orange-50",
-    skills: ["Agriculture", "Soil Health", "Sustainability"]
-  },
-  {
-    name: "Government/Economics",
-    icon: BarChart3,
-    description: "Stewarding resources and understanding how societies function.",
-    color: "from-blue-500 to-blue-600",
-    bgColor: "bg-blue-50",
-    skills: ["Stewardship", "Finance", "Civics"]
-  },
-  {
-    name: "Justice",
-    icon: Scale,
-    description: "Standing for truth and understanding biblical justice.",
-    color: "from-indigo-500 to-indigo-600",
-    bgColor: "bg-indigo-50",
-    skills: ["Ethics", "Biblical Justice", "Duty"]
-  },
-  {
-    name: "Discipleship",
-    icon: Sparkles,
-    description: "Building character and following the Way in everyday life.",
-    color: "from-purple-500 to-purple-600",
-    bgColor: "bg-purple-50",
-    skills: ["Character", "Faith", "Service"]
-  },
-  {
-    name: "History",
-    icon: Globe,
-    description: "The story of humanity through the lens of time and providence.",
-    color: "from-amber-500 to-amber-600",
-    bgColor: "bg-amber-50",
-    skills: ["Providence", "Geography", "Timelines"]
-  },
-  {
-    name: "English/Lit",
-    icon: BookOpen,
-    description: "The power of word, storytelling, and deep reading.",
-    color: "from-pink-500 to-pink-600",
-    bgColor: "bg-pink-50",
-    skills: ["Storytelling", "Analysis", "Composition"]
-  },
-  {
-    name: "Math",
-    icon: Calculator,
-    description: "The orderly logic and beautiful design of numbers.",
-    color: "from-cyan-500 to-cyan-600",
-    bgColor: "bg-cyan-50",
-    skills: ["Logic", "Geometry", "Order"]
-  }
-];
+export default async function Home() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-export default function ExplorationPage() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeTrack, setActiveTrack] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
+  const ctaLink = user ? "/dashboard" : "/login";
+  const ctaText = user ? "Continue Learning" : "Join the Academy";
+  const secondaryCtaLink = user ? "/portfolio" : "/login";
   return (
-    <div className="min-h-screen bg-[var(--cream)]">
-      {/* Nav */}
-      <nav className={`nav ${isScrolled ? 'scrolled' : ''}`}>
-        <div className="container flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--sage)] to-[var(--sage-dark)] flex items-center justify-center shadow-lg">
-              <Sparkles className="w-5 h-5 text-white" />
+    <div className="min-h-screen bg-[var(--cream)] text-[var(--burgundy)] font-body selection:bg-[var(--ochre)]/20">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 bg-white/70 backdrop-blur-xl z-50 border-b border-[var(--cream-dark)]">
+        <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-[var(--forest)] rounded-xl flex items-center justify-center text-white shadow-lg transform -rotate-3">
+              <Sparkles className="w-6 h-6" />
             </div>
-            <span className="text-xl font-semibold tracking-tight">Dear Adeline</span>
+            <span className="text-2xl font-bold serif text-[var(--forest)] tracking-tight">Dear Adeline</span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-6">
-            <a href="#tracks" className="text-sm font-medium text-[var(--charcoal-light)]">The 9 Tracks</a>
-            <a href="#how-it-works" className="text-sm font-medium text-[var(--charcoal-light)]">The Adeline Method</a>
-            <Link href="/login" className="btn-secondary py-2 text-sm">Dashboard</Link>
+          <div className="hidden md:flex items-center gap-10">
+            <Link href="#experience" className="text-xs font-bold uppercase tracking-widest text-[var(--forest)]/60 hover:text-[var(--forest)] transition-colors">Experience</Link>
+            <Link href="#philosophy" className="text-xs font-bold uppercase tracking-widest text-[var(--forest)]/60 hover:text-[var(--forest)] transition-colors">Philosophy</Link>
+            <Link href="/login" className="px-6 py-2.5 rounded-full border-2 border-[var(--forest)] text-[var(--forest)] text-xs font-black uppercase tracking-widest hover:bg-[var(--forest)] hover:text-white transition-all">Log In</Link>
+            <Link href={ctaLink} className="px-8 py-4 rounded-full bg-[var(--burgundy)] text-white text-xs font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all">
+              {user ? "Dashboard" : "Launch App"}
+            </Link>
           </div>
-
-          <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            <Menu className="w-6 h-6" />
-          </button>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <header className="pt-24 pb-12 sm:pt-32 sm:pb-20 px-4 relative overflow-hidden">
-        <div className="blob blob-sage w-96 h-96 -top-20 -right-20 absolute opacity-20" />
-        <div className="blob blob-rose w-80 h-80 top-1/2 -left-20 absolute opacity-20" />
+      <section className="pt-48 pb-32 px-6">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
+          <div className="space-y-12 animate-in fade-in slide-in-from-left-8 duration-1000">
+            <div className="space-y-6">
+              <p className="text-[var(--ochre)] font-script text-3xl mb-0 leading-none">Where Learning Comes Alive</p>
+              <h1 className="text-8xl md:text-9xl font-normal serif text-[var(--forest)] leading-[0.85] tracking-tighter">
+                Education as <br />
+                <span className="text-[var(--ochre)] italic">Unique</span> <br />
+                as Your Child
+              </h1>
+            </div>
 
-        <div className="container relative z-10 text-center">
-          <span className="text-script text-2xl text-[var(--terracotta)] mb-4 block animate-fade-in-up">
-            Individualized & Interest-Led
-          </span>
-          <h1 className="text-5xl lg:text-7xl font-bold mb-6 max-w-4xl mx-auto">
-            Experience the <span className="gradient-text">Adeline Method</span>
-          </h1>
-          <p className="text-xl text-[var(--charcoal-light)] mb-10 max-w-2xl mx-auto leading-relaxed">
-            Step beyond traditional curriculum. Explore a world where your child's curiosity
-            drives their education, tracked meticulously towards graduation.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/dashboard" className="btn-primary px-8">
-              Join the Experience
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-            <a href="#tracks" className="btn-secondary px-8">
-              Explore the 9 Tracks
-            </a>
+            <p className="text-xl text-[var(--forest)]/80 font-medium max-w-lg leading-relaxed">
+              An AI-powered learning companion that adapts to your student's interests, tracks skills toward graduation, and transforms curiosity into achievement.
+            </p>
+
+            <div className="flex flex-wrap gap-6 pt-4">
+              <Link href={ctaLink} className="px-12 py-6 rounded-full bg-[var(--burgundy)] text-white font-black uppercase tracking-[0.2em] text-xs shadow-2xl hover:brightness-125 active:scale-95 transition-all flex items-center gap-4">
+                {ctaText}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link href="#philosophy" className="px-12 py-6 rounded-full border-2 border-[var(--forest)] text-[var(--forest)] font-black uppercase tracking-[0.2em] text-xs flex items-center gap-2 hover:bg-[var(--forest)]/5 transition-all">
+                The Method
+              </Link>
+            </div>
+
+            <div className="flex items-center gap-4 pt-8 opacity-60">
+              <div className="flex -space-x-3">
+                {['E', 'M', 'D', 'K'].map((initial, i) => (
+                  <div key={i} className="w-10 h-10 rounded-full bg-[var(--forest-light)] border-2 border-[var(--cream)] flex items-center justify-center text-[10px] font-bold text-white uppercase">
+                    {initial}
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--forest)]">
+                Trusted by homeschool families <br />
+                across Oklahoma
+              </p>
+            </div>
+          </div>
+
+          <div className="relative animate-in fade-in slide-in-from-right-12 duration-1000">
+            <div className="relative z-10 bg-white p-2 rounded-[2rem] border-2 border-[var(--forest)] shadow-2xl skew-y-1">
+              <div className="bg-[var(--cream)] rounded-[1.8rem] overflow-hidden">
+                <div className="p-6 bg-[var(--forest)] text-white flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">🧠</div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest opacity-60">AI Mentor</p>
+                      <p className="font-bold serif">Adeline v2.4</p>
+                    </div>
+                  </div>
+                  <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
+                </div>
+                <div className="p-8 space-y-6 min-h-[400px]">
+                  <div className="space-y-4">
+                    <div className="flex justify-start">
+                      <div className="bg-white p-5 rounded-2xl rounded-tl-none border border-[var(--forest)]/10 text-sm text-[var(--forest)] max-w-[85%] shadow-sm">
+                        Hi Della! What are you excited to learn about today? 🌟
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <div className="bg-[var(--forest)]/80 p-5 rounded-2xl rounded-tr-none text-white text-sm max-w-[85%] shadow-lg">
+                        I want to grow my crochet business!
+                      </div>
+                    </div>
+                    <div className="flex justify-start">
+                      <div className="bg-white p-5 rounded-2xl rounded-tl-none border border-[var(--forest)]/10 text-sm text-[var(--forest)] max-w-[85%] shadow-sm">
+                        That's amazing! 🧶 Do you have a website to sell your products yet?
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <div className="bg-[var(--forest)]/80 p-5 rounded-2xl rounded-tr-none text-white text-sm max-w-[85%] shadow-lg">
+                        No, not yet...
+                      </div>
+                    </div>
+                    <div className="flex justify-start">
+                      <div className="bg-white p-6 rounded-2xl rounded-tl-none border-2 border-[var(--ochre)] text-sm space-y-4 shadow-xl">
+                        <p className="font-bold text-[var(--ochre)]">Perfect! Let's build one together!</p>
+                        <p className="text-xs opacity-80 italic">You'll learn web design, marketing, AND run your business. Here are the skills you'll earn:</p>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="px-3 py-0.5 bg-[var(--forest)]/10 text-[var(--forest)] font-bold rounded-full text-[10px] uppercase">Web Design</span>
+                          <span className="px-3 py-0.5 bg-[var(--forest)]/10 text-[var(--forest)] font-bold rounded-full text-[10px] uppercase">Marketing</span>
+                          <span className="px-3 py-0.5 bg-[var(--forest)]/10 text-[var(--forest)] font-bold rounded-full text-[10px] uppercase">Entrepreneurship</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 bg-white/50 border-t border-[var(--forest)]/10 flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                  </div>
+                  <p className="text-[10px] font-bold text-[var(--forest)]/40 uppercase tracking-widest">Skills automatically tracked toward graduation</p>
+                </div>
+              </div>
+            </div>
+            {/* Decorative Blobs */}
+            <div className="absolute -top-10 -right-10 w-64 h-64 bg-[var(--ochre)]/10 rounded-full blur-[80px] -z-0"></div>
+            <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-[var(--forest)]/10 rounded-full blur-[100px] -z-0"></div>
           </div>
         </div>
-      </header>
+      </section>
 
-      {/* The 9 Tracks Showcase */}
-      <section id="tracks" className="section bg-white rounded-t-[3rem] lg:rounded-t-[5rem] shadow-2xl relative z-20">
-        <div className="container">
-          <div className="text-center mb-16 px-4">
-            <h2 className="text-4xl font-bold mb-4">Curriculum for a <span className="gradient-text">New Era</span></h2>
-            <p className="text-[var(--charcoal-light)] max-w-2xl mx-auto">
-              Modern tracks designed for real-world impact and biblical depth.
+      {/* Why Dear Adeline / Features Section */}
+      <section id="features" className="py-32 px-6">
+        <div className="max-w-7xl mx-auto space-y-24">
+          <div className="text-center space-y-6">
+            <p className="text-[var(--ochre)] font-black uppercase tracking-[0.4em] text-xs italic">Why Dear Adeline?</p>
+            <h2 className="text-7xl font-normal serif text-[var(--forest)] leading-none">Learning That <br /> <span className="text-[var(--ochre)]">Grows With You</span></h2>
+            <p className="text-xl text-[var(--forest)]/60 max-w-2xl mx-auto font-medium">
+              Every student is unique. Our AI understands that, adapting to interests, identifying strengths, and gently filling learning gaps.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tracks.map((track, i) => (
-              <div key={i} className="card p-8 group hover:scale-[1.02] transition-transform duration-300 border border-transparent hover:border-[var(--sage-light)]">
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${track.color} flex items-center justify-center mb-6 shadow-lg`}>
-                  <track.icon className="w-7 h-7 text-white" />
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { title: 'Student-Led Learning', icon: MessageCircle, desc: "Your student tells the AI what they're interested in. Curiosity becomes curriculum, making education meaningful and engaging." },
+              { title: 'Skills & Credits Tracking', icon: Target, desc: "Everything learned earns skills. Watch progress build toward graduation requirements in real-time." },
+              { title: 'Graduation Tracker', icon: GraduationCap, desc: "State standards (Oklahoma and beyond) mapped clearly. Know exactly where you stand on the path to graduation." },
+              { title: 'Portfolio Builder', icon: BookOpen, desc: "Every project, every lesson, every achievement becomes part of a beautiful, shareable portfolio." },
+              { title: 'Gap Detection', icon: Brain, desc: "AI identifies learning gaps and suggests activities to strengthen understanding—no struggling in silence." },
+              { title: 'Gamification & Fun', icon: Sparkles, desc: "'Let's play a spelling game!' Interactive learning keeps students motivated and makes education feel like play." },
+            ].map((feature, i) => (
+              <div key={i} className="card group">
+                <div className="w-16 h-16 bg-[var(--cream-dark)]/50 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-[var(--ochre)]/10 transition-colors">
+                  <feature.icon className="w-8 h-8 text-[var(--forest)] group-hover:text-[var(--ochre)] transition-colors" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">{track.name}</h3>
-                <p className="text-[var(--charcoal-light)] text-sm mb-6 leading-relaxed">
-                  {track.description}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {track.skills.map((skill, si) => (
-                    <span key={si} className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-[var(--cream)] text-[var(--charcoal-light)]">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
+                <h3 className="text-2xl font-bold mb-4 serif text-[var(--forest)]">{feature.title}</h3>
+                <p className="text-[var(--forest)]/60 text-sm leading-relaxed">{feature.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* The Adeline Demo Visualization */}
-      <section id="how-it-works" className="section relative overflow-hidden">
-        <div className="container">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <span className="text-script text-2xl text-[var(--terracotta)] mb-4 block">Personalized Learning</span>
-              <h2 className="text-4xl font-bold mb-6">How Adeline <span className="gradient-text-warm">Adapts to You</span></h2>
-              <div className="space-y-8">
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-md flex-shrink-0">
-                    <MessageCircle className="w-6 h-6 text-[var(--terracotta)]" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold mb-2">Interest-Led Discovery</h4>
-                    <p className="text-[var(--charcoal-light)] text-sm">Adeline starts every conversation by listening. Whatever your child loves, she turns into a lesson.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-md flex-shrink-0">
-                    <Brain className="w-6 h-6 text-[var(--sage)]" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold mb-2">Individualized Pacing</h4>
-                    <p className="text-[var(--charcoal-light)] text-sm">She identifies mastery instantly. If they're ready to level up, she leads the way.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-md flex-shrink-0">
-                    <Trophy className="w-6 h-6 text-[var(--gold)]" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold mb-2">Hebrew Word Studies</h4>
-                    <p className="text-[var(--charcoal-light)] text-sm">Daily studies reveal the original pictographic and root meanings of Scripture.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+      {/* Featured Tracks Section (Project Library Style) */}
+      <section id="experience" className="py-32 bg-[var(--forest)] text-white overflow-hidden relative">
+        <div className="absolute top-0 right-0 p-20 opacity-10">
+          <Sparkles className="w-96 h-96" />
+        </div>
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="text-center space-y-6 mb-24">
+            <p className="text-[var(--ochre)] font-black uppercase tracking-[0.4em] text-xs italic">Hands-On Learning</p>
+            <h2 className="text-7xl font-normal serif leading-none">Project Library</h2>
+            <p className="text-xl text-white/60 max-w-2xl mx-auto font-medium">
+              A curated collection of art projects, farm activities, and science experiments. Each one earns skills toward graduation.
+            </p>
+          </div>
 
-            <div className="relative">
-              <div className="card-glass p-6 max-w-md mx-auto relative z-10">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--sage)] to-[var(--sage-dark)] flex items-center justify-center">
-                    <Brain className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="font-bold">Adeline</span>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { title: 'Art Projects', icon: Palette, desc: 'Painting, sculpture, digital art, and more. Express creativity while earning fine arts credits.', skills: ['Fine Arts', 'Creativity', 'Design'], color: 'bg-rose-500/20' },
+              { title: 'Farm Projects', icon: Leaf, desc: 'Gardening, animal care, sustainability. Real-world skills that count toward graduation.', skills: ['Life Sciences', 'Agriculture', 'Ecology'], color: 'bg-emerald-500/20' },
+              { title: 'Science Experiments', icon: FlaskConical, desc: 'Chemistry, physics, biology experiments. Hands-on discovery that builds real understanding.', skills: ['Lab Skills', 'Science', 'Research'], color: 'bg-blue-500/20' },
+            ].map((track, i) => (
+              <Link key={i} href="/dashboard" className="group p-10 bg-white/5 border border-white/10 rounded-[2.5rem] hover:bg-white transition-all duration-500 hover:scale-[1.02] cursor-pointer block text-left">
+                <div className={`w-16 h-16 ${track.color} rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform`}>
+                  <track.icon className="w-8 h-8 text-white group-hover:text-[var(--forest)] transition-colors" />
                 </div>
-                <div className="space-y-4">
-                  <div className="chat-bubble ai text-xs">
-                    <p>Shalom! Before we dive into gardening, let's look at the Hebrew word for Seed: <strong>Zera</strong>.</p>
-                  </div>
-                  <div className="chat-bubble user text-xs">
-                    <p>What does it mean pictographically?</p>
-                  </div>
-                  <div className="chat-bubble ai text-xs">
-                    <p>Great question! It represents "the continuation of life." 🪴 Ready to see how this fits into our Food Systems track?</p>
-                  </div>
-                  <div className="mt-4 flex gap-2">
-                    <span className="text-[10px] font-bold bg-[var(--sage-light)] text-[var(--sage-dark)] px-2 py-1 rounded">Food Systems +0.25</span>
-                    <span className="text-[10px] font-bold bg-[var(--gold-light)] text-[var(--terracotta)] px-2 py-1 rounded">Skill: Plant Biology</span>
-                  </div>
+                <h3 className="text-2xl font-bold mb-4 serif group-hover:text-[var(--forest)]">{track.title}</h3>
+                <p className="text-white/60 text-sm leading-relaxed group-hover:text-[var(--forest)]/70 mb-8">{track.desc}</p>
+
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {track.skills.map(skill => (
+                    <span key={skill} className="px-3 py-1 bg-white/10 group-hover:bg-[var(--forest)]/10 text-[10px] uppercase font-bold rounded-full group-hover:text-[var(--forest)]">
+                      {skill}
+                    </span>
+                  ))}
                 </div>
-              </div>
-              {/* Decorative floaters */}
-              <div className="absolute -top-10 -right-10 w-24 h-24 bg-[var(--gold-light)] rounded-full blur-3xl opacity-50" />
-              <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-[var(--terracotta)] rounded-full blur-3xl opacity-20" />
-            </div>
+
+                <div className="flex items-center gap-2 text-[var(--ochre)] font-bold text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                  Explore Track <ArrowRight className="w-3 h-3" />
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="section text-center">
-        <div className="container">
-          <div className="card p-6 sm:p-12 bg-gradient-to-br from-[var(--charcoal)] to-[#1a1a1a] text-white">
-            <h2 className="text-4xl font-bold mb-6">Begin Your Student's <span className="gradient-text">Journey</span></h2>
-            <p className="text-gray-400 mb-10 max-w-xl mx-auto">
-              Join the growing community of families redefining education with
-              the power of individualized AI guidance.
+      {/* Philosophy Section */}
+      <section id="philosophy" className="py-40 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col items-center text-center space-y-20">
+          <div className="max-w-3xl space-y-6">
+            <h2 className="text-7xl md:text-8xl font-normal serif text-[var(--forest)] leading-none italic">
+              Education should look <span className="text-[var(--ochre)]">nothing like</span> a factory.
+            </h2>
+            <p className="text-xl text-[var(--forest)]/60 font-medium leading-relaxed">
+              We've replaced the assembly line with a laboratory. Dear Adeline adapts to each student's pulse—discovering their strengths and gently revealing their gaps.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/dashboard" className="btn-primary">
-                Get Started for Free
-                <Sparkles className="w-5 h-5" />
-              </Link>
-            </div>
-            <p className="mt-8 text-xs text-gray-500">
-              Oklahoma Standard Aligned • GDPR Compliant • Values-First
-            </p>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-4 w-full">
+            {[
+              { title: 'Hook', desc: 'Narrative-driven discovery', icon: '✨' },
+              { title: 'Research', desc: 'Deep-dive investigation', icon: '🔍' },
+              { title: 'Build', desc: 'Tangible physical creation', icon: '🛠️' },
+              { title: 'Share', desc: 'Teaching for mastery', icon: '📢' },
+            ].map((step, i) => (
+              <div key={i} className="p-8 bg-white border-2 border-[var(--cream-dark)] rounded-[3rem] space-y-4 hover:border-[var(--ochre)] transition-all group">
+                <div className="text-4xl mb-6 grayscale group-hover:grayscale-0 transition-all">{step.icon}</div>
+                <h4 className="font-bold serif text-xl">{step.title}</h4>
+                <p className="text-xs font-bold uppercase tracking-widest opacity-40">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-20 px-6 mb-32">
+        <div className="max-w-6xl mx-auto bg-[var(--ochre)] rounded-[4rem] p-24 text-white text-center space-y-12 shadow-2xl relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-full bg-[var(--burgundy)] opacity-0 group-hover:opacity-10 transition-opacity duration-700"></div>
+          <h2 className="text-7xl md:text-8xl font-normal serif leading-none tracking-tighter">
+            Reclaim <br />
+            Their <span className="italic">Wonder</span>
+          </h2>
+          <p className="text-xl text-white/80 max-w-xl mx-auto font-medium">
+            Join a community of families proving that education is an adventure, and mastery is its own reward.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <Link href={ctaLink} className="px-16 py-7 rounded-full bg-white text-[var(--burgundy)] font-black uppercase tracking-[0.2em] text-sm shadow-xl hover:scale-105 transition-all">
+              {user ? "Back to Lesson" : "Get Started"}
+            </Link>
+            <Link href={secondaryCtaLink} className="px-16 py-7 rounded-full border-2 border-white text-white font-black uppercase tracking-[0.2em] text-sm hover:bg-white hover:text-[var(--ochre)] transition-all">
+              {user ? "View Portfolio" : "View Demo"}
+            </Link>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-[var(--cream-dark)] px-4">
-        <div className="container flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[var(--sage)] flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
+      <footer className="py-24 px-6 border-t border-[var(--cream-dark)] bg-white/50">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 justify-between items-center gap-10 opacity-60">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-[var(--forest)] rounded-lg flex items-center justify-center text-white">
+              <Sparkles className="w-5 h-5" />
             </div>
-            <span className="font-semibold">Dear Adeline</span>
+            <span className="text-xl font-bold serif text-[var(--forest)]">Dear Adeline Academy</span>
           </div>
-          <div className="flex items-center gap-8 text-sm text-[var(--charcoal-light)]">
-            <a href="https://dearadeline.co" className="hover:text-[var(--sage-dark)]">Visit Brand Home</a>
-            <a href="#" className="hover:text-[var(--sage-dark)]">Privacy</a>
-            <a href="#" className="hover:text-[var(--sage-dark)]">Terms</a>
+          <div className="text-right space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--burgundy)]">Oklahoma Homeschooling Reimagined</p>
+            <p className="text-xs font-medium text-[var(--forest)]/60">© 2025 Dear Adeline Co. All rights reserved.</p>
           </div>
-          <p className="text-xs text-[var(--charcoal-light)]">© 2024 Dear Adeline. All Rights Reserved.</p>
         </div>
       </footer>
     </div>

@@ -2,13 +2,16 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { X, Trophy, Gamepad2, Keyboard, Code } from 'lucide-react';
+import { TypingGame } from './TypingGame';
+import { CodingGame } from './CodingGame';
 
 interface GameCenterProps {
     type: 'pacman' | 'typing' | 'coding' | string;
     onClose: () => void;
+    gameData?: any;
 }
 
-export function GameCenter({ type, onClose }: GameCenterProps) {
+export function GameCenter({ type, onClose, gameData }: GameCenterProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [score, setScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
@@ -288,6 +291,46 @@ export function GameCenter({ type, onClose }: GameCenterProps) {
         if (type === 'coding') return 'Code Challenge';
         return 'Pac-Learning';
     };
+
+    if (type === 'typing') {
+        return (
+            <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+                <div className="w-full max-w-4xl h-[600px] relative">
+                    <button onClick={onClose} className="absolute -top-12 right-0 p-2 text-white hover:text-slate-300 transition-colors">
+                        <X className="w-8 h-8" />
+                    </button>
+                    <TypingGame
+                        onComplete={(wpm) => {
+                            setScore(wpm);
+                            setGameOver(true);
+                        }}
+                        customText={gameData?.text}
+                        customSource={gameData?.source}
+                        customCategory={gameData?.category}
+                    />
+                </div>
+            </div>
+        );
+    }
+
+    if (type === 'coding') {
+        return (
+            <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+                <div className="w-full max-w-4xl h-[600px] relative">
+                    <button onClick={onClose} className="absolute -top-12 right-0 p-2 text-white hover:text-slate-300 transition-colors">
+                        <X className="w-8 h-8" />
+                    </button>
+                    <CodingGame
+                        onComplete={(score) => {
+                            setScore(score);
+                            setGameOver(true);
+                        }}
+                        customPuzzles={gameData?.puzzles}
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="relative w-full aspect-square max-w-[400px] mx-auto bg-[#1a1a1a] rounded-xl overflow-hidden shadow-2xl border-4 border-slate-800">

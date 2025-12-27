@@ -47,6 +47,21 @@ export default async function TrackerPage() {
         .select('*')
         .order('category', { ascending: true });
 
+    // Get portfolio for blueprint synthesis
+    const { data: portfolioItems } = await supabase
+        .from('portfolio_items')
+        .select('title, description, type')
+        .eq('student_id', user.id)
+        .order('created_at', { ascending: false });
+
+    // Get topics for blueprint synthesis
+    const { data: conversations } = await supabase
+        .from('conversations')
+        .select('topic, title')
+        .eq('student_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(10);
+
     return (
         <TrackerClient
             profile={profile}
@@ -54,6 +69,8 @@ export default async function TrackerPage() {
             progress={progress || []}
             earnedSkills={earnedSkills || []}
             allSkills={allSkills || []}
+            portfolio={portfolioItems || []}
+            topics={conversations?.map(c => c.title || c.topic).filter(Boolean) || []}
         />
     );
 }

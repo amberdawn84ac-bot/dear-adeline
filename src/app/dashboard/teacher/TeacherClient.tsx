@@ -24,7 +24,9 @@ import {
     Loader2,
     School,
     AlertTriangle,
-    Bell
+    Bell,
+    Heart,
+    Scale
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useEffect } from 'react';
@@ -87,6 +89,7 @@ export default function TeacherClient({
     const [inviteSuccess, setInviteSuccess] = useState('');
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+    const [complianceMode, setComplianceMode] = useState(false);
 
     // Fetch alerts
     useEffect(() => {
@@ -252,13 +255,29 @@ export default function TeacherClient({
                                 Monitor progress and manage your assigned students
                             </p>
                         </div>
-                        <button
-                            onClick={() => setShowInviteModal(true)}
-                            className="btn-primary"
-                        >
-                            <UserPlus className="w-5 h-5" />
-                            Add Student
-                        </button>
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                            <div className="flex items-center gap-3 p-1.5 bg-white border border-[var(--cream-dark)] rounded-2xl shadow-sm">
+                                <button
+                                    onClick={() => setComplianceMode(false)}
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${!complianceMode ? 'bg-[var(--forest)] text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    Mastery View
+                                </button>
+                                <button
+                                    onClick={() => setComplianceMode(true)}
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${complianceMode ? 'bg-[var(--ochre)] text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    Compliance View
+                                </button>
+                            </div>
+                            <button
+                                onClick={() => setShowInviteModal(true)}
+                                className="btn-primary"
+                            >
+                                <UserPlus className="w-5 h-5" />
+                                Add Student
+                            </button>
+                        </div>
                     </div>
 
                     {/* Search */}
@@ -342,12 +361,21 @@ export default function TeacherClient({
                                             </div>
                                             <p className="text-xs text-[var(--charcoal-light)]">Skills</p>
                                         </div>
-                                        <div className="bg-[var(--cream)] p-3 rounded-lg text-center">
+                                        <div className="bg-[var(--cream)] p-3 rounded-lg text-center relative overflow-hidden group/card shadow-sm border border-[var(--cream-dark)]/50">
+                                            {complianceMode && (
+                                                <div className="absolute top-0 right-0 px-1.5 py-0.5 bg-[var(--ochre)] text-white text-[7px] font-black uppercase tracking-tighter rounded-bl-lg animate-in fade-in slide-in-from-top-1">
+                                                    Compliance
+                                                </div>
+                                            )}
                                             <div className="flex items-center justify-center gap-1 text-[var(--sage-dark)]">
                                                 <GraduationCap className="w-4 h-4" />
-                                                <span className="font-bold">{student.total_credits.toFixed(1)}</span>
+                                                <span className="font-bold">
+                                                    {complianceMode ? student.total_credits.toFixed(1) : `${Math.min((student.total_credits / 24) * 100, 100).toFixed(0)}%`}
+                                                </span>
                                             </div>
-                                            <p className="text-xs text-[var(--charcoal-light)]">Credits</p>
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                                {complianceMode ? 'State Credits' : 'Mastery Progress'}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -411,10 +439,14 @@ export default function TeacherClient({
                                     <p className="text-2xl font-bold">{selectedStudent.skills_earned}</p>
                                     <p className="text-sm text-[var(--charcoal-light)]">Skills Earned</p>
                                 </div>
-                                <div className="bg-[var(--cream)] p-4 rounded-xl text-center">
-                                    <GraduationCap className="w-6 h-6 mx-auto mb-2 text-[var(--sage)]" />
-                                    <p className="text-2xl font-bold">{selectedStudent.total_credits.toFixed(1)}</p>
-                                    <p className="text-sm text-[var(--charcoal-light)]">Total Credits</p>
+                                <div className="bg-[var(--cream)] p-4 rounded-xl text-center border border-[var(--cream-dark)]/50 shadow-sm">
+                                    <GraduationCap className={`w-6 h-6 mx-auto mb-2 ${complianceMode ? 'text-[var(--ochre)]' : 'text-[var(--sage)]'}`} />
+                                    <p className="text-2xl font-bold">
+                                        {complianceMode ? selectedStudent.total_credits.toFixed(1) : `${Math.min((selectedStudent.total_credits / 24) * 100, 100).toFixed(0)}%`}
+                                    </p>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                        {complianceMode ? 'State Credits' : 'Mastery Progress'}
+                                    </p>
                                 </div>
                                 <div className="bg-[var(--cream)] p-4 rounded-xl text-center">
                                     <FolderOpen className="w-6 h-6 mx-auto mb-2 text-[var(--dusty-rose)]" />
@@ -424,25 +456,75 @@ export default function TeacherClient({
                             </div>
 
                             {/* Track Progress Breakdown */}
-                            <div className="mb-6">
-                                <h3 className="font-semibold mb-3">Learning Tracks Breakdown</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {Object.entries(selectedStudent.track_credits || {}).map(([track, credits]) => (
-                                        <div key={track} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                            <div className="flex justify-between items-center mb-1">
-                                                <span className="text-xs font-medium text-slate-600 truncate mr-2">{track}</span>
-                                                <span className="text-xs font-bold text-slate-800">{credits.toFixed(1)}</span>
-                                            </div>
-                                            <div className="w-full bg-slate-200 rounded-full h-1 overflow-hidden">
-                                                <div className="bg-blue-500 h-full transition-all" style={{ width: `${Math.min((credits / 4.0) * 100, 100)}%` }} />
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {(!selectedStudent.track_credits || Object.keys(selectedStudent.track_credits).length === 0) && (
-                                        <p className="col-span-2 text-xs text-slate-400 italic text-center py-4">
-                                            No track progress recorded yet.
-                                        </p>
+                            <div className="mb-8">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-bold flex items-center gap-2">
+                                        <Target className="w-5 h-5 text-[var(--sage)]" />
+                                        Learning Progress Breakdown
+                                    </h3>
+                                    {complianceMode && (
+                                        <span className="text-[10px] font-black text-[var(--ochre)] bg-[var(--ochre)]/10 px-3 py-1 rounded-full uppercase tracking-widest border border-[var(--ochre)]/20">
+                                            Legal Tracking Active
+                                        </span>
                                     )}
+                                </div>
+
+                                <div className="space-y-6">
+                                    {/* Academy Priorities */}
+                                    <div>
+                                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--burgundy)] mb-3 flex items-center gap-1.5">
+                                            <Heart className="w-3 h-3" />
+                                            Academy Priorities (Spiritual Core)
+                                        </h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {Object.entries(selectedStudent.track_credits || {})
+                                                .filter(([name]) => ['discipleship', 'justice', 'spiritual'].some(k => name.toLowerCase().includes(k)))
+                                                .map(([track, credits]) => (
+                                                    <div key={track} className="p-4 bg-[var(--burgundy)]/[0.02] rounded-2xl border border-[var(--burgundy)]/10 hover:border-[var(--burgundy)]/30 transition-colors">
+                                                        <div className="flex justify-between items-center mb-2">
+                                                            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--burgundy)]/60 truncate">{track}</span>
+                                                            <span className="text-xs font-black text-[var(--burgundy)]">
+                                                                {((credits / 1.0) * 100).toFixed(0)}%
+                                                            </span>
+                                                        </div>
+                                                        <div className="w-full bg-[var(--burgundy)]/5 rounded-full h-2 overflow-hidden">
+                                                            <div
+                                                                className="h-full bg-gradient-to-r from-[var(--burgundy)] to-[var(--burgundy-light)] transition-all duration-1000"
+                                                                style={{ width: `${Math.min((credits / 1.0) * 100, 100)}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    </div>
+
+                                    {/* State Requirements */}
+                                    <div>
+                                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--forest)] mb-3 flex items-center gap-1.5">
+                                            <Scale className="w-3 h-3" />
+                                            State Compliance Requirements
+                                        </h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {Object.entries(selectedStudent.track_credits || {})
+                                                .filter(([name]) => !['discipleship', 'justice', 'spiritual'].some(k => name.toLowerCase().includes(k)))
+                                                .map(([track, credits]) => (
+                                                    <div key={track} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-[var(--sage)]/50 transition-colors">
+                                                        <div className="flex justify-between items-center mb-2">
+                                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 truncate mr-2">{track}</span>
+                                                            <span className="text-xs font-black text-slate-700">
+                                                                {complianceMode ? `${credits.toFixed(1)} / 4.0` : `${((credits / 4.0) * 100).toFixed(0)}%`}
+                                                            </span>
+                                                        </div>
+                                                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                                            <div
+                                                                className={`h-full transition-all duration-1000 ${complianceMode ? 'bg-[var(--ochre)]' : 'bg-[var(--sage)]'}`}
+                                                                style={{ width: `${Math.min((credits / 4.0) * 100, 100)}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

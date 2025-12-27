@@ -396,42 +396,32 @@ insert into public.graduation_requirements (name, description, category, require
 ('Electives', 'Additional courses of student choice', 'electives', 5.0, 'oklahoma');
 
 insert into public.skills (name, description, category, subcategory, credit_value) values
--- ELA Skills
-('Reading Comprehension', 'Understanding and analyzing written text', 'ela', 'reading', 0.25),
-('Creative Writing', 'Writing original stories, poems, and creative pieces', 'ela', 'writing', 0.25),
-('Grammar & Mechanics', 'Proper use of grammar, punctuation, and spelling', 'ela', 'writing', 0.25),
-('Research Skills', 'Gathering, evaluating, and synthesizing information', 'ela', 'research', 0.25),
-('Public Speaking', 'Effective verbal communication and presentation', 'ela', 'communication', 0.25),
+-- ELA Skills -> English & Lit
+('Reading Comprehension', 'Understanding and analyzing written text', 'english_lit', 'reading', 0.25),
+('Creative Writing', 'Writing original stories, poems, and creative pieces', 'english_lit', 'writing', 0.25),
+('Grammar & Mechanics', 'Proper use of grammar, punctuation, and spelling', 'english_lit', 'writing', 0.25),
+('Research Skills', 'Gathering, evaluating, and synthesizing information', 'english_lit', 'research', 0.25),
+('Public Speaking', 'Effective verbal communication and presentation', 'english_lit', 'communication', 0.25),
 
--- Math Skills
+-- Math Skills -> Math
 ('Algebra', 'Solving equations and understanding algebraic concepts', 'math', 'algebra', 0.25),
 ('Geometry', 'Understanding shapes, angles, and spatial reasoning', 'math', 'geometry', 0.25),
 ('Statistics', 'Data analysis and probability', 'math', 'statistics', 0.25),
 ('Financial Literacy', 'Understanding money, budgeting, and economics', 'math', 'applied', 0.25),
 
--- Science Skills
-('Scientific Method', 'Designing and conducting experiments', 'science', 'process', 0.25),
-('Biology', 'Understanding living organisms and life processes', 'science', 'life_science', 0.25),
-('Chemistry', 'Understanding matter and chemical reactions', 'science', 'physical_science', 0.25),
-('Physics', 'Understanding forces, motion, and energy', 'science', 'physical_science', 0.25),
-('Environmental Science', 'Understanding ecosystems and environmental issues', 'science', 'earth_science', 0.25),
+-- Science Skills -> Creation & Science
+('Scientific Method', 'Designing and conducting experiments', 'creation_science', 'process', 0.25),
+('Biology', 'Understanding living organisms and life processes', 'creation_science', 'life_science', 0.25),
+('Chemistry', 'Understanding matter and chemical reactions', 'creation_science', 'physical_science', 0.25),
+('Physics', 'Understanding forces, motion, and energy', 'creation_science', 'physical_science', 0.25),
+('Environmental Science', 'Understanding ecosystems and environmental issues', 'creation_science', 'earth_science', 0.25),
 
--- Fine Arts Skills
-('Visual Arts', 'Creating and analyzing visual artwork', 'fine_arts', 'visual', 0.25),
-('Music', 'Understanding and creating music', 'fine_arts', 'music', 0.25),
-('Digital Art', 'Creating art using digital tools', 'fine_arts', 'digital', 0.25),
-('Crafts', 'Handmade crafts including knitting, crochet, woodworking', 'fine_arts', 'crafts', 0.25),
-
--- Technology Skills
-('Web Design', 'Creating websites and understanding web technologies', 'technology', 'web', 0.25),
-('Digital Literacy', 'Basic computer skills and online safety', 'technology', 'basics', 0.25),
-('Coding', 'Programming and computational thinking', 'technology', 'programming', 0.25),
-
--- Life Skills
-('Entrepreneurship', 'Starting and running a business', 'electives', 'business', 0.25),
-('Marketing', 'Promoting products and services', 'electives', 'business', 0.25),
-('Agriculture', 'Farming, gardening, and animal care', 'electives', 'vocational', 0.25),
-('Cooking', 'Food preparation and nutrition', 'electives', 'life_skills', 0.25);
+-- Life/Farm Skills -> Food Systems / Health
+('Agriculture', 'Farming, gardening, and animal care', 'food_systems', 'vocational', 0.25),
+('Plant Identification', 'Identifying herbs and medicinal plants', 'health_naturopathy', 'botany', 0.25),
+('Cooking', 'Food preparation and nutrition', 'food_systems', 'life_skills', 0.25),
+('Entrepreneurship', 'Starting and running a business', 'gov_econ', 'business', 0.25),
+('Biblical Ethics', 'Principles of justice and character', 'discipleship', 'spirituality', 0.25);
 
 insert into public.library_projects (title, description, category, instructions, materials, difficulty, estimated_time, grade_levels) values
 -- Art Projects

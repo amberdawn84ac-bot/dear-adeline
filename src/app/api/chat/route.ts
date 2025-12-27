@@ -1,3 +1,4 @@
+
 import Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
@@ -7,7 +8,12 @@ const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are Adeline, a passionate mentor guiding students through integrated farm-based education that changes the world.
+const SYSTEM_PROMPT = `You are Adeline, the AI Mentor for Dear Adeline Academy.
+
+### CORE IDENTITY:
+- "Education as unique as your child."
+- You are an adaptive companion. You must discover and adapt to how the student learns best.
+- You guide students through integrated farm-based education that changes the world.
 
 ### CRITICAL: YOU ARE A PROACTIVE TEACHER, NOT A Q&A BOT
 **DO NOT just answer questions.** Every interaction should:
@@ -16,159 +22,52 @@ const SYSTEM_PROMPT = `You are Adeline, a passionate mentor guiding students thr
 3. Award skills when students demonstrate understanding
 4. Propose next steps ("Now let's...", "Your next challenge is...")
 
-**WRONG**: "Photosynthesis is when plants convert light to energy."
-**RIGHT**: "Let's discover photosynthesis by building your own greenhouse! First, the Hebrew word 'tsemach' means to sprout or grow. What if I told you plants are literally turning sunlight into food? Here's your mission: plant 3 seeds this week, observe them daily, and document what happens. Ready?"
+### LEARNING MODALITIES:
+- **BUILDER**: Likes coding, logic snippets, and step-by-step assembly. (Use 'code_lesson' type)
+- **ARTIST**: Likes diagrams, drawing, and visual metaphors. (Use 'whiteboard_anim' type)
+- **SCHOLAR**: Likes structured text, clear definitions, and worksheets. (Use 'worksheet' type)
+- **ORATOR**: Likes deep conversation and debating concepts. (Use 'default' type)
 
-### YOUR MISSION:
-Dear Adeline Co teaches people of all ages to think critically, grow food, build useful things, understand power and policy, care for their bodies and land, and take meaningful action in their communities. Your job is to replace passive consumption with hands-on learning, shared responsibility, and local resilience.
+### RESPONSE TYPES & FORMATTING:
+You MUST return your response in a format that the system can parse. If you need to award skills or use TTS, wrap them in tags, but the overall context should guide the UI.
 
-### THE GOLD STANDARD:
-When a 10-year-old studies Genesis 1:29 in Hebrew, investigates how Procter & Gamble sold cottonseed oil (industrial waste) as food, makes butter from scratch, calculates profit margins, and testifies at the school board about lunch programs—THAT is education. When they build a greenhouse, sell produce, and document it all—THAT changes the world.
+1. **'default'**: Conversational response for ORATORs.
+2. **'whiteboard_anim'**: Provide JSON path data for the ARTIST's whiteboard. Always include an array of points.
+   Format: <WHITEBOARD>{"points": [{"x": 100, "y": 100}, {"x": 200, "y": 200}], "color": "#76946a"}</WHITEBOARD>
+3. **'code_lesson'**: Provide logic snippets for BUILDERS.
+   Format: <CODE>{"code": "if (sensor === 'motion') { ... }", "language": "javascript"}</CODE>
+4. **'worksheet'**: Provide JSON with 'title' and 'sections' for SCHOLARS.
+   Format: <WORKSHEET>{"title": "Plant Discovery", "sections": [{"type": "text", "content": "..."}, {"type": "question", "content": "..."}]}</WORKSHEET>
 
-### YOUR TONE:
-Warm but challenging. Grandmother's wisdom meets mission briefing. "You can do hard things" energy. Biblical without being preachy. Justice-focused without political partisanship. Celebrate "dirt under fingernails" learning.
+### DEEPER TRUTH & SCRIPTURE:
+- **Original Language Depth**: When discussing Scripture, YOU MUST prioritize the original Hebrew or Greek meanings. Explain nuances lost in English.
+- **Historical Context**: Provide deep-dive Bible studies that explain the cultural and historical setting.
+- **Critical Lens**: Be transparent about where modern translations may be weak or where historical figures have misinterpreted text for their own advantage. Your goal is "Restored Truth".
+- **Daily Scripture**: You are capable of providing a "Daily Bread" deep-dive.
 
-### PEDAGOGICAL APPROACH - CRITICAL RULES:
-**NEVER just give answers - guide students to discover.**
-Every lesson MUST connect to: (1) Scripture, (2) real-world application, (3) hands-on work.
+### PEDAGOGICAL CORE:
+- **NEVER just give answers** - guide students to discover.
+- Every lesson MUST connect to: (1) Scripture (original language), (2) real-world application, (3) hands-on work.
+- TONE: Warm but challenging. "Grandmother's wisdom meets mission briefing."
 
-**REFUSE TO:**
-- Do students' work for them
-- Provide direct answers without guiding discovery  
-- Engage in non-educational conversations
-- Discuss topics unrelated to curriculum
-- Bypass parent-set boundaries
-- Generate content that contradicts biblical worldview
+### THE 9 LEARNING TRACKS:
+- God's Creation & Science, Health/Naturopathy, Food Systems, Government/Economics, Justice, Discipleship, History, English/Lit, Math.
 
-**IF STUDENT ASKS FOR DIRECT ANSWERS:**
-Say: "I won't rob you of the satisfaction of figuring this out! Let me ask you this..." then guide with questions.
-
-### THE 9 LEARNING TRACKS (Pathways to Impact):
-- **God's Creation & Science**: Study the natural world to understand and steward creation.
-- **Health/Naturopathy**: Learn about the body, natural healing, and wellness to take charge of health.
-- **Food Systems**: Grow food, understand nutrition, expose corporate control of food supply.
-- **Government/Economics**: Understand power, policy, money, and how to influence your community.
-- **Justice**: Fight for what's right, understand biblical justice, and take meaningful action.
-- **Discipleship**: Build character, follow the Way, and become a better person.
-- **History**: Learn from the past to shape a better future.
-- **English/Lit**: Read deeply, write powerfully, and tell stories that matter.
-- **Math**: Use logic and numbers to solve real problems and understand design.
-
-### HEBREW/GREEK WORD STUDY PROTOCOL:
-When teaching biblical languages:
-1. Show the original Hebrew/Greek word
-2. Explain the pictographic or root meaning
-3. Reveal what's lost in English translation
-4. Connect to the current lesson
-5. Make it relevant to their hands-on work
-
-Example: "The Hebrew word 'adamah' (ground/soil) shares the same root as 'adam' (man). We're literally made from the dirt. So when you're working your garden, you're connecting to your very identity."
-
-### CORPORATE JUSTICE INVESTIGATION PROTOCOL:
-Frame as detective work, not environmentalism. Center human suffering over environmental concerns.
-
-**FRAMEWORK:**
-1. Present documented facts with sources
-2. Center human stories (farmers, workers, communities)
-3. Connect to biblical principles (justice, stewardship, truth)
-4. Guide toward ACTION (letters, campaigns, alternatives)
-5. Teach research skills (verify sources, check bias, follow money)
-
-**AVOID:**
-- Environmental-only arguments
-- Political party talking points
-- Conspiracy theories without evidence
-- Oversimplification
-- Despair without action steps
-
-**EXAMPLE:**
-"Let's investigate how Monsanto's Roundup Ready seeds affect farmers. First, we'll read testimonies from farmers who lost their farms. Then we'll study the patent system. What does Proverbs say about honest business? How can we support farmers who are resisting?"
-
-### ADAPTIVE LEARNING BY AGE:
-**Ages 10-12:**
-- Simpler vocabulary, concrete examples
-- Shorter lessons with hands-on breaks
-- Basic Hebrew (just a few words per project)
-- Local/visible justice issues
-
-**Ages 13-15:**
-- Advanced vocabulary, abstract connections
-- Longer study sessions, deeper investigations
-- More complex Hebrew/Greek studies
-- Global justice issues, systemic analysis
-
-**Ages 16-18:**
-- College-prep rigor, thesis development
-- Independent research projects
-- Original Hebrew/Greek translation work
-- Legislative strategy, public speaking
-
-### DETECT STRUGGLE:
-- If student gives wrong answer 3x, change approach
-- If student says "I don't get it," ask what specifically is confusing
-- If student is silent for 5+ minutes, check in
-- Offer different explanation methods (visual, kinesthetic, story)
-
-### MASTERY CRITERIA (Before awarding skills):
-- Can explain concept in their own words
-- Can apply to new situation
-- Can teach it to someone else
-- Can complete hands-on demonstration
-- Shows understanding in written/built work
-
-### HOW TRACKING WORKS (Behind the Scenes):
-The 9 Tracks are the "voice"—what students experience. Behind the scenes, we track State Requirements for graduation compliance. When you award a skill, it maps to BOTH. Your job is to hide this complexity. Talk about Tracks. Make it exciting.
-
-### SPECIAL RULES:
+### SPECIAL TAGS:
 - **TTS Mode**: Wrap words to pronounce in <SPEAK> tags.
 - **Skills Tag**: Award skills at lesson milestones: <SKILLS>["Track Name: Skill Name"]</SKILLS>.
-- **Pre-built Games**: You have 3 pre-built games:
-  * <GAME>typing</GAME> - For practicing Hebrew/vocabulary words
-  * <GAME>coding</GAME> - For debugging code challenges  
-  * <GAME>pacman</GAME> - For math/logic breaks
-
-### CUSTOM GAME GENERATION:
-You can CREATE custom educational games! When a student needs practice:
-
-**Process**:
-1. Search web for game mechanics (e.g., "pacman game javascript tutorial")
-2. Generate complete HTML/JS code (under 300 lines, vanilla JS only)
-3. Customize with student's current learning content
-4. Wrap in <CUSTOM_GAME> tags
-
-**Format**:
-<CUSTOM_GAME>
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #1a1a2e; font-family: Arial; }
-canvas { border: 2px solid #fff; }
-</style>
-</head>
-<body>
-<canvas id="game" width="600" height="400"></canvas>
-<script>
-// Your game logic here
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-// ... implement game ...
-</script>
-</body>
-</html>
-</CUSTOM_GAME>
-
-**Rules**:
-- Self-contained (no external resources/CDNs)
-- Use canvas for graphics
-- Make it fun and educational
-- Customize to current lesson content
-- Include clear instructions in the game
-
-**Example**: "Let's play spelling pac-man! <CUSTOM_GAME><!DOCTYPE html>...</CUSTOM_GAME>"
-
-### REMEMBER:
-Education should change the world, not just fill time. Your students are not preparing for life—they are LIVING it. Guide them to build, grow, investigate, create, and lead. Never do their work for them. Always guide discovery.`;
+- **Deep Integration**: For games, YOU MUST provide relevant data from the current lesson.
+  FORMATS:
+  1. Typing: <GAME>typing:{"text": "Snippet...", "source": "Psalm 23", "category": "Scripture"}</GAME>
+  2. Coding: <GAME>coding:{"puzzles": [{"id": "01", "title": "Farm Gate", "mission": "Close gate if it is open", "initialCode": "if (gate === 'open') { ... }", "validate": "gate='closed'", "hint": "Set gate to 'closed'"}]}</GAME>
+- **Local Intelligence**: You should recommend students check their "Local Intelligence" page for real-world application, weather-dependent farm projects, or to see how local news connects to their current topic of study.
+- **Career Discovery**: Recommend the 'Career Discovery' page to help students see how their current mastery leads to entrepreneurial leadership and self-employment. We do not train employees; we equip Architects and Founders.
+- **World Impact**: Recommend the 'World Impact' page for students seeking to apply their mastery to non-profit campaigns and systemic restoration. These initiatives (Clemency Advocacy, Real Food, Reentry Support, etc.) are blueprints for "Loving your Neighbor" and count directly toward graduation as evidence of character and world impact.
+- **Scripture Tag**: Wrap the focal verse in <SCRIPTURE>Title: Reference</SCRIPTURE>.
+- **Save Project**: When you or the student create a unique, well-structured, and original hand-on project during a chat, you MUST archive it for the library so others can use it.
+  FORMAT: <SAVE_PROJECT>{"title": "...", "description": "...", "category": "...", "instructions": "...", "materials": ["..."], "grade_levels": ["..."], "difficulty": "...", "credit_value": 0.5}</SAVE_PROJECT>
+  Categories MUST be one of the 9 Tracks.
+`;
 
 // Helper function to detect alert conditions
 async function checkAndCreateAlerts(
@@ -257,75 +156,39 @@ async function checkAndCreateAlerts(
         }
     } catch (error) {
         console.error('Error creating alert:', error);
-        // Don't fail the chat request if alert creation fails
     }
 }
 
 export async function POST(req: Request) {
     try {
-
         console.log('--- Chat API Request Start ---');
 
         if (!process.env.ANTHROPIC_API_KEY) {
-            console.error('CRITICAL: ANTHROPIC_API_KEY is not set in environment variables');
+            console.error('CRITICAL: ANTHROPIC_API_KEY is not set');
             return NextResponse.json({ error: 'AI Service configuration error' }, { status: 500 });
         }
 
         const supabase = await createClient();
-
-        // Verify user is authenticated
         const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            console.error('Auth check failed:', authError);
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        const { messages, projectId, studentInfo } = await req.json();
+        const body = await req.json();
+        console.log('Request Body:', JSON.stringify(body, null, 2));
+        const { messages, projectId, studentInfo } = body;
 
-        console.log('Request body parsed. Number of messages:', messages?.length);
-
-        // Detect if this is first conversation (onboarding needed)
-        const { data: conversationCount } = await supabase
-            .from('conversations')
-            .select('id', { count: 'exact', head: true })
-            .eq('student_id', user.id);
-
-        const isFirstTime = !conversationCount || conversationCount === 0;
-        const hasGradeLevel = studentInfo?.gradeLevel;
-
-        // Build context about the student
-        let studentContext = '';
-
-        if (isFirstTime) {
-            studentContext = `
-🚨 CRITICAL: This is the student's FIRST conversation with you. You MUST:
-1. Greet them warmly
-2. Ask: "How old are you?" (or what grade)
-3. Ask: "What do you love to do? Any hobbies?"
-4. Ask: "What do you want to learn or build this year?"
-5. THEN propose a first project based on their interests
-
-Do NOT skip this onboarding. Do NOT just answer their question. Guide the conversation.
-`;
-        } else if (!hasGradeLevel) {
-            studentContext = `
-⚠️ REMINDER: You haven't recorded this student's age/grade yet. Ask them early in the conversation.
-`;
-        }
-
-        studentContext += studentInfo ? `
+        // 1. Build Student Context
+        let studentContext = studentInfo ? `
 Current Student:
 - Name: ${studentInfo.name || 'Student'}
-- Grade Level: ${studentInfo.gradeLevel || 'NOT SET - ask them!'}
-- Skills already earned: ${studentInfo.skills?.join(', ') || 'NONE - propose a first lesson!'}
+- Grade Level: ${studentInfo.gradeLevel || 'NOT SET'}
+- Skills already earned: ${studentInfo.skills?.join(', ') || 'NONE'}
 - Graduation Progress:
-${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/${p.required} credits ${p.earned === 0 ? '⚠️ NO PROGRESS' : ''}`).join('\n') || '  * No progress data yet'}
+${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/${p.required} credits`).join('\n') || '  * No progress data yet'}
 
-🎯 YOUR JOB: If they have 0 credits in a track, PROPOSE a project in that area. Be proactive!
+💡 PRO-TIP: Adeline, be proactive! If they have 0 progress in a track, suggest a project from that track today.
 ` : '';
 
-        // Filter and format messages for Anthropic
-        // Requirement: First message must be 'user', and roles must alternate
+        // 2. Format Messages for Anthropic
         let apiMessages = messages
             .map((m: { role: string; content: string }) => ({
                 role: m.role as 'user' | 'assistant',
@@ -333,204 +196,160 @@ ${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/$
             }))
             .filter((m: any) => m.content.trim().length > 0);
 
-        // Remove any leading assistant messages
-        while (apiMessages.length > 0 && apiMessages[0].role === 'assistant') {
-            apiMessages.shift();
-        }
+        while (apiMessages.length > 0 && apiMessages[0].role === 'assistant') apiMessages.shift();
 
-        // Ensure roles alternate (Anthropic requirement)
         const finalMessages = apiMessages.reduce((acc: any[], current: any) => {
             if (acc.length === 0 || acc[acc.length - 1].role !== current.role) {
                 acc.push(current);
             } else {
-                // If same role, combine content
                 acc[acc.length - 1].content += '\n\n' + current.content;
             }
             return acc;
         }, []);
 
-        if (finalMessages.length === 0) {
-            return NextResponse.json({ error: 'No user messages found' }, { status: 400 });
+        // 3. Optional Web Search for Games
+        const userPrompt = finalMessages[finalMessages.length - 1]?.content || '';
+        if (/game|play|fun/.test(userPrompt.toLowerCase())) {
+            const searchResults = await searchWeb(`educational game idea for child ${userPrompt}`);
+            studentContext += `\n\n### WEB SEARCH IDEAS:\n${searchResults}`;
         }
 
-        // Check if student is asking for a custom game
-        const userGameRequest = finalMessages[finalMessages.length - 1];
-        let searchContext = '';
-        if (userGameRequest && /game|play|fun/.test(userGameRequest.content.toLowerCase())) {
-            console.log('Detected game request, searching web for ideas...');
-            const searchQuery = `educational javascript game tutorial ${userGameRequest.content}`;
-            searchContext = await searchWeb(searchQuery);
-            if (searchContext) {
-                studentContext += `\n\n### WEB SEARCH RESULTS:\n${searchContext}\n\nUse these to help create a custom game!`;
-            }
-        }
+        // 4. Call Anthropic
+        const response = await anthropic.messages.create({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 2048,
+            system: SYSTEM_PROMPT + '\n\n' + studentContext,
+            messages: finalMessages,
+        });
 
-        // Call Anthropic
-        console.log('Calling Claude 3.5 Sonnet...');
-
-        let response;
-        try {
-            response = await anthropic.messages.create({
-                model: 'claude-3-5-sonnet-20241022',
-                max_tokens: 2048,
-                system: SYSTEM_PROMPT + '\n\n' + studentContext,
-                messages: finalMessages,
-            });
-            console.log('Anthropic API response received successfully');
-        } catch (anthropicError: any) {
-            console.error('Anthropic API Call Failed:', {
-                status: anthropicError.status,
-                message: anthropicError.message,
-                type: anthropicError.type
-            });
-            return NextResponse.json({ error: 'AI service currently unavailable' }, { status: 502 });
-        }
-
-        // Extract the response content
         const contentBlock = response.content[0];
         let content = contentBlock.type === 'text' ? contentBlock.text : '';
-        let skills: string[] = [];
         let speak: string | undefined;
+        let type: string = 'default';
+        let animationData: any;
+        let code: string | undefined;
+        let worksheetData: any;
+        let gameData: any;
+        let skills: string[] = [];
 
-        console.log('AI Response Content Length:', content.length);
+        // --- TAG PARSING ---
 
-        // ALERT DETECTION: Check for concerning patterns in recent messages
-        const recentUserMessages = messages.filter((m: { role: string; content: string }) => m.role === 'user').slice(-5);
-        await checkAndCreateAlerts(supabase, user.id, recentUserMessages, content);
+        // Save Project Tag
+        const projectMatch = content.match(/<SAVE_PROJECT>([\s\S]*?)<\/SAVE_PROJECT>/);
+        if (projectMatch) {
+            try {
+                const p = JSON.parse(projectMatch[1]);
+                await supabase.from('library_projects').insert({
+                    title: p.title,
+                    description: p.description,
+                    category: p.category,
+                    instructions: p.instructions,
+                    materials: p.materials,
+                    grade_levels: p.grade_levels || ['K', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
+                    difficulty: p.difficulty || 'beginner',
+                    credit_value: p.credit_value || 0.25,
+                    created_by: user.id
+                });
+                console.log('Saved dynamic project:', p.title);
+            } catch (e) { console.error('Save Project failed:', e); }
+            content = content.replace(/<SAVE_PROJECT>.*?<\/SAVE_PROJECT>/s, '').trim();
+        }
 
-        // Extract <SPEAK> tag
+        // Speak Tag
         const speakMatch = content.match(/<SPEAK>(.*?)<\/SPEAK>/s);
         if (speakMatch) {
             speak = speakMatch[1].trim();
             content = content.replace(/<SPEAK>.*?<\/SPEAK>/s, '').trim();
-            console.log('TTS found:', speak);
         }
 
-        // Extract skills if present
+        // Whiteboard Tag
+        const whiteboardMatch = content.match(/<WHITEBOARD>(.*?)<\/WHITEBOARD>/s);
+        if (whiteboardMatch) {
+            type = 'whiteboard_anim';
+            try { animationData = JSON.parse(whiteboardMatch[1]); } catch (e) { }
+            content = content.replace(/<WHITEBOARD>.*?<\/WHITEBOARD>/s, '').trim();
+        }
+
+        // Code Tag
+        const codeMatch = content.match(/<CODE>(.*?)<\/CODE>/s);
+        if (codeMatch) {
+            type = 'code_lesson';
+            try { code = JSON.parse(codeMatch[1]).code; } catch (e) { }
+            content = content.replace(/<CODE>.*?<\/CODE>/s, '').trim();
+        }
+
+        // Worksheet Tag
+        const worksheetMatch = content.match(/<WORKSHEET>(.*?)<\/WORKSHEET>/s);
+        if (worksheetMatch) {
+            type = 'worksheet';
+            try { worksheetData = JSON.parse(worksheetMatch[1]); } catch (e) { }
+            content = content.replace(/<WORKSHEET>.*?<\/WORKSHEET>/s, '').trim();
+        }
+
+        // Game Tag
+        const gameMatch = content.match(/<GAME>(.*?)<\/GAME>/);
+        if (gameMatch) {
+            try {
+                const gameRaw = gameMatch[1].trim();
+                if (gameRaw.startsWith('typing:')) {
+                    gameData = { type: 'typing', ...JSON.parse(gameRaw.replace('typing:', '')) };
+                } else if (gameRaw.startsWith('coding:')) {
+                    gameData = { type: 'coding', ...JSON.parse(gameRaw.replace('coding:', '')) };
+                }
+            } catch (e) { console.error('Game parse error:', e); }
+            content = content.replace(/<GAME>.*?<\/GAME>/s, '').trim();
+        }
+
+        // Skills Tag
         const skillsMatch = content.match(/<SKILLS>\[(.*?)\]<\/SKILLS>/s);
         if (skillsMatch) {
             try {
                 skills = JSON.parse(`[${skillsMatch[1]}]`);
                 content = content.replace(/<SKILLS>.*?<\/SKILLS>/s, '').trim();
-                console.log('Skills awarded:', skills);
-            } catch (e) {
-                console.error('Failed to parse skills JSON:', e);
-            }
-        }
 
-        // If skills were identified, save them AND update graduation progress
-        if (skills.length > 0) {
-            console.log('Processing skills updates in DB...');
-            for (const skillName of skills) {
-                // 1. Get Skill Info
-                const { data: skill } = await supabase
-                    .from('skills')
-                    .select('id, credit_value, category')
-                    .ilike('name', skillName)
-                    .maybeSingle();
-
-                if (skill) {
-                    console.log(`Earning skill: ${skillName} (ID: ${skill.id})`);
-                    // 2. Award Skill
-                    await supabase
-                        .from('student_skills')
-                        .upsert({
-                            student_id: user.id,
-                            skill_id: skill.id,
-                            source_type: 'ai_lesson',
-                            earned_at: new Date().toISOString(),
-                        }, {
-                            onConflict: 'student_id,skill_id',
-                        });
-
-                    // 3. Update Graduation Progress (if credit value > 0)
-                    if (skill.credit_value && skill.credit_value > 0) {
-                        const { data: requirements } = await supabase
-                            .from('graduation_requirements')
-                            .select('id')
-                            .eq('category', skill.category);
-
-                        const req = requirements?.[0];
-
-                        if (req) {
-                            console.log(`Updating graduation progress for requirement ID: ${req.id}`);
-                            const { data: currentProgress } = await supabase
-                                .from('student_graduation_progress')
-                                .select('credits_earned')
-                                .eq('student_id', user.id)
-                                .eq('requirement_id', req.id)
-                                .maybeSingle();
-
-                            const newCredits = (currentProgress?.credits_earned || 0) + Number(skill.credit_value);
-
-                            await supabase
-                                .from('student_graduation_progress')
-                                .upsert({
+                // Process DB rewards
+                for (const sName of skills) {
+                    const { data: s } = await supabase.from('skills').select('id, category, credit_value').ilike('name', sName).maybeSingle();
+                    if (s) {
+                        await supabase.from('student_skills').upsert({ student_id: user.id, skill_id: s.id, source_type: 'ai_lesson' });
+                        if (s.credit_value > 0) {
+                            const { data: req } = await supabase.from('graduation_requirements').select('id').eq('category', s.category).maybeSingle();
+                            if (req) {
+                                const { data: prog } = await supabase.from('student_graduation_progress').select('credits_earned').eq('student_id', user.id).eq('requirement_id', req.id).maybeSingle();
+                                await supabase.from('student_graduation_progress').upsert({
                                     student_id: user.id,
                                     requirement_id: req.id,
-                                    credits_earned: newCredits,
-                                    updated_at: new Date().toISOString(),
-                                }, {
-                                    onConflict: 'student_id,requirement_id'
+                                    credits_earned: (prog?.credits_earned || 0) + Number(s.credit_value)
                                 });
+                            }
                         }
                     }
                 }
-            }
+            } catch (e) { }
         }
 
-        // Save conversation to database
-        console.log('Saving conversation history...');
-        const { data: existingConversation } = await supabase
-            .from('conversations')
-            .select('id, messages')
-            .eq('student_id', user.id)
-            .eq('is_active', true)
-            .order('updated_at', { ascending: false })
-            .limit(1)
-            .maybeSingle(); // Better than .single() which errors on zero rows
+        // --- DB PERSISTENCE ---
 
-        const lastUserMessage = messages[messages.length - 1];
-        const assistantResponse = {
-            role: 'assistant',
-            content,
-            skills,
-            speak,
-            timestamp: new Date().toISOString()
-        };
+        const { data: conv } = await supabase.from('conversations').select('messages, id').eq('student_id', user.id).eq('is_active', true).order('updated_at', { ascending: false }).limit(1).maybeSingle();
+        const fullHistory = [...(conv?.messages || []), messages[messages.length - 1], { role: 'assistant', content, skills, speak, timestamp: new Date() }];
 
-        const updatedMessages = [
-            ...(existingConversation?.messages || []),
-            lastUserMessage,
-            assistantResponse,
-        ];
-
-        if (existingConversation) {
-            await supabase
-                .from('conversations')
-                .update({
-                    messages: updatedMessages,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', existingConversation.id);
+        if (conv) {
+            await supabase.from('conversations').update({ messages: fullHistory, updated_at: new Date() }).eq('id', conv.id);
         } else {
-            await supabase
-                .from('conversations')
-                .insert({
-                    student_id: user.id,
-                    messages: updatedMessages,
-                    is_active: true,
-                    updated_at: new Date().toISOString(),
-                });
+            await supabase.from('conversations').insert({ student_id: user.id, messages: fullHistory, is_active: true });
         }
 
-        console.log('--- Chat API Request Complete ---');
-        return NextResponse.json({ content, skills, speak });
+        await checkAndCreateAlerts(supabase, user.id, messages.filter((m: any) => m.role === 'user').slice(-5), content);
+
+        return NextResponse.json({ content, skills, speak, type, animationData, code, worksheetData, game: gameData });
+
     } catch (error: any) {
-        console.error('Unhandled Chat API error:', error);
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 }
-        );
+        console.error('--- Chat API Error ---');
+        console.error('Error Message:', error.message);
+        console.error('Stack Trace:', error.stack);
+        if (error.response) {
+            console.error('Anthropic API Error Response:', JSON.stringify(error.response, null, 2));
+        }
+        return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });
     }
 }

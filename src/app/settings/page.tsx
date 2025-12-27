@@ -23,7 +23,8 @@ export default function SettingsPage() {
     const [profile, setProfile] = useState({
         display_name: '',
         grade_level: '',
-        state_standards: 'oklahoma'
+        state_standards: 'oklahoma',
+        city: 'Edmond, OK'
     });
 
     useEffect(() => {
@@ -36,7 +37,7 @@ export default function SettingsPage() {
 
             const { data } = await supabase
                 .from('profiles')
-                .select('display_name, grade_level, state_standards')
+                .select('display_name, grade_level, state_standards, city')
                 .eq('id', user.id)
                 .single();
 
@@ -44,7 +45,8 @@ export default function SettingsPage() {
                 setProfile({
                     display_name: data.display_name || '',
                     grade_level: data.grade_level || '',
-                    state_standards: data.state_standards || 'oklahoma'
+                    state_standards: data.state_standards || 'oklahoma',
+                    city: data.city || 'Edmond, OK'
                 });
             }
             setLoading(false);
@@ -67,6 +69,7 @@ export default function SettingsPage() {
                 display_name: profile.display_name,
                 grade_level: profile.grade_level,
                 state_standards: profile.state_standards,
+                city: profile.city,
                 updated_at: new Date().toISOString()
             })
             .eq('id', user.id);
@@ -144,6 +147,25 @@ export default function SettingsPage() {
                             </select>
                             <p className="text-xs text-slate-500 mt-2">
                                 This helps Adeline adjust how she explains concepts to you!
+                            </p>
+                        </div>
+
+                        {/* Location */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+                                <Globe className="w-4 h-4" />
+                                Your Location
+                            </label>
+                            <input
+                                type="text"
+                                value={profile.city}
+                                onChange={(e) => setProfile({ ...profile, city: e.target.value })}
+                                placeholder="e.g. Edmond, OK"
+                                className="input w-full"
+                                required
+                            />
+                            <p className="text-xs text-slate-500 mt-2">
+                                This helps Adeline connect lessons to your local weather and news!
                             </p>
                         </div>
 

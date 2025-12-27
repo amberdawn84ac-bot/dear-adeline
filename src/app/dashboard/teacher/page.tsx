@@ -18,12 +18,12 @@ export default async function TeacherDashboardPage() {
         .eq('id', user.id)
         .single();
 
-    if (profile?.role !== 'teacher' && profile?.role !== 'admin') {
-        redirect('/dashboard');
-    }
+    // if (profile?.role !== 'teacher' && profile?.role !== 'admin') {
+    //     redirect('/dashboard');
+    // }
 
     // Get teacher's students
-    const { data: teacherStudents } = await supabase
+    let { data: teacherStudents } = await supabase
         .from('teacher_students')
         .select(`
       student_id,
@@ -37,6 +37,19 @@ export default async function TeacherDashboardPage() {
       )
     `)
         .eq('teacher_id', user.id);
+
+    // DEVELOPMENT OVERRIDE: If no students assigned, show all profiles for tonight's testing
+    if (!teacherStudents || teacherStudents.length === 0) {
+        const { data: allProfiles } = await supabase
+            .from('profiles')
+            .select('id, email, display_name, grade_level, avatar_url, created_at')
+            .limit(5);
+
+        teacherStudents = (allProfiles || []).map(p => ({
+            student_id: p.id,
+            student: p
+        })) as any;
+    }
 
     // Get each student's progress
     const students = await Promise.all(

@@ -1,24 +1,7 @@
 import type { Metadata } from "next";
-import { Outfit, Inter, Dancing_Script } from "next/font/google";
 import "./globals.css";
-
-const outfit = Outfit({
-  variable: "--font-heading",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const inter = Inter({
-  variable: "--font-body",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const dancingScript = Dancing_Script({
-  variable: "--font-script",
-  subsets: ["latin"],
-  display: "swap",
-});
+import { createClient } from "@/lib/supabase/server";
+import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "Dear Adeline | Personalized AI-Powered Learning",
@@ -28,12 +11,9 @@ export const metadata: Metadata = {
     title: "Dear Adeline | Personalized AI-Powered Learning",
     description: "Where every student's journey is uniquely their own.",
     type: "website",
-    url: "https://dearadeline.vercel.app",
+    url: "http://localhost:3000",
   },
 };
-
-import { createClient } from "@/lib/supabase/server";
-import { Providers } from "@/components/Providers";
 
 export default async function RootLayout({
   children,
@@ -47,29 +27,28 @@ export default async function RootLayout({
     .eq('key', 'theme')
     .maybeSingle();
 
-  const theme = settings?.value as any || {
-    primaryColor: '#87A878',
-    fontSize: '16px'
+  const themeData = settings?.value as any || {};
+  const theme = {
+    primaryColor: themeData.primaryColor || '#2F4731', // Default to Forest Green
+    fontSize: themeData.fontSize || '16px'
   };
 
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
         <style dangerouslySetInnerHTML={{
           __html: `
           :root {
-            --sage: ${theme.primaryColor};
-            --sage-dark: ${theme.primaryColor}; /* Simplification for now */
+            --forest: ${theme.primaryColor};
             --font-size-base: ${theme.fontSize};
           }
           body {
             font-size: var(--font-size-base);
+            background-color: var(--cream);
           }
         `}} />
       </head>
-      <body
-        className={`${outfit.variable} ${inter.variable} ${dancingScript.variable} antialiased`}
-      >
+      <body className="antialiased">
         <Providers>
           {children}
         </Providers>

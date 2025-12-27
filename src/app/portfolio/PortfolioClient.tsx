@@ -129,31 +129,31 @@ export default function PortfolioClient({
         <div className="min-h-screen flex bg-[var(--cream)]">
             {/* Sidebar */}
             <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 lg:translate-x-0 lg:static ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="flex flex-col h-full">
-                    <div className="p-6 border-b border-[var(--cream-dark)]">
-                        <Link href="/" className="flex items-center gap-2">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--sage)] to-[var(--sage-dark)] flex items-center justify-center">
+                <div className="flex flex-col h-full bg-[var(--cream-dark)]/30">
+                    <div className="p-6 border-b border-[var(--forest)]/10 bg-[var(--forest)] text-[var(--cream)]">
+                        <Link href="/" className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-[var(--ochre)] flex items-center justify-center shadow-lg transform -rotate-3 hover:rotate-0 transition-transform">
                                 <Sparkles className="w-5 h-5 text-white" />
                             </div>
-                            <span className="text-xl font-semibold">Dear Adeline</span>
+                            <span className="text-xl font-bold tracking-tight serif">Dear Adeline</span>
                         </Link>
                     </div>
 
                     <nav className="flex-1 p-4 space-y-1">
-                        <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--cream)] transition-colors">
-                            <Home className="w-5 h-5" />
+                        <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--forest)]/5 transition-colors font-medium">
+                            <Home className="w-5 h-5 text-[var(--forest)]/60" />
                             <span>Dashboard</span>
                         </Link>
-                        <Link href="/portfolio" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[var(--dusty-rose-light)] text-[var(--terracotta)]">
+                        <Link href="/portfolio" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[var(--forest)]/10 text-[var(--forest)] font-bold">
                             <FolderOpen className="w-5 h-5" />
-                            <span className="font-medium">Portfolio</span>
+                            <span>Portfolio</span>
                         </Link>
-                        <Link href="/library" className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--cream)] transition-colors">
-                            <Library className="w-5 h-5" />
+                        <Link href="/library" className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--forest)]/5 transition-colors font-medium">
+                            <Library className="w-5 h-5 text-[var(--forest)]/60" />
                             <span>Project Library</span>
                         </Link>
-                        <Link href="/tracker" className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--cream)] transition-colors">
-                            <GraduationCap className="w-5 h-5" />
+                        <Link href="/tracker" className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--forest)]/5 transition-colors font-medium">
+                            <GraduationCap className="w-5 h-5 text-[var(--forest)]/60" />
                             <span>Graduation Tracker</span>
                         </Link>
                     </nav>
@@ -195,8 +195,8 @@ export default function PortfolioClient({
                     {/* Header */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
                         <div>
-                            <h1 className="text-3xl font-bold mb-2">My Portfolio</h1>
-                            <p className="text-[var(--charcoal-light)]">
+                            <h1 className="text-4xl font-normal serif text-[var(--forest)] mb-2">My Portfolio</h1>
+                            <p className="text-[var(--charcoal-light)] font-medium">
                                 A showcase of your learning journey and accomplishments
                             </p>
                         </div>
@@ -216,8 +216,8 @@ export default function PortfolioClient({
                                 key={type}
                                 onClick={() => setFilterType(type)}
                                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filterType === type
-                                        ? 'bg-[var(--sage)] text-white'
-                                        : 'bg-white text-[var(--charcoal-light)] hover:bg-[var(--cream)]'
+                                    ? 'bg-[var(--sage)] text-white'
+                                    : 'bg-white text-[var(--charcoal-light)] hover:bg-[var(--cream)]'
                                     }`}
                             >
                                 {type === 'all' ? 'All Items' : type.charAt(0).toUpperCase() + type.slice(1)}
@@ -322,8 +322,8 @@ export default function PortfolioClient({
                                                 type="button"
                                                 onClick={() => setNewItem(p => ({ ...p, type: type as PortfolioItem['type'] }))}
                                                 className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-colors ${newItem.type === type
-                                                        ? 'border-[var(--sage)] bg-[var(--sage-light)]'
-                                                        : 'border-[var(--cream-dark)] hover:border-[var(--sage-light)]'
+                                                    ? 'border-[var(--sage)] bg-[var(--sage-light)]'
+                                                    : 'border-[var(--cream-dark)] hover:border-[var(--sage-light)]'
                                                     }`}
                                             >
                                                 <Icon className="w-5 h-5" />

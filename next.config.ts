@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: ["posthog-js", "lucide-react", "@supabase/ssr", "@supabase/supabase-js"],
 };
 
 export default nextConfig;

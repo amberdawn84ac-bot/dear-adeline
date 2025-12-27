@@ -23,6 +23,7 @@ import {
     Loader2,
     Menu,
     Plus,
+    Rocket,
     X,
     Home,
     Library,
@@ -34,18 +35,30 @@ import {
     Globe,
     Calculator,
     Shield,
+    Cloud,
+    ArrowRight,
     BarChart3
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import { GameCenter } from '@/components/GameCenter';
 import { SandboxedGame } from '@/components/SandboxedGame';
+import { Whiteboard } from '@/components/Whiteboard';
+import { TypingGame } from '@/components/TypingGame';
+import { CodingGame } from '@/components/CodingGame';
+import { DigitalWorksheet } from '@/components/DigitalWorksheet';
+import { CodeWorkspace } from '@/components/CodeWorkspace';
+import { OnboardingModal } from '@/components/OnboardingModal';
 
 interface Message {
     role: 'user' | 'assistant';
     content: string;
     skills?: string[];
     game?: string;
+    type?: 'default' | 'lesson_award' | 'whiteboard_anim' | 'code_lesson' | 'worksheet' | 'typing_game' | 'coding_game';
+    animationData?: string;
+    code?: string;
+    worksheetData?: any;
     timestamp: Date;
 }
 
@@ -115,22 +128,47 @@ export default function DashboardClient({
     profileError,
 }: DashboardClientProps) {
     const router = useRouter();
-    const [messages, setMessages] = useState<Message[]>(
-        activeConversation?.messages || [
-            {
-                role: 'assistant',
-                content: `Hi ${profile?.display_name || 'there'}! 👋 I'm Adeline, your learning companion. What are you excited to learn about or work on today?`,
-                timestamp: new Date(),
-            },
-        ]
-    );
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [isClient, setIsClient] = useState(false);
+    const [showOnboarding, setShowOnboarding] = useState(!profile?.grade_level || !profile?.state_standards);
+
+    useEffect(() => {
+        setIsClient(true);
+        if (activeConversation?.messages) {
+            setMessages(activeConversation.messages);
+        } else {
+            setMessages([
+                {
+                    role: 'assistant',
+                    content: profile?.display_name
+                        ? `Peace be with you, ${profile.display_name}. What shall we build or discover together today?`
+                        : "Peace be with you. I am Adeline, your learning companion. What shall we discover together today?",
+                    timestamp: new Date(),
+                },
+            ]);
+        }
+    }, [activeConversation, profile?.display_name]);
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [activeGame, setActiveGame] = useState<string | null>(null);
+    const [gameData, setGameData] = useState<any>(null);
     const [customGameHtml, setCustomGameHtml] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const [activeModality, setActiveModality] = useState<'BUILDER' | 'ARTIST' | 'SCHOLAR' | 'ORATOR'>('ORATOR');
+    const [workspaceView, setWorkspaceView] = useState<'none' | 'whiteboard' | 'code' | 'worksheet' | 'game'>('none');
+    const [workspaceData, setWorkspaceData] = useState<any>(null);
+    const [showCelebration, setShowCelebration] = useState<string[] | null>(null);
+
+    const dailyScriptures = [
+        { verse: "Micah 6:8", text: "He has shown you, O mortal, what is good. And what does the Lord require of you? To act justly and to love mercy and to walk humbly with your God." },
+        { verse: "Joshua 1:9", text: "Have I not commanded you? Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go." },
+        { verse: "Proverbs 3:5-6", text: "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight." },
+        { verse: "Matthew 6:33", text: "But seek first his kingdom and his righteousness, and all these things will be given to you as well." },
+        { verse: "Isaiah 40:31", text: "But those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint." }
+    ];
+    const todayScripture = dailyScriptures[new Date().getDate() % dailyScriptures.length];
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -145,15 +183,15 @@ export default function DashboardClient({
     const overallProgress = totalRequiredCredits > 0 ? (totalEarnedCredits / totalRequiredCredits) * 100 : 0;
 
     const trackConfig: Record<string, { icon: any; color: string; badgeColor: string }> = {
-        "God's Creation & Science": { icon: FlaskConical, color: 'text-green-600', badgeColor: 'bg-green-100 text-green-700 border-green-200' },
-        "Health/Naturopathy": { icon: Heart, color: 'text-red-600', badgeColor: 'bg-red-100 text-red-700 border-red-200' },
-        "Food Systems": { icon: Leaf, color: 'text-orange-600', badgeColor: 'bg-orange-100 text-orange-700 border-orange-200' },
-        "Government/Economics": { icon: BarChart3, color: 'text-blue-600', badgeColor: 'bg-blue-100 text-blue-700 border-blue-200' },
-        "Justice": { icon: Scale, color: 'text-indigo-600', badgeColor: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
-        "Discipleship": { icon: Sparkles, color: 'text-purple-600', badgeColor: 'bg-purple-100 text-purple-700 border-purple-200' },
-        "History": { icon: Globe, color: 'text-amber-600', badgeColor: 'bg-amber-100 text-amber-700 border-amber-200' },
-        "English/Lit": { icon: BookOpen, color: 'text-pink-600', badgeColor: 'bg-pink-100 text-pink-700 border-pink-200' },
-        "Math": { icon: Calculator, color: 'text-cyan-600', badgeColor: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
+        "God's Creation & Science": { icon: FlaskConical, color: 'text-[var(--forest)]', badgeColor: 'bg-[var(--forest)]/10 text-[var(--forest)] border-[var(--forest)]/20' },
+        "Health/Naturopathy": { icon: Heart, color: 'text-[var(--dusty-rose)]', badgeColor: 'bg-[var(--dusty-rose)]/10 text-[var(--dusty-rose)] border-[var(--dusty-rose)]/20' },
+        "Food Systems": { icon: Leaf, color: 'text-[var(--ochre)]', badgeColor: 'bg-[var(--ochre)]/10 text-[var(--ochre)] border-[var(--ochre)]/20' },
+        "Government/Economics": { icon: BarChart3, color: 'text-[var(--forest-light)]', badgeColor: 'bg-[var(--forest-light)]/10 text-[var(--forest-light)] border-[var(--forest-light)]/20' },
+        "Justice": { icon: Scale, color: 'text-[var(--ochre-light)]', badgeColor: 'bg-[var(--ochre-light)]/10 text-[var(--ochre-light)] border-[var(--ochre-light)]/20' },
+        "Discipleship": { icon: Sparkles, color: 'text-[var(--burgundy)]', badgeColor: 'bg-[var(--burgundy)]/5 text-[var(--burgundy)] border-[var(--burgundy)]/10' },
+        "History": { icon: Globe, color: 'text-[var(--burgundy)]', badgeColor: 'bg-[var(--burgundy)]/5 text-[var(--burgundy)] border-[var(--burgundy)]/10' },
+        "English/Lit": { icon: BookOpen, color: 'text-[var(--ochre)]', badgeColor: 'bg-[var(--ochre)]/10 text-[var(--ochre)] border-[var(--ochre)]/20' },
+        "Math": { icon: Calculator, color: 'text-[var(--charcoal)]', badgeColor: 'bg-[var(--charcoal)]/5 text-[var(--charcoal)] border-[var(--charcoal)]/10' },
     };
 
     const earnedBadges = graduationProgress.filter(p => p.credits_earned >= 0.5); // Example threshold for a badge
@@ -169,12 +207,13 @@ export default function DashboardClient({
         }
     };
 
-    const handleSendMessage = async () => {
-        if (!input.trim() || isTyping) return;
+    const handleSendMessage = async (textOverride?: string) => {
+        const messageText = textOverride || input.trim();
+        if (!messageText || isTyping) return;
 
         const userMessage: Message = {
             role: 'user',
-            content: input.trim(),
+            content: messageText,
             timestamp: new Date(),
         };
 
@@ -221,7 +260,22 @@ export default function DashboardClient({
             let gameType: string | undefined;
             const gameMatch = data.content?.match(/<GAME>(.+?)<\/GAME>/);
             if (gameMatch) {
-                gameType = gameMatch[1];
+                const fullGameTag = gameMatch[1];
+                if (fullGameTag.includes(':')) {
+                    const [type, ...jsonDataParts] = fullGameTag.split(':');
+                    gameType = type.trim();
+                    try {
+                        const parsedData = JSON.parse(jsonDataParts.join(':').trim());
+                        setGameData(parsedData);
+                    } catch (e) {
+                        console.error('Failed to parse game JSON data', e);
+                        setGameData(null);
+                    }
+                } else {
+                    gameType = fullGameTag.trim();
+                    setGameData(null);
+                }
+
                 if (gameType) {
                     setActiveGame(gameType);
                 }
@@ -238,9 +292,30 @@ export default function DashboardClient({
                 role: 'assistant',
                 content: data.content,
                 skills: data.skills,
+                type: data.type,
+                animationData: data.animationData,
+                code: data.code,
+                worksheetData: data.worksheetData,
                 game: gameType,
                 timestamp: new Date(),
             };
+
+            // Automatically open workspaces based on response type
+            if (data.type === 'whiteboard_anim') {
+                setWorkspaceView('whiteboard');
+                setWorkspaceData(data.animationData);
+            } else if (data.type === 'worksheet') {
+                setWorkspaceView('worksheet');
+                setWorkspaceData(data.worksheetData);
+            } else if (data.type === 'code_lesson') {
+                setWorkspaceView('code');
+                setWorkspaceData(data.code);
+            }
+
+            if (data.type === 'lesson_award' && data.skills) {
+                setShowCelebration(data.skills);
+                setTimeout(() => setShowCelebration(null), 5000);
+            }
 
             setMessages((prev) => [...prev, assistantMessage]);
         } catch (error) {
@@ -284,13 +359,13 @@ export default function DashboardClient({
 
             {/* Sidebar */}
             <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 lg:translate-x-0 lg:static ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="flex flex-col h-full">
-                    <div className="p-6 border-b border-[var(--cream-dark)]">
-                        <Link href="/" className="flex items-center gap-2">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--sage)] to-[var(--sage-dark)] flex items-center justify-center">
+                <div className="flex flex-col h-full bg-[var(--cream-dark)]/30">
+                    <div className="p-6 border-b border-[var(--forest)]/10 bg-[var(--forest)] text-[var(--cream)]">
+                        <Link href="/" className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-[var(--ochre)] flex items-center justify-center shadow-lg transform -rotate-3 hover:rotate-0 transition-transform">
                                 <Sparkles className="w-5 h-5 text-white" />
                             </div>
-                            <span className="text-xl font-semibold">Dear Adeline</span>
+                            <span className="text-xl font-bold tracking-tight serif">Dear Adeline</span>
                         </Link>
                     </div>
 
@@ -308,19 +383,27 @@ export default function DashboardClient({
 
                     <nav className="flex-1 p-4 space-y-1 overflow-y-auto no-scrollbar">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-2">Navigation</p>
-                        <Link href="/dashboard" className="flex items-center gap-3 px-4 py-2 rounded-lg bg-[var(--sage-light)] text-[var(--sage-dark)] font-medium">
+                        <Link href="/dashboard" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/dashboard' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
                             <Home className="w-4 h-4" />
                             <span className="text-sm">Dashboard</span>
                         </Link>
-                        <Link href="/portfolio" className="flex items-center gap-3 px-4 py-2 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--cream)] transition-colors">
+                        <Link href="/portfolio" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/portfolio' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
                             <FolderOpen className="w-4 h-4" />
                             <span className="text-sm">Portfolio</span>
                         </Link>
-                        <Link href="/library" className="flex items-center gap-3 px-4 py-2 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--cream)] transition-colors">
+                        <Link href="/library" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/library' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
                             <Library className="w-4 h-4" />
                             <span className="text-sm">Project Library</span>
                         </Link>
-                        <Link href="/tracker" className="flex items-center gap-3 px-4 py-2 rounded-lg text-[var(--charcoal-light)] hover:bg-[var(--cream)] transition-colors">
+                        <Link href="/intelligence" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/intelligence' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
+                            <Cloud className="w-4 h-4" />
+                            <span className="text-sm">Local Intelligence</span>
+                        </Link>
+                        <Link href="/careers" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/careers' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
+                            <Rocket className="w-4 h-4" />
+                            <span className="text-sm">Career Discovery</span>
+                        </Link>
+                        <Link href="/tracker" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/tracker' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
                             <GraduationCap className="w-4 h-4" />
                             <span className="text-sm">Graduation Tracker</span>
                         </Link>
@@ -379,59 +462,94 @@ export default function DashboardClient({
 
                 <div className="flex-1 overflow-y-auto p-4 lg:p-6 no-scrollbar">
                     <div className="grid grid-cols-12 gap-6 h-full">
-                        {/* Grade Level Onboarding Alert */}
-                        {!profile?.grade_level && (
-                            <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in">
-                                <div className="flex items-center gap-3 text-amber-800">
-                                    <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                                    <p className="text-sm">
-                                        <span className="font-semibold">Level Up Adeline!</span> Set your grade level in settings so Adeline can personalize your lessons to your exact pace.
-                                    </p>
-                                </div>
-                                <Link
-                                    href="/settings"
-                                    className="px-4 py-2 bg-amber-600 text-white rounded-full text-xs font-semibold hover:bg-amber-700 transition-colors whitespace-nowrap self-end sm:self-auto"
-                                >
-                                    Set Level
-                                </Link>
-                            </div>
+                        {/* Onboarding Flow */}
+                        {showOnboarding && (
+                            <OnboardingModal
+                                userId={user.id}
+                                onComplete={() => {
+                                    setShowOnboarding(false);
+                                    router.refresh();
+                                }}
+                            />
                         )}
 
                         {/* Chat Area */}
                         <div className="col-span-12 lg:col-span-8 flex flex-col h-[500px] md:h-[600px] lg:h-[calc(100vh-120px)] bg-white rounded-2xl shadow-sm border border-[var(--cream-dark)] overflow-hidden">
                             <div className="p-4 border-b border-[var(--cream-dark)]">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-[var(--sage-light)] flex items-center justify-center">
-                                        <Brain className="w-6 h-6 text-[var(--sage-dark)]" />
+                                    <div className="w-10 h-10 rounded-full bg-[var(--forest)]/10 flex items-center justify-center">
+                                        <Brain className="w-6 h-6 text-[var(--forest)]" />
                                     </div>
                                     <div>
-                                        <h2 className="font-semibold text-slate-800">Learning Chat</h2>
-                                        <p className="text-xs text-slate-500">Talk to Adeline</p>
+                                        <h2 className="font-bold text-[var(--forest)] serif">Learning Chat</h2>
+                                        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest opacity-60">Talk to Adeline</p>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
-                                {messages.map((m, i) => (
-                                    <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`px-4 py-3 rounded-2xl max-w-[85%] shadow-sm ${m.role === 'user'
-                                            ? 'bg-[var(--sage-dark)] text-white rounded-tr-none'
-                                            : 'bg-slate-50 text-slate-800 border border-slate-100 rounded-tl-none'
-                                            }`}>
-                                            <p className="whitespace-pre-wrap text-sm leading-relaxed">{m.content}</p>
-                                            {m.skills && m.skills.length > 0 && (
-                                                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-[var(--cream-dark)]/20">
-                                                    {m.skills.map((skill, j) => (
-                                                        <span key={j} className="text-[10px] font-bold uppercase tracking-wider bg-white/50 text-slate-600 px-2 py-1 rounded-md border border-slate-200/50 flex items-center gap-1">
-                                                            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                                                            {skill}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
+                                {messages.map((m, i) => {
+                                    // Parse potential scripture tag
+                                    const scriptureMatch = m.content.match(/<SCRIPTURE>(.*?)<\/SCRIPTURE>/s);
+                                    let cleanContent = m.content;
+                                    let scriptureInfo = null;
+
+                                    if (scriptureMatch) {
+                                        scriptureInfo = scriptureMatch[1];
+                                        cleanContent = m.content.replace(/<SCRIPTURE>.*?<\/SCRIPTURE>/s, '').trim();
+                                    }
+
+                                    return (
+                                        <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`chat-bubble ${m.role === 'user' ? 'user' : 'ai'}`}>
+                                                {scriptureInfo && (
+                                                    <div className="mb-4 p-4 bg-[var(--ochre)]/10 border-l-4 border-[var(--ochre)] rounded-r-xl italic font-serif text-[var(--burgundy)] text-lg animate-in fade-in slide-in-from-left-2">
+                                                        "{scriptureInfo}"
+                                                    </div>
+                                                )}
+                                                <p className="whitespace-pre-wrap text-sm leading-relaxed">{cleanContent}</p>
+
+                                                {m.type === 'whiteboard_anim' && (
+                                                    <button
+                                                        onClick={() => { setWorkspaceView('whiteboard'); setWorkspaceData(m.animationData); }}
+                                                        className="mt-3 w-full bg-[#76946a]/10 text-[#76946a] py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-[#76946a]/20 hover:bg-[#76946a]/20 transition-all"
+                                                    >
+                                                        View Adeline's Illustration
+                                                    </button>
+                                                )}
+
+                                                {m.type === 'worksheet' && (
+                                                    <button
+                                                        onClick={() => { setWorkspaceView('worksheet'); setWorkspaceData(m.worksheetData); }}
+                                                        className="mt-3 w-full bg-indigo-50 text-indigo-600 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-indigo-100 hover:bg-indigo-100 transition-all"
+                                                    >
+                                                        Open Discovery Sheet
+                                                    </button>
+                                                )}
+
+                                                {m.type === 'code_lesson' && (
+                                                    <button
+                                                        onClick={() => { setWorkspaceView('code'); setWorkspaceData(m.code); }}
+                                                        className="mt-3 w-full bg-slate-900 text-indigo-300 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/10 hover:bg-slate-800 transition-all"
+                                                    >
+                                                        Open Code Workshop
+                                                    </button>
+                                                )}
+
+                                                {m.skills && m.skills.length > 0 && (
+                                                    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-[var(--cream-dark)]/20">
+                                                        {m.skills.map((skill, j) => (
+                                                            <span key={j} className="text-[10px] font-bold uppercase tracking-wider bg-white/50 text-slate-600 px-2 py-1 rounded-md border border-slate-200/50 flex items-center gap-1">
+                                                                <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                                                                {skill}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                                 {isTyping && (
                                     <div className="flex justify-start">
                                         <div className="bg-slate-50 px-4 py-3 rounded-2xl flex gap-1 animate-pulse">
@@ -464,7 +582,7 @@ export default function DashboardClient({
                                         placeholder="Message Adeline..."
                                         className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm ring-[var(--sage)] focus:ring-2 focus:outline-none"
                                     />
-                                    <button type="submit" disabled={!input.trim() || isTyping} className="bg-[var(--sage-dark)] text-white p-2.5 rounded-xl hover:bg-[var(--sage)] transition-colors shadow-sm disabled:opacity-50">
+                                    <button type="submit" disabled={!input.trim() || isTyping} className="bg-[var(--forest)] text-white p-2.5 rounded-xl hover:brightness-110 transition-all shadow-sm disabled:opacity-50">
                                         <Send className="w-5 h-5" />
                                     </button>
                                 </form>
@@ -473,13 +591,50 @@ export default function DashboardClient({
 
                         {/* Sidebar Stats */}
                         <div className="col-span-12 lg:col-span-4 space-y-6 overflow-y-auto no-scrollbar lg:h-[calc(100vh-120px)]">
-                            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
+                            {/* Daily Bread Card */}
+                            <div className="card !p-0 overflow-hidden border-2 border-[var(--ochre)]/30 group">
+                                <div className="bg-[var(--ochre)]/10 p-5 border-b border-[var(--ochre)]/20">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <h3 className="font-bold text-[var(--ochre)] serif flex items-center gap-2">
+                                            <BookOpen className="w-5 h-5" />
+                                            Daily Bread
+                                        </h3>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-[var(--ochre)] opacity-60">Restoring Truth</span>
+                                    </div>
+                                    <p className="text-xs text-[var(--burgundy)]/70 italic">Get back to the original context and meaning.</p>
+                                </div>
+                                <div className="p-5">
+                                    <div className="mb-6 p-4 bg-[var(--cream)] rounded-2xl border border-[var(--ochre)]/10 text-center relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 p-1 opacity-10">
+                                            <Sparkles className="w-8 h-8 text-[var(--ochre)]" />
+                                        </div>
+                                        <p className="text-sm font-medium text-[var(--forest)] italic leading-relaxed mb-3 relative z-10">
+                                            "{todayScripture.text}"
+                                        </p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--ochre)]">
+                                            — {todayScripture.verse}
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        onClick={() => {
+                                            handleSendMessage("Adeline, I want my Daily Bread deep-dive study on a scripture today. Show me the original language and context that modern translations might have missed.");
+                                        }}
+                                        className="w-full py-4 rounded-xl bg-[var(--ochre)] text-white font-black uppercase tracking-[0.2em] text-[10px] shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                                    >
+                                        Start Deep Dive Study
+                                        <ArrowRight className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="card !p-5">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                        <GraduationCap className="w-5 h-5 text-[var(--sage)]" />
+                                    <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2">
+                                        <GraduationCap className="w-5 h-5" />
                                         Goal Progress
                                     </h3>
-                                    <span className="text-2xl font-black text-[var(--sage-dark)]">{overallProgress.toFixed(0)}%</span>
+                                    <span className="text-2xl font-black text-[var(--ochre)]">{overallProgress.toFixed(0)}%</span>
                                 </div>
                                 <div className="w-full bg-slate-100 rounded-full h-3 mb-6 overflow-hidden">
                                     <div className="bg-gradient-to-r from-[var(--sage)] to-[var(--sage-dark)] h-full transition-all duration-1000 ease-out" style={{ width: `${overallProgress}%` }} />
@@ -505,8 +660,8 @@ export default function DashboardClient({
                             </div>
 
                             <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
-                                <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
-                                    <Trophy className="w-5 h-5 text-amber-500" />
+                                <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2 mb-4">
+                                    <Trophy className="w-5 h-5 text-[var(--ochre)]" />
                                     Badges Earned
                                 </h3>
                                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
@@ -532,8 +687,8 @@ export default function DashboardClient({
                             </div>
 
                             <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
-                                <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
-                                    <Sparkles className="w-5 h-5 text-[var(--sage)]" />
+                                <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2 mb-4">
+                                    <Sparkles className="w-5 h-5 text-[var(--ochre)]" />
                                     Skills Earned
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
@@ -548,14 +703,14 @@ export default function DashboardClient({
                             </div>
 
                             {portfolioItems.length > 0 && (
-                                <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
+                                <div className="card !p-5">
                                     <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
                                         <FolderOpen className="w-5 h-5 text-indigo-500" />
                                         Recent Projects
                                     </h3>
                                     <div className="space-y-2">
                                         {portfolioItems.slice(0, 3).map(item => (
-                                            <Link key={item.id} href={`/portfolio/${item.id}`} className="block p-3 rounded-xl border border-slate-50 hover:bg-slate-50 transition-all">
+                                            <Link key={item.id} href="/portfolio" className="block p-3 rounded-xl border border-slate-50 hover:bg-slate-50 transition-all">
                                                 <p className="text-sm font-medium text-slate-700 truncate">{item.title}</p>
                                                 <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-tighter">{item.type}</p>
                                             </Link>
@@ -568,10 +723,55 @@ export default function DashboardClient({
                 </div>
             </main>
 
+            {/* Workspace Slide-over / Area */}
+            {workspaceView !== 'none' && (
+                <div className="fixed inset-y-0 right-0 w-full lg:w-[450px] bg-[var(--cream)] shadow-2xl z-40 border-l border-[var(--cream-dark)] flex flex-col animate-slide-in-right">
+                    <div className="p-4 border-b border-[var(--cream-dark)] flex justify-between items-center bg-white">
+                        <h3 className="font-bold text-slate-800 uppercase text-xs tracking-widest">
+                            {workspaceView === 'whiteboard' ? 'Illustration Room' :
+                                workspaceView === 'code' ? 'Logic Terminal' :
+                                    workspaceView === 'worksheet' ? 'Discovery Sheet' : 'Learning Hub'}
+                        </h3>
+                        <button onClick={() => setWorkspaceView('none')} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+                    <div className="flex-1 p-6 overflow-hidden">
+                        {workspaceView === 'whiteboard' && (
+                            <Whiteboard
+                                onSave={(url) => console.log('Saved whiteboard', url)}
+                                animationData={workspaceData}
+                            />
+                        )}
+                        {workspaceView === 'code' && (
+                            <CodeWorkspace
+                                initialCode={workspaceData || ''}
+                                language="javascript"
+                                onCodeRun={(code) => {
+                                    setInput(`Check my logic: ${code}`);
+                                    handleSendMessage();
+                                    setWorkspaceView('none');
+                                }}
+                            />
+                        )}
+                        {workspaceView === 'worksheet' && (
+                            <DigitalWorksheet
+                                data={workspaceData}
+                                onSubmit={(answers) => {
+                                    setInput(`Here's my discovery: ${JSON.stringify(answers)}`);
+                                    handleSendMessage();
+                                    setWorkspaceView('none');
+                                }}
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Game Modals */}
             {activeGame && (
                 <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-                    <GameCenter type={activeGame} onClose={() => setActiveGame(null)} />
+                    <GameCenter type={activeGame} gameData={gameData} onClose={() => { setActiveGame(null); setGameData(null); }} />
                 </div>
             )}
 
@@ -580,6 +780,29 @@ export default function DashboardClient({
                     htmlContent={customGameHtml}
                     onClose={() => setCustomGameHtml(null)}
                 />
+            )}
+
+            {showCelebration && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
+                    <div className="absolute inset-0 bg-white/20 backdrop-blur-sm animate-fade-in" />
+                    <div className="relative bg-white p-12 rounded-[4rem] shadow-2xl border-4 border-[var(--ochre)] text-center animate-in zoom-in-75 duration-500 max-w-lg pointer-events-auto">
+                        <div className="w-24 h-24 bg-[var(--ochre)]/10 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
+                            <Trophy className="w-12 h-12 text-[var(--ochre)]" />
+                        </div>
+                        <p className="text-[var(--ochre)] font-black uppercase tracking-[0.4em] text-xs mb-4">Mastery Verified</p>
+                        <h2 className="text-5xl font-bold serif text-[var(--forest)] mb-6">New Skills Earned!</h2>
+                        <div className="flex flex-wrap justify-center gap-3 mb-8">
+                            {showCelebration.map((skill, i) => (
+                                <span key={i} className="px-6 py-2 bg-[var(--forest)] text-white font-bold rounded-2xl text-sm shadow-lg animate-in slide-in-from-bottom-2" style={{ animationDelay: `${i * 100}ms` }}>
+                                    {skill}
+                                </span>
+                            ))}
+                        </div>
+                        <button onClick={() => setShowCelebration(null)} className="btn-primary w-full">
+                            Praise God! Continue Discovery
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );

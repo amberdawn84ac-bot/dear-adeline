@@ -144,13 +144,64 @@ export default function LibraryClient({
     const [searchQuery, setSearchQuery] = useState('');
     const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [personalizedContent, setPersonalizedContent] = useState<{
+        personalizedInstructions: string;
+        encouragement: string;
+        keyDiscovery: string;
+    } | null>(null);
+    const [personalizing, setPersonalizing] = useState(false);
+    const [seeding, setSeeding] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const getProjectStatus = (projectId: string) => {
         return studentProjects.find(sp => sp.project_id === projectId)?.status || 'not_started';
     };
 
+    const handleSelectProject = async (project: Project) => {
+        setSelectedProject(project);
+        setPersonalizedContent(null);
+        setPersonalizing(true);
+
+        try {
+            const res = await fetch('/api/projects/personalize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    project,
+                    gradeLevel: gradeLevel || 'all',
+                    studentName: '', // Could be passed from profile
+                }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setPersonalizedContent(data);
+            }
+        } catch (error) {
+            console.error('Error personalizing project:', error);
+        } finally {
+            setPersonalizing(false);
+        }
+    };
+
+    const handleSeedProjects = async () => {
+        setSeeding(true);
+        try {
+            const res = await fetch('/api/projects/seed', { method: 'POST' });
+            if (res.ok) {
+                router.refresh();
+            }
+        } catch (error) {
+            console.error('Error seeding projects:', error);
+        } finally {
+            setSeeding(false);
+        }
+    };
+
     const filteredProjects = projects.filter(project => {
+        // Strict grade filtering: Only show projects that include the student's grade
+        if (gradeLevel && project.grade_levels && !project.grade_levels.includes(gradeLevel)) return false;
+
         if (selectedCategory !== 'all' && project.category !== selectedCategory) return false;
         if (difficultyFilter !== 'all' && project.difficulty !== difficultyFilter) return false;
         if (searchQuery && !project.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
@@ -260,17 +311,34 @@ export default function LibraryClient({
                 </header>
 
                 <div className="p-4 lg:p-8">
-                    {/* Header */}
-                    <div className="mb-8">
-                        <h1 className="text-3xl font-bold mb-2">Project Library</h1>
-                        <p className="text-[var(--charcoal-light)]">
-                            Hands-on projects that earn skills toward graduation
-                        </p>
+                    <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl font-bold mb-2">Project Library</h1>
+                            <p className="text-[var(--charcoal-light)]">
+                                Hands-on projects that earn skills toward graduation
+                            </p>
+                        </div>
+                        {projects.length === 0 && (
+                            <button
+                                onClick={handleSeedProjects}
+                                disabled={seeding}
+                                className="px-6 py-3 bg-[var(--forest)] text-white rounded-2xl font-bold text-sm shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group"
+                            >
+                                {seeding ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                                        Fill Library with Real Projects
+                                    </>
+                                )}
+                            </button>
+                        )}
                     </div>
 
                     {/* Category Cards */}
                     <div className="grid md:grid-cols-3 gap-4 mb-8">
-                        {(Object.entries(categoryConfig) as [keyof typeof categoryConfig, typeof categoryConfig.art][]).map(([key, config]) => {
+                        {(Object.entries(categoryConfig) as [string, any][]).map(([key, config]) => {
                             const count = projects.filter(p => p.category === key).length;
                             const completed = studentProjects.filter(sp =>
                                 projects.find(p => p.id === sp.project_id && p.category === key) && sp.status === 'completed'
@@ -322,15 +390,15 @@ export default function LibraryClient({
                     {/* Projects Grid */}
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredProjects.map((project) => {
-                            const config = categoryConfig[project.category];
+                            const config = categoryConfig[project.category] || categoryConfig['game'];
                             const status = getProjectStatus(project.id);
-                            const diffConfig = difficultyConfig[project.difficulty];
+                            const diffConfig = difficultyConfig[project.difficulty as keyof typeof difficultyConfig] || difficultyConfig.beginner;
 
                             return (
                                 <div
                                     key={project.id}
                                     className="card hover:shadow-lg transition-shadow cursor-pointer"
-                                    onClick={() => setSelectedProject(project)}
+                                    onClick={() => handleSelectProject(project)}
                                 >
                                     {/* Project Image or Placeholder */}
                                     <div className={`h-40 rounded-t-xl -mx-8 -mt-8 mb-4 ${config.bgColor} flex items-center justify-center`}>
@@ -402,11 +470,12 @@ export default function LibraryClient({
 
             {/* Project Detail Modal */}
             {selectedProject && (() => {
-                const SelectedIcon = categoryConfig[selectedProject.category].icon;
+                const config = categoryConfig[selectedProject.category] || categoryConfig['game'];
+                const SelectedIcon = config.icon || Library;
                 return (
                     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                         <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                            <div className={`h-48 ${categoryConfig[selectedProject.category].bgColor} flex items-center justify-center relative`}>
+                            <div className={`h-48 ${config.bgColor} flex items-center justify-center relative`}>
                                 <SelectedIcon className="w-24 h-24 text-white/50" />
                                 <button
                                     onClick={() => setSelectedProject(null)}
@@ -420,8 +489,8 @@ export default function LibraryClient({
                             <div className="p-8">
                                 <div className="flex items-start justify-between mb-4">
                                     <div>
-                                        <span className={`inline-block px-3 py-1 rounded-full text-sm ${difficultyConfig[selectedProject.difficulty].color} mb-2`}>
-                                            {difficultyConfig[selectedProject.difficulty].label}
+                                        <span className={`inline-block px-3 py-1 rounded-full text-sm ${difficultyConfig[selectedProject.difficulty as keyof typeof difficultyConfig]?.color || difficultyConfig.beginner.color} mb-2`}>
+                                            {difficultyConfig[selectedProject.difficulty as keyof typeof difficultyConfig]?.label || 'Standard'}
                                         </span>
                                         <h2 className="text-2xl font-bold">{selectedProject.title}</h2>
                                     </div>
@@ -447,13 +516,34 @@ export default function LibraryClient({
                                     </div>
                                 )}
 
-                                {selectedProject.instructions && (
-                                    <div className="mb-6">
-                                        <h3 className="font-semibold mb-3">Instructions</h3>
-                                        <div className="bg-[var(--cream)] p-4 rounded-xl text-sm whitespace-pre-wrap">
-                                            {selectedProject.instructions}
-                                        </div>
+                                {personalizing ? (
+                                    <div className="mb-6 py-12 flex flex-col items-center justify-center gap-4 bg-[var(--cream)] rounded-2xl animate-pulse">
+                                        <Sparkles className="w-8 h-8 text-[var(--sage)] animate-spin-slow" />
+                                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--charcoal-light)]">Adeline is personalizing your instructions...</p>
                                     </div>
+                                ) : (
+                                    <>
+                                        {personalizedContent && (
+                                            <div className="mb-8 p-6 bg-[var(--ochre)]/10 border-l-4 border-[var(--ochre)] rounded-r-2xl italic font-serif text-[var(--burgundy)] animate-in fade-in slide-in-from-left-4">
+                                                <div className="flex items-center gap-2 mb-2 not-italic">
+                                                    <Sparkles className="w-4 h-4 text-[var(--ochre)]" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">Adeline's Note</span>
+                                                </div>
+                                                "{personalizedContent.encouragement}"
+                                                <div className="mt-4 pt-4 border-t border-[var(--ochre)]/20 not-italic">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60 block mb-1">Your Mission Discovery:</span>
+                                                    <p className="text-sm font-bold text-[var(--forest)]">{personalizedContent.keyDiscovery}</p>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="mb-6">
+                                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Project Instructions</h3>
+                                            <div className="bg-[var(--cream)] p-6 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap font-medium text-[var(--forest)]">
+                                                {personalizedContent?.personalizedInstructions || selectedProject.instructions}
+                                            </div>
+                                        </div>
+                                    </>
                                 )}
 
                                 <div className="flex gap-4">

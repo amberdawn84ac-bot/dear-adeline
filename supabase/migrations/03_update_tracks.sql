@@ -40,7 +40,35 @@ VALUES
   ('English & Literature', 'Reading, writing, and communication.', 'english_lit', 4.0, 'oklahoma'),
   ('Mathematics', 'Logic, numeracy, and geometric design.', 'math', 4.0, 'oklahoma');
 
--- 3. Add app_settings table for visual styling (if not already added)
+-- 3. Add National (Interest-Led) requirements
+DELETE FROM public.graduation_requirements WHERE state_standards = 'national';
+INSERT INTO public.graduation_requirements (name, description, category, required_credits, state_standards)
+VALUES 
+  ('Creation & Science', 'Exploration of the world.', 'creation_science', 3.0, 'national'),
+  ('Health & Life', 'Vitality and body stewardship.', 'health_naturopathy', 2.0, 'national'),
+  ('Food systems', 'Sovereignty and provision.', 'food_systems', 2.0, 'national'),
+  ('Governance', 'Leading and stewardship.', 'gov_econ', 2.0, 'national'),
+  ('Ethics & Justice', 'Right relationship with others.', 'justice', 2.0, 'national'),
+  ('Discipleship', 'Heart and mission.', 'discipleship', 4.0, 'national'),
+  ('Human Story', 'History and cultures.', 'history', 3.0, 'national'),
+  ('Expression', 'Lit and communication.', 'english_lit', 4.0, 'national'),
+  ('Logic & Design', 'Mathematical thinking.', 'math', 3.0, 'national');
+
+-- 4. Add Unstructured (Restored) requirements
+DELETE FROM public.graduation_requirements WHERE state_standards = 'unstructured';
+INSERT INTO public.graduation_requirements (name, description, category, required_credits, state_standards)
+VALUES 
+  ('Ancient Wisdom', 'Creation and science.', 'creation_science', 2.0, 'unstructured'),
+  ('Temple Stewardship', 'Natural health.', 'health_naturopathy', 1.0, 'unstructured'),
+  ('Earth Sovereignty', 'Food systems.', 'food_systems', 2.0, 'unstructured'),
+  ('True Wealth', 'Stewardship and economics.', 'gov_econ', 1.0, 'unstructured'),
+  ('Restored Justice', 'Biblical ethics.', 'justice', 2.0, 'unstructured'),
+  ('Heart Mastery', 'Discipleship and character.', 'discipleship', 10.0, 'unstructured'),
+  ('The Long Memory', 'History and lineage.', 'history', 2.0, 'unstructured'),
+  ('Voice of Truth', 'Literature and expression.', 'english_lit', 2.0, 'unstructured'),
+  ('Creation Order', 'Logic and math.', 'math', 2.0, 'unstructured');
+
+-- 5. Add app_settings table for visual styling (if not already added)
 CREATE TABLE IF NOT EXISTS public.app_settings (
   key text PRIMARY KEY,
   value jsonb NOT NULL,
