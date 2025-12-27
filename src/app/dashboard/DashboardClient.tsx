@@ -138,11 +138,11 @@ export default function DashboardClient({
             const params = new URLSearchParams(window.location.search);
             const shouldOnboard = params.get('onboarding') === 'true';
 
-            if (shouldOnboard && profile?.role === 'student' && (!profile.grade_level || !profile.state_standards)) {
+            if (shouldOnboard) {
                 setShowOnboarding(true);
             }
         }
-    }, [profile]);
+    }, []);
 
     useEffect(() => {
         setIsClient(true);
