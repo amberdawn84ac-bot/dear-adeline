@@ -50,14 +50,15 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
 
         const { error } = await supabase
             .from('profiles')
-            .update({
+            .upsert({
+                id: userId,
+                email: data.email || undefined, // Include email if available
                 display_name: data.display_name,
                 grade_level: data.grade_level,
                 state_standards: data.state_standards,
                 city: data.city,
                 updated_at: new Date().toISOString()
-            })
-            .eq('id', userId);
+            }, { onConflict: 'id' });
 
         if (!error) {
             onComplete(data);

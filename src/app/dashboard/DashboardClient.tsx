@@ -130,9 +130,13 @@ export default function DashboardClient({
     const router = useRouter();
     const [messages, setMessages] = useState<Message[]>([]);
     const [isClient, setIsClient] = useState(false);
-    const [showOnboarding, setShowOnboarding] = useState(
-        profile?.role === 'student' && (!profile?.grade_level || !profile?.state_standards)
-    );
+    const [showOnboarding, setShowOnboarding] = useState(() => {
+        if (profile) {
+            return profile.role === 'student' && (!profile.grade_level || !profile.state_standards);
+        }
+        // Fallback to user metadata if profile hasn't loaded yet
+        return (user.user_metadata?.role || 'student') === 'student';
+    });
 
     useEffect(() => {
         setIsClient(true);
