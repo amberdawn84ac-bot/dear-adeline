@@ -199,7 +199,7 @@ ${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/$
 
         // 4. Call Anthropic
         const response = await anthropic.messages.create({
-            model: 'claude-3-5-sonnet-latest',
+            model: 'claude-3-5-sonnet-20241022',
             max_tokens: 2048,
             system: SYSTEM_PROMPT + '\n\n' + studentContext,
             messages: finalMessages,
