@@ -29,7 +29,9 @@ import {
     LogOut,
     Leaf,
     BarChart3,
-    Rocket
+    Rocket,
+    Loader2,
+    Save
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -66,7 +68,7 @@ interface EarnedSkill {
 }
 
 interface TrackerClientProps {
-    profile: { display_name: string | null; state_standards: string | null } | null;
+    profile: { id: string, role: string, display_name: string | null; state_standards: string | null } | null;
     requirements: Requirement[];
     progress: Progress[];
     earnedSkills: EarnedSkill[];
@@ -110,20 +112,26 @@ export default function TrackerClient({
 }: TrackerClientProps) {
     const router = useRouter();
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
     const [blueprint, setBlueprint] = useState<any>(null);
     const [loadingBlueprint, setLoadingBlueprint] = useState(true);
+    const [localRequirements, setLocalRequirements] = useState<Requirement[]>(requirements);
+    const [discovering, setDiscovering] = useState(false);
+    const [publishing, setPublishing] = useState(false);
+    const isAdmin = profile?.role === 'admin';
+    const hasPersistentRequirements = requirements.length > 0;
     const complianceMode = !!profile?.state_standards;
 
     useEffect(() => {
         const fetchBlueprint = async () => {
+            if (localRequirements.length === 0) return;
+            setLoadingBlueprint(true);
             try {
                 const res = await fetch('/api/graduation-blueprint', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         profile,
-                        requirements,
+                        requirements: localRequirements,
                         progress,
                         earnedSkills,
                         portfolio,
@@ -139,7 +147,52 @@ export default function TrackerClient({
             }
         };
         fetchBlueprint();
-    }, [profile, requirements, progress, earnedSkills, portfolio, topics]);
+    }, [profile, localRequirements, progress, earnedSkills, portfolio, topics]);
+
+    const handleDiscoverRequirements = async () => {
+        if (!profile?.state_standards) return;
+        setDiscovering(true);
+        try {
+            const res = await fetch('/api/graduation-requirements/discover', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ state: profile.state_standards }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.requirements) {
+                    setLocalRequirements(data.requirements);
+                }
+            }
+        } catch (error) {
+            console.error('Discovery failed:', error);
+        } finally {
+            setDiscovering(false);
+        }
+    };
+
+    const handlePublishRequirements = async () => {
+        if (!profile?.state_standards || localRequirements.length === 0) return;
+        setPublishing(true);
+        try {
+            const res = await fetch('/api/graduation-requirements/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    requirements: localRequirements,
+                    state: profile.state_standards
+                }),
+            });
+            if (res.ok) {
+                router.refresh();
+                // We'll keep the local ones for now but refresh might update props
+            }
+        } catch (error) {
+            console.error('Publishing failed:', error);
+        } finally {
+            setPublishing(false);
+        }
+    };
 
     const toggleCategory = (category: string) => {
         setExpandedCategories(prev =>
@@ -244,11 +297,28 @@ export default function TrackerClient({
 
                 <div className="p-4 lg:p-8">
                     {/* Header */}
-                    <div className="mb-8">
-                        <h1 className="text-4xl font-normal serif text-[var(--forest)] mb-2">Mastery Roadmap</h1>
-                        <p className="text-[var(--charcoal-light)] font-medium">
-                            Charting your growth across the 9 tracks of discovery.
-                        </p>
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+                        <div>
+                            <h1 className="text-4xl font-normal serif text-[var(--forest)] mb-2">Mastery Roadmap</h1>
+                            <p className="text-[var(--charcoal-light)] font-medium">
+                                Charting your growth across the 9 tracks of discovery.
+                            </p>
+                        </div>
+
+                        {isAdmin && localRequirements.length > 0 && !hasPersistentRequirements && (
+                            <button
+                                onClick={handlePublishRequirements}
+                                disabled={publishing}
+                                className="px-6 py-3 bg-[var(--ochre)] text-white rounded-2xl font-bold shadow-lg hover:brightness-110 transition-all flex items-center gap-2 group animate-in fade-in slide-in-from-right-4"
+                            >
+                                {publishing ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    <Save className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                )}
+                                Publish for {profile?.state_standards}
+                            </button>
+                        )}
                     </div>
 
                     {/* Overall Progress Card */}
@@ -426,12 +496,35 @@ export default function TrackerClient({
 
                     {/* Mastery Tracks Split */}
                     <div className="space-y-12">
-                        {requirements.length === 0 ? (
+                        {localRequirements.length === 0 ? (
                             <div className="card-glass p-12 text-center bg-white border-2 border-dashed border-slate-200">
-                                <Target className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                                <h3 className="text-xl font-bold text-slate-400 serif mb-2">No Roadmap Found</h3>
-                                <p className="text-slate-400 text-sm max-w-sm mx-auto italic">
-                                    Choose your path in settings to see your discovery tracks.
+                                <div className="w-16 h-16 bg-[var(--sage)]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <Target className="w-8 h-8 text-[var(--sage)]" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-700 serif mb-3">Roadmap Not Initialized</h3>
+                                <p className="text-slate-500 text-sm max-w-sm mx-auto mb-8 font-medium">
+                                    We haven't indexed the graduation standards for <span className="text-[var(--forest)] font-bold capitalize">{profile?.state_standards || 'your state'}</span> yet.
+                                    Adeline can discover them for you right now using public datasets.
+                                </p>
+                                <button
+                                    onClick={handleDiscoverRequirements}
+                                    disabled={discovering}
+                                    className="btn-primary"
+                                >
+                                    {discovering ? (
+                                        <>
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            Searching State Records...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles className="w-5 h-5" />
+                                            Discover My Roadmap
+                                        </>
+                                    )}
+                                </button>
+                                <p className="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                                    Adeline will prioritize Public School standards for full compliance.
                                 </p>
                             </div>
                         ) : (
@@ -450,14 +543,14 @@ export default function TrackerClient({
                                         )}
                                     </div>
                                     <div className="space-y-4">
-                                        {requirements.filter(r => ['discipleship', 'justice'].includes(r.category)).map((req) => (
-                                            <RequirementCard key={req.id} req={req} />
+                                        {localRequirements.filter(r => ['discipleship', 'justice'].includes(r.category)).map((req) => (
+                                            <RequirementCard key={req.id || req.name} req={req} />
                                         ))}
                                     </div>
                                 </section>
 
                                 {/* Academic Foundation - The "Compliance" Requirements */}
-                                <section>
+                                <section className="mt-12">
                                     <div className="flex items-center gap-3 mb-6">
                                         <div className="w-8 h-8 rounded-full bg-[var(--forest)]/10 flex items-center justify-center">
                                             <Scale className="w-4 h-4 text-[var(--forest)]" />
@@ -470,8 +563,8 @@ export default function TrackerClient({
                                         )}
                                     </div>
                                     <div className="space-y-4">
-                                        {requirements.filter(r => !['discipleship', 'justice'].includes(r.category)).map((req) => (
-                                            <RequirementCard key={req.id} req={req} />
+                                        {localRequirements.filter(r => !['discipleship', 'justice'].includes(r.category)).map((req) => (
+                                            <RequirementCard key={req.id || req.name} req={req} />
                                         ))}
                                     </div>
                                 </section>

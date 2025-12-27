@@ -21,9 +21,26 @@ export default async function Home() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const ctaLink = user ? "/dashboard" : "/login";
+  let profile = null;
+  if (user) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+    profile = data;
+  }
+
+  const getDashboardLink = (role?: string) => {
+    if (role === 'admin') return "/dashboard/admin";
+    if (role === 'teacher') return "/dashboard/teacher";
+    return "/dashboard";
+  };
+
+  const ctaLink = user ? getDashboardLink(profile?.role) : "/login";
   const ctaText = user ? "Continue Learning" : "Join the Academy";
   const secondaryCtaLink = user ? "/portfolio" : "/login";
+  const loginLink = user ? getDashboardLink(profile?.role) : "/login";
   return (
     <div className="min-h-screen bg-[var(--cream)] text-[var(--burgundy)] font-body selection:bg-[var(--ochre)]/20">
       {/* Navigation */}
@@ -39,9 +56,15 @@ export default async function Home() {
           <div className="hidden md:flex items-center gap-10">
             <Link href="#experience" className="text-xs font-bold uppercase tracking-widest text-[var(--forest)]/60 hover:text-[var(--forest)] transition-colors">Experience</Link>
             <Link href="#philosophy" className="text-xs font-bold uppercase tracking-widest text-[var(--forest)]/60 hover:text-[var(--forest)] transition-colors">Philosophy</Link>
-            <Link href="/login" className="px-6 py-2.5 rounded-full border-2 border-[var(--forest)] text-[var(--forest)] text-xs font-black uppercase tracking-widest hover:bg-[var(--forest)] hover:text-white transition-all">Log In</Link>
+            {profile?.role === 'admin' ? (
+              <Link href="/dashboard/admin" className="px-6 py-2.5 rounded-full border-2 border-purple-500 text-purple-500 text-xs font-black uppercase tracking-widest hover:bg-purple-500 hover:text-white transition-all">Admin Hub</Link>
+            ) : (
+              <Link href={loginLink} className="px-6 py-2.5 rounded-full border-2 border-[var(--forest)] text-[var(--forest)] text-xs font-black uppercase tracking-widest hover:bg-[var(--forest)] hover:text-white transition-all">
+                {user ? "Portal" : "Log In"}
+              </Link>
+            )}
             <Link href={ctaLink} className="px-8 py-4 rounded-full bg-[var(--burgundy)] text-white text-xs font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all">
-              {user ? "Dashboard" : "Launch App"}
+              {user ? (profile?.role === 'admin' ? "Admin Hub" : "Dashboard") : "Launch App"}
             </Link>
           </div>
         </div>

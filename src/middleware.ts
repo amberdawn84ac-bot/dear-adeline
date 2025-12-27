@@ -40,9 +40,23 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(url);
     }
 
-    // If authenticated and accessing login, redirect to dashboard
+    // If authenticated and accessing login, redirect to appropriate dashboard based on role
     if (user && request.nextUrl.pathname === '/login') {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        const role = profile?.role || 'student';
+
+        if (role === 'admin') {
+            return NextResponse.redirect(new URL('/dashboard/admin', request.url));
+        } else if (role === 'teacher') {
+            return NextResponse.redirect(new URL('/dashboard/teacher', request.url));
+        } else {
+            return NextResponse.redirect(new URL('/dashboard', request.url));
+        }
     }
 
     // Role-based access control

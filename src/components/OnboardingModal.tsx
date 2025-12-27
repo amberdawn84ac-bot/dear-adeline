@@ -25,7 +25,7 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
         display_name: '',
         grade_level: '',
         state_standards: 'oklahoma',
-        city: 'Nowata, OK'
+        city: 'Nowata'
     });
 
     const isStepValid = () => {
@@ -152,16 +152,16 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                                     <MapPin className="w-4 h-4" />
                                     Your Hub of Influence
                                 </label>
-                                <h3 className="text-xl font-bold serif text-[var(--forest)] mb-6">Where are you located? (City, State)</h3>
+                                <h3 className="text-xl font-bold serif text-[var(--forest)] mb-6">Which city are you in?</h3>
                                 <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-                                    Adeline uses this to gather local weather, news, and student opportunities specific to your area.
+                                    Adeline uses this to gather local weather, news, and student opportunities specific to your city.
                                 </p>
                                 <input
                                     type="text"
                                     autoFocus
                                     value={data.city}
                                     onChange={(e) => setData({ ...data, city: e.target.value })}
-                                    placeholder="e.g. Nowata, OK"
+                                    placeholder="e.g. Nowata"
                                     className="w-full bg-white/50 border-2 border-[var(--forest)]/10 rounded-[2rem] px-8 py-6 text-2xl font-bold serif text-[var(--forest)] focus:outline-none focus:border-[var(--forest)]/30 transition-all shadow-inner"
                                 />
                             </div>
@@ -171,32 +171,25 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                                 <label className="block text-sm font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
                                     <MapPin className="w-4 h-4" />
-                                    The Path of Law
+                                    Your Home State
                                 </label>
-                                <h3 className="text-xl font-bold serif text-[var(--forest)] mb-6">Which state's requirements should we track?</h3>
-                                <div className="space-y-3">
+                                <h3 className="text-xl font-bold serif text-[var(--forest)] mb-6">Which state do you live in?</h3>
+                                <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                                    This helps Adeline align your journey with local requirements.
+                                </p>
+                                <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                                     {[
-                                        { v: 'oklahoma', l: 'Oklahoma (Standard)' },
-                                        { v: 'national', l: 'National (Interest-Led)' },
-                                        { v: 'unstructured', l: 'Unstructured (Restored)' }
-                                    ].map((s) => (
+                                        'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'
+                                    ].map((state) => (
                                         <button
-                                            key={s.v}
-                                            onClick={() => setData({ ...data, state_standards: s.v })}
-                                            className={`w-full p-6 rounded-[2rem] border-2 text-left transition-all relative group ${data.state_standards === s.v
-                                                ? 'bg-[var(--ochre)]/10 border-[var(--ochre)] text-[var(--burgundy)]'
-                                                : 'bg-white border-slate-100 text-slate-500 hover:border-[var(--ochre)]/20'
+                                            key={state}
+                                            onClick={() => setData({ ...data, state_standards: state.toLowerCase() })}
+                                            className={`p-4 rounded-2xl border-2 text-left transition-all font-bold text-sm ${data.state_standards === state.toLowerCase()
+                                                ? 'bg-[var(--forest)] border-[var(--forest)] text-white shadow-lg'
+                                                : 'bg-white border-slate-100 text-slate-400 hover:border-[var(--forest)]/20'
                                                 }`}
                                         >
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <p className="font-bold text-lg">{s.l}</p>
-                                                    <p className="text-xs opacity-60">
-                                                        {s.v === 'oklahoma' ? 'Full regulatory tracking' : 'Flexibly track any mastery area'}
-                                                    </p>
-                                                </div>
-                                                {data.state_standards === s.v && <CheckCircle2 className="w-6 h-6" />}
-                                            </div>
+                                            {state}
                                         </button>
                                     ))}
                                 </div>

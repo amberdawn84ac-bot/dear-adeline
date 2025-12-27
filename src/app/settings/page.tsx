@@ -169,11 +169,11 @@ export default function SettingsPage() {
                             </p>
                         </div>
 
-                        {/* State Standards */}
+                        {/* Home State */}
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
                                 <Globe className="w-4 h-4" />
-                                Academic Standards
+                                Home State
                             </label>
                             <select
                                 value={profile.state_standards}
@@ -181,9 +181,14 @@ export default function SettingsPage() {
                                 className="input w-full"
                                 required
                             >
-                                <option value="oklahoma">Oklahoma (Standard)</option>
-                                <option value="national">National (Common Core)</option>
-                                <option value="unstructured">Unstructured / Interest-Led</option>
+                                <option value="" disabled>Select your state</option>
+                                {[
+                                    'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'
+                                ].map((state) => (
+                                    <option key={state} value={state.toLowerCase()}>
+                                        {state}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 

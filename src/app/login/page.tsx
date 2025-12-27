@@ -11,7 +11,8 @@ import {
     EyeOff,
     ArrowRight,
     AlertCircle,
-    Loader2
+    Loader2,
+    Shield
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -56,7 +57,9 @@ export default function LoginPage() {
                         .eq('id', data.user.id)
                         .single();
 
-                    if (profile?.role === 'teacher' || profile?.role === 'admin') {
+                    if (profile?.role === 'admin') {
+                        router.push('/dashboard/admin');
+                    } else if (profile?.role === 'teacher') {
                         router.push('/dashboard/teacher');
                     } else {
                         router.push('/dashboard');
@@ -307,7 +310,7 @@ export default function LoginPage() {
                             </button>
                         </form>
 
-                        <div className="mt-6 pt-6 border-t border-[var(--cream-dark)] text-center">
+                        <div className="mt-6 pt-6 border-t border-[var(--cream-dark)] text-center space-y-4">
                             <p className="text-sm text-[var(--charcoal-light)]">
                                 {isLogin ? "Don't have an account? " : 'Already have an account? '}
                                 <button
@@ -317,6 +320,26 @@ export default function LoginPage() {
                                     {isLogin ? 'Sign up' : 'Sign in'}
                                 </button>
                             </p>
+
+                            {isLogin && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2 py-4">
+                                        <div className="h-[1px] flex-1 bg-[var(--cream-dark)]"></div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">Staff Access</span>
+                                        <div className="h-[1px] flex-1 bg-[var(--cream-dark)]"></div>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            setEmail('admin@dearadeline.com');
+                                            // Focus password field
+                                        }}
+                                        className="w-full py-3 rounded-xl border-2 border-purple-100 text-purple-600 font-bold text-sm hover:bg-purple-50 hover:border-purple-200 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <Shield className="w-4 h-4" />
+                                        Log In to Admin Office
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
