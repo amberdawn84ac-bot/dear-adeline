@@ -36,7 +36,7 @@ Original Instructions: ${project.instructions}
 Please adapt this for a grade ${gradeLevel} student.`;
 
         const response = await anthropic.messages.create({
-            model: 'claude-sonnet-4-20250514',
+            model: 'claude-3-5-sonnet-latest',
             max_tokens: 1000,
             system: systemPrompt,
             messages: [{ role: 'user', content: userPrompt }],
