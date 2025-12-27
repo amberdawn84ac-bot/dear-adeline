@@ -129,7 +129,7 @@ Map the required credits to our 9 tracks.
 `;
 
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-latest',
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 2048,
       messages: [{ role: 'user', content: prompt }],
       system: "You only output valid JSON. Return an array of 9 objects, one for each of the Modern Tracks."
