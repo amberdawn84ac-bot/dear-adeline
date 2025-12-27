@@ -88,11 +88,21 @@ export default function LoginPage() {
 
                 if (error) throw error;
 
-                // For students, we want to trigger onboarding immediately after email confirmation
-                if (role === 'student') {
-                    setMessage('Check your email to confirm your account, then complete your profile setup!');
+                // If email confirmation is disabled (dev mode), user is immediately logged in
+                // Redirect students directly to onboarding
+                if (signupData?.user && signupData?.session) {
+                    if (role === 'student') {
+                        router.push('/dashboard?onboarding=true');
+                    } else if (role === 'teacher') {
+                        router.push('/dashboard/teacher');
+                    }
                 } else {
-                    setMessage('Check your email for the confirmation link!');
+                    // Email confirmation required
+                    if (role === 'student') {
+                        setMessage('Check your email to confirm your account, then complete your profile setup!');
+                    } else {
+                        setMessage('Check your email for the confirmation link!');
+                    }
                 }
             }
         } catch (err) {
