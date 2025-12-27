@@ -75,11 +75,11 @@ export default function LoginPage() {
                     throw new Error('Password must be at least 6 characters');
                 }
 
-                const { error } = await supabase.auth.signUp({
+                const { data: signupData, error } = await supabase.auth.signUp({
                     email,
                     password,
                     options: {
-                        emailRedirectTo: `${window.location.origin}/auth/callback`,
+                        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard${role === 'student' ? '?onboarding=true' : ''}`,
                         data: {
                             role: role
                         }
@@ -88,7 +88,12 @@ export default function LoginPage() {
 
                 if (error) throw error;
 
-                setMessage('Check your email for the confirmation link!');
+                // For students, we want to trigger onboarding immediately after email confirmation
+                if (role === 'student') {
+                    setMessage('Check your email to confirm your account, then complete your profile setup!');
+                } else {
+                    setMessage('Check your email for the confirmation link!');
+                }
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');

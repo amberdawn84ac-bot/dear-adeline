@@ -133,14 +133,16 @@ export default function DashboardClient({
     const [showOnboarding, setShowOnboarding] = useState(false);
 
     useEffect(() => {
-        if (profile) {
-            const needsOnboarding = profile.role === 'student' && (!profile.grade_level || !profile.state_standards);
-            setShowOnboarding(needsOnboarding);
-        } else {
-            const isStudent = (user.user_metadata?.role || 'student') === 'student';
-            setShowOnboarding(isStudent);
+        // Only show onboarding if explicitly requested via URL parameter (set during signup)
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const shouldOnboard = params.get('onboarding') === 'true';
+
+            if (shouldOnboard && profile?.role === 'student' && (!profile.grade_level || !profile.state_standards)) {
+                setShowOnboarding(true);
+            }
         }
-    }, [profile, user.user_metadata?.role]);
+    }, [profile]);
 
     useEffect(() => {
         setIsClient(true);
@@ -478,6 +480,10 @@ export default function DashboardClient({
                                 userId={user.id}
                                 onComplete={() => {
                                     setShowOnboarding(false);
+                                    // Remove the onboarding parameter from URL
+                                    const url = new URL(window.location.href);
+                                    url.searchParams.delete('onboarding');
+                                    window.history.replaceState({}, '', url);
                                     router.refresh();
                                 }}
                             />
