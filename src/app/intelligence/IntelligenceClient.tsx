@@ -31,6 +31,7 @@ export default function IntelligenceClient({ profile, currentTopic }: Intelligen
     const [error, setError] = useState<string | null>(null);
     const [location, setLocation] = useState(profile?.city || 'Nowata, OK');
     const [isEditing, setIsEditing] = useState(false);
+    const [showAllOpportunities, setShowAllOpportunities] = useState(false);
 
     const fetchIntelligence = async (cityToFetch: string) => {
         setRefreshing(true);
@@ -216,14 +217,14 @@ export default function IntelligenceClient({ profile, currentTopic }: Intelligen
                         </span>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {data?.opportunities?.map((opp: any, i: number) => (
+                    <div className="space-y-6">
+                        {data?.opportunities?.slice(0, showAllOpportunities ? undefined : 4).map((opp: any, i: number) => (
                             <a
                                 key={i}
                                 href={opp.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="group relative card-glass p-8 bg-white border-2 border-slate-50 hover:border-amber-200 hover:shadow-2xl transition-all overflow-hidden"
+                                className="group relative card-glass p-8 bg-white border-2 border-slate-50 hover:border-amber-200 hover:shadow-2xl transition-all overflow-hidden block"
                             >
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition-opacity">
                                     <Award className="w-12 h-12 text-amber-400" />
@@ -239,7 +240,7 @@ export default function IntelligenceClient({ profile, currentTopic }: Intelligen
                                         {opp.title}
                                     </h3>
 
-                                    <p className="text-sm text-slate-500 leading-relaxed mb-6 line-clamp-3">
+                                    <p className="text-sm text-slate-500 leading-relaxed mb-6">
                                         {opp.content}
                                     </p>
 
@@ -259,6 +260,15 @@ export default function IntelligenceClient({ profile, currentTopic }: Intelligen
                                 </div>
                             </a>
                         ))}
+
+                        {data?.opportunities?.length > 4 && !showAllOpportunities && (
+                            <button
+                                onClick={() => setShowAllOpportunities(true)}
+                                className="w-full py-4 bg-amber-50 hover:bg-amber-100 border-2 border-amber-200 rounded-2xl text-amber-700 font-bold transition-all hover:scale-[1.02] active:scale-95"
+                            >
+                                Show {data.opportunities.length - 4} More Opportunities
+                            </button>
+                        )}
                     </div>
 
                     {(!data?.opportunities || data?.opportunities?.length === 0) && (
