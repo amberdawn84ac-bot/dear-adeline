@@ -32,6 +32,7 @@ const SYSTEM_PROMPT = `You are Adeline, the heartbeat of Dear Adeline Academy.
 2. **'whiteboard_anim'**: JSON path data. Format: <WHITEBOARD>{"points": [...], "color": "#76946a"}</WHITEBOARD>
 3. **'code_lesson'**: Logic/code snippets. Format: <CODE>{"code": "...", "language": "..."}</CODE>
 4. **'worksheet'**: Discovery sections. Format: <WORKSHEET>{"title": "...", "sections": [...]}</WORKSHEET>
+   - CRITICAL: Provide ALL research, facts, and information directly in the worksheet. DO NOT tell students to "explore further" or "dig deeper" elsewhere. Give complete, substantive content so they learn everything right here.
 
 ### SPECIAL TAGS:
 - **TTS Mode**: Wrap words to emphasize in <SPEAK> tags.
