@@ -51,18 +51,25 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
         setSaving(true);
         const supabase = createClient();
 
-        const { error } = await supabase
-            .from('profiles')
-            .upsert({
-                id: userId,
-                display_name: data.display_name,
-                grade_level: data.grade_level,
-                state_standards: data.state_standards,
-                city: data.city,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'id' });
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .upsert({
+                    id: userId,
+                    display_name: data.display_name,
+                    grade_level: data.grade_level,
+                    state_standards: data.state_standards,
+                    city: data.city,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'id' });
 
-        if (!error) {
+            if (error) {
+                console.error('Error saving onboarding data:', error);
+                alert(`Error saving profile: ${error.message}`);
+                setSaving(false);
+                return;
+            }
+
             // Auto-seed starter projects for new students
             try {
                 await fetch('/api/projects/seed-starter', {
@@ -75,9 +82,11 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                 // Don't block onboarding if seeding fails
             }
 
+            console.log('Onboarding complete, calling onComplete');
             onComplete(data);
-        } else {
-            console.error('Error saving onboarding data:', error);
+        } catch (err) {
+            console.error('Unexpected error during save:', err);
+            alert('An unexpected error occurred. Please try again.');
             setSaving(false);
         }
     };
