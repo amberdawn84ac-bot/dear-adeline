@@ -266,9 +266,10 @@ export default function DashboardClient({
 
             const data = await response.json();
 
-            if (data.speak) {
-                speakText(data.speak);
-            }
+            // Disabled robotic browser TTS - use Voice button for natural speech instead
+            // if (data.speak) {
+            //     speakText(data.speak);
+            // }
 
             // Parse game tags from response
             let gameType: string | undefined;
