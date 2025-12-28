@@ -49,6 +49,7 @@ import { CodingGame } from '@/components/CodingGame';
 import { DigitalWorksheet } from '@/components/DigitalWorksheet';
 import { CodeWorkspace } from '@/components/CodeWorkspace';
 import { OnboardingModal } from '@/components/OnboardingModal';
+import { VoiceSession } from '@/components/VoiceSession';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -172,6 +173,7 @@ export default function DashboardClient({
     const [workspaceView, setWorkspaceView] = useState<'none' | 'whiteboard' | 'code' | 'worksheet' | 'game'>('none');
     const [workspaceData, setWorkspaceData] = useState<any>(null);
     const [showCelebration, setShowCelebration] = useState<string[] | null>(null);
+    const [showVoiceSession, setShowVoiceSession] = useState(false);
 
     const dailyScriptures = [
         { verse: "Micah 6:8", text: "He has shown you, O mortal, what is good. And what does the Lord require of you? To act justly and to love mercy and to walk humbly with your God." },
@@ -492,14 +494,23 @@ export default function DashboardClient({
                         {/* Chat Area */}
                         <div className="col-span-12 lg:col-span-8 flex flex-col h-[500px] md:h-[600px] lg:h-[calc(100vh-120px)] bg-white rounded-2xl shadow-sm border border-[var(--cream-dark)] overflow-hidden">
                             <div className="p-4 border-b border-[var(--cream-dark)]">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-[var(--forest)]/10 flex items-center justify-center">
-                                        <Brain className="w-6 h-6 text-[var(--forest)]" />
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-[var(--forest)]/10 flex items-center justify-center">
+                                            <Brain className="w-6 h-6 text-[var(--forest)]" />
+                                        </div>
+                                        <div>
+                                            <h2 className="font-bold text-[var(--forest)] serif">Learning Chat</h2>
+                                            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest opacity-60">Talk to Adeline</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h2 className="font-bold text-[var(--forest)] serif">Learning Chat</h2>
-                                        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest opacity-60">Talk to Adeline</p>
-                                    </div>
+                                    <button
+                                        onClick={() => setShowVoiceSession(true)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-[var(--sage-light)] text-[var(--sage-dark)] rounded-xl hover:bg-[var(--sage)] hover:text-white transition-all font-medium text-sm"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                                        Voice
+                                    </button>
                                 </div>
                             </div>
 
@@ -819,6 +830,14 @@ export default function DashboardClient({
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* Voice Session Modal */}
+            {showVoiceSession && (
+                <VoiceSession
+                    onClose={() => setShowVoiceSession(false)}
+                    studentName={profile?.display_name || undefined}
+                />
             )}
         </div>
     );
