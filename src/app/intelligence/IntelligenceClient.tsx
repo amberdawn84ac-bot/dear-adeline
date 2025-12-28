@@ -278,6 +278,71 @@ export default function IntelligenceClient({ profile, currentTopic }: Intelligen
                         </div>
                     )}
                 </section>
+
+                {/* National Opportunities Section */}
+                <section className="animate-in fade-in slide-in-from-bottom-6 duration-1000">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center">
+                            <Trophy className="w-5 h-5 text-blue-500" />
+                        </div>
+                        <h2 className="text-2xl font-bold serif">National Youth Opportunities</h2>
+                        <span className="ml-auto text-[10px] font-black uppercase tracking-[0.2em] text-blue-500 bg-blue-50 px-3 py-1.5 rounded-full">
+                            Contests & Scholarships
+                        </span>
+                    </div>
+
+                    <div className="space-y-6">
+                        {data?.nationalOpportunities?.map((opp: any, i: number) => (
+                            <a
+                                key={i}
+                                href={opp.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative card-glass p-8 bg-white border-2 border-slate-50 hover:border-blue-200 hover:shadow-2xl transition-all overflow-hidden block"
+                            >
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition-opacity">
+                                    <Award className="w-12 h-12 text-blue-400" />
+                                </div>
+
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-blue-500">National Opportunity</span>
+                                    </div>
+
+                                    <h3 className="text-xl font-bold text-[var(--forest)] mb-3 group-hover:text-blue-700 transition-colors">
+                                        {opp.title}
+                                    </h3>
+
+                                    <p className="text-sm text-slate-500 leading-relaxed mb-6">
+                                        {opp.content}
+                                    </p>
+
+                                    <div className="flex items-center justify-between pt-6 border-t border-slate-50">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center">
+                                                <Target className="w-3 h-3 text-slate-400" />
+                                            </div>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                {new URL(opp.url).hostname.replace('www.', '')}
+                                            </span>
+                                        </div>
+                                        <div className="px-4 py-2 bg-blue-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all group-hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/10">
+                                            View Details
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        ))}
+                    </div>
+
+                    {(!data?.nationalOpportunities || data?.nationalOpportunities?.length === 0) && (
+                        <div className="card-glass p-12 text-center bg-blue-50/30 border-dashed">
+                            <Trophy className="w-8 h-8 text-blue-200 mx-auto mb-3" />
+                            <p className="text-blue-400 text-sm italic">Searching for national contests and scholarships...</p>
+                        </div>
+                    )}
+                </section>
             </main>
 
             {/* Integration Tip Footnote */}

@@ -61,10 +61,25 @@ export async function POST(req: Request) {
         });
         const oppsData = await oppsResponse.json();
 
+        // 4. Get National Youth Opportunities
+        const nationalQuery = `national youth contests scholarships grants 2025: spelling bee, science fair, poetry contest, writing contest, art competition, student opportunities`;
+        const nationalResponse = await fetch('https://api.tavily.com/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                api_key: apiKey,
+                query: nationalQuery,
+                search_depth: 'advanced',
+                max_results: 6,
+            }),
+        });
+        const nationalData = await nationalResponse.json();
+
         return NextResponse.json({
             weather: weatherData.answer || 'Weather information temporarily unavailable.',
             news: newsData.results || [],
             opportunities: oppsData.results || [],
+            nationalOpportunities: nationalData.results || [],
         });
     } catch (error) {
         console.error('Intelligence fetch error:', error);
