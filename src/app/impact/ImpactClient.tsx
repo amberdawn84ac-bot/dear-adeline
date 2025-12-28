@@ -76,7 +76,7 @@ export default function ImpactClient() {
                     <div className="absolute bottom-0 left-0 w-1/2 h-full bg-gradient-to-t from-white/5 to-transparent" />
 
                     <div className="relative z-10 max-w-2xl">
-                        <div className="flex items-center gap-3 text-[var(--sage)] mb-6">
+                        <div className="flex items-center gap-3 text-[var(--ochre)] mb-6">
                             <Globe className="w-6 h-6 animate-pulse" />
                             <span className="text-[10px] font-black uppercase tracking-[0.4em]">World Restoration Initiative</span>
                         </div>
@@ -109,8 +109,8 @@ export default function ImpactClient() {
                             key={f}
                             onClick={() => setFilter(f as any)}
                             className={`px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${filter === f
-                                    ? 'bg-[var(--forest)] text-white shadow-xl scale-105'
-                                    : 'bg-white text-slate-400 hover:text-[var(--forest)] border border-slate-100 shadow-sm'
+                                ? 'bg-[var(--forest)] text-white shadow-xl scale-105'
+                                : 'bg-white text-slate-400 hover:text-[var(--forest)] border border-slate-100 shadow-sm'
                                 }`}
                         >
                             {f}
@@ -136,7 +136,7 @@ export default function ImpactClient() {
 
                                     <div className="mb-6">
                                         <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[var(--ochre)] mb-2 block">{campaign.category}</span>
-                                        <h3 className="text-xl font-bold serif text-[var(--forest)] group-hover:text-[var(--sage-dark)] transition-colors">{campaign.title}</h3>
+                                        <h3 className="text-xl font-bold serif text-[var(--forest)] group-hover:text-[var(--burgundy)] transition-colors">{campaign.title}</h3>
                                     </div>
 
                                     <p className="text-sm text-slate-500 leading-relaxed mb-8 line-clamp-3 italic">
@@ -145,7 +145,7 @@ export default function ImpactClient() {
 
                                     <div className="space-y-4 mb-10">
                                         <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                            <Zap className="w-4 h-4 text-[var(--sage)]" />
+                                            <Zap className="w-4 h-4 text-[var(--burgundy)]" />
                                             Key Metrics for Success
                                         </div>
                                         <div className="flex flex-wrap gap-2">
@@ -166,7 +166,7 @@ export default function ImpactClient() {
                                                     U{i}
                                                 </div>
                                             ))}
-                                            <div className="w-8 h-8 rounded-full bg-[var(--sage)]/20 border-2 border-white flex items-center justify-center text-[8px] font-bold text-[var(--sage-dark)]">
+                                            <div className="w-8 h-8 rounded-full bg-[var(--burgundy)]/20 border-2 border-white flex items-center justify-center text-[8px] font-bold text-[var(--burgundy)]">
                                                 +12
                                             </div>
                                         </div>
@@ -183,7 +183,7 @@ export default function ImpactClient() {
 
                 {/* CTA / Proposal */}
                 <div className="mt-20 card-glass p-12 bg-white border-2 border-dashed border-[var(--sage)]/20 text-center relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-[var(--sage)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-[var(--burgundy)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <Heart className="w-12 h-12 text-[var(--ochre)] mx-auto mb-6 animate-bounce" />
                     <h3 className="text-3xl font-bold serif text-[var(--forest)] mb-4">Have a different mission on your heart?</h3>
                     <p className="text-slate-500 max-w-xl mx-auto mb-10 leading-relaxed font-serif italic text-lg">
