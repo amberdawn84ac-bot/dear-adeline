@@ -182,6 +182,13 @@ When a student shares a learning goal, help them:
                 },
                 config: {
                     responseModalities: [Modality.AUDIO],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: {
+                                voiceName: 'Puck' // Female voice - warm and friendly
+                            }
+                        }
+                    },
                     systemInstruction: ADELINE_VOICE_INSTRUCTION,
                 }
             });
@@ -283,8 +290,8 @@ When a student shares a learning goal, help them:
                     <button
                         onClick={isConnected ? stopSession : startSession}
                         className={`px-8 py-4 rounded-2xl font-bold transition-all shadow-lg ${isConnected
-                                ? 'bg-red-50 text-red-600 border-2 border-red-200 hover:bg-red-100'
-                                : 'bg-[var(--forest)] text-white hover:brightness-110'
+                            ? 'bg-red-50 text-red-600 border-2 border-red-200 hover:bg-red-100'
+                            : 'bg-[var(--forest)] text-white hover:brightness-110'
                             }`}
                     >
                         {isConnected ? 'End Voice Session' : 'Start Voice Session'}
