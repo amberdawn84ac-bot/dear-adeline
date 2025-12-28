@@ -41,7 +41,7 @@ export default function ImpactClient() {
     });
 
     return (
-        <div className="min-h-screen bg-[var(--cream)]">
+        <div className="min-h-screen bg-white">
             {/* Header */}
             <header className="bg-white border-b border-[var(--cream-dark)] sticky top-0 z-50 p-6 lg:px-12 backdrop-blur-md bg-white/80">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
