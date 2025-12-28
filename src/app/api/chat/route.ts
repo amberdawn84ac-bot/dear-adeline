@@ -38,6 +38,7 @@ const SYSTEM_PROMPT = `You are Adeline, the heartbeat of Dear Adeline Academy.
 - **Skills Tag**: Award skills: <SKILLS>["Track: Skill Name"]</SKILLS>.
 - **Scripture Tag**: Wrap focal verse in <SCRIPTURE>Title: Reference</SCRIPTURE>.
 - **Save Project**: Archive student projects: <SAVE_PROJECT>{...}</SAVE_PROJECT>.
+- **Game Tag**: Create playable games: <GAME>{"concept": "description of game mechanics and learning objective"}</GAME>.
 - **Local Intel**: Always encourage students to look at their "Local Intelligence" to see how the weather, news, or community opportunities in their own town connect to the lesson.
 `;
 
@@ -279,6 +280,20 @@ ${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/$
                     gameData = { type: 'typing', ...JSON.parse(gameRaw.replace('typing:', '')) };
                 } else if (gameRaw.startsWith('coding:')) {
                     gameData = { type: 'coding', ...JSON.parse(gameRaw.replace('coding:', '')) };
+                } else if (gameRaw.includes('"concept"')) {
+                    // Generate HTML game from concept
+                    try {
+                        const conceptData = JSON.parse(gameRaw);
+                        const gameResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/games/generate`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ concept: conceptData.concept }),
+                        });
+                        if (gameResponse.ok) {
+                            const { html } = await gameResponse.json();
+                            content += `\n\n<CUSTOM_GAME>${html}</CUSTOM_GAME>`;
+                        }
+                    } catch (genErr) { console.error('Game gen error:', genErr); }
                 }
             } catch (e) { console.error('Game parse error:', e); }
             content = content.replace(/<GAME>.*?<\/GAME>/s, '').trim();
