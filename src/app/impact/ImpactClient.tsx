@@ -89,10 +89,11 @@ export default function ImpactClient() {
                         <div className="flex flex-wrap gap-4">
                             <div className="px-6 py-3 bg-[var(--ochre)] text-white rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-[var(--ochre-dark)] transition-all cursor-pointer">
                                 <Target className="w-4 h-4" />
-                                Propose a Campaign
+                                Start a Campaign
                             </div>
-                            <div className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold backdrop-blur-md transition-all cursor-pointer">
-                                How this tracks for Graduation
+                            <div className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold backdrop-blur-md transition-all cursor-pointer flex items-center gap-2">
+                                <ChevronRight className="w-4 h-4" />
+                                Join a Campaign
                             </div>
                         </div>
                     </div>
@@ -190,7 +191,7 @@ export default function ImpactClient() {
                         "The world's brokenness is vaste, but your specific gifts are the key to a specific restoration. Propose your own non-profit campaign and Adeline will help you architect it."
                     </p>
                     <button className="px-12 py-4 bg-[var(--forest)] text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl hover:scale-105 active:scale-95 transition-all">
-                        Architect a New Initiative
+                        Start Your Own Campaign
                     </button>
                 </div>
             </main>

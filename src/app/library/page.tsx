@@ -12,7 +12,7 @@ export default async function LibraryPage() {
     }
 
     // Get all library projects
-    const { data: projects } = await supabase
+    let { data: projects } = await supabase
         .from('library_projects')
         .select('*')
         .order('created_at', { ascending: false });
@@ -29,6 +29,23 @@ export default async function LibraryPage() {
         .select('role, grade_level')
         .eq('id', user.id)
         .single();
+
+    // Auto-seed library if empty (for existing users who didn't go through onboarding)
+    if (!projects || projects.length === 0) {
+        await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/projects/seed-starter`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.id }),
+        });
+
+        // Refetch projects after seeding
+        const { data: seededProjects } = await supabase
+            .from('library_projects')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        projects = seededProjects;
+    }
 
     return (
         <LibraryClient
