@@ -32,6 +32,7 @@ export default async function TeacherDashboardPage() {
         email,
         display_name,
         grade_level,
+        state_standards,
         avatar_url,
         created_at
       )
@@ -42,7 +43,7 @@ export default async function TeacherDashboardPage() {
     if (!teacherStudents || teacherStudents.length === 0) {
         const { data: allProfiles } = await supabase
             .from('profiles')
-            .select('id, email, display_name, grade_level, avatar_url, created_at')
+            .select('id, email, display_name, grade_level, state_standards, avatar_url, created_at')
             .limit(5);
 
         teacherStudents = (allProfiles || []).map(p => ({
@@ -101,6 +102,7 @@ export default async function TeacherDashboardPage() {
                 email: studentData.email,
                 display_name: studentData.display_name,
                 grade_level: studentData.grade_level,
+                state_standards: (studentData as any).state_standards,
                 avatar_url: studentData.avatar_url,
                 created_at: studentData.created_at,
                 skills_earned: skillsCount || 0,

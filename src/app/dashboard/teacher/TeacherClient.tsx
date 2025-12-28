@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useEffect } from 'react';
+import { TeacherLearningPlans } from '@/components/TeacherLearningPlans';
 
 interface Alert {
     id: string;
@@ -52,6 +53,7 @@ interface Student {
     email: string;
     display_name: string | null;
     grade_level: string | null;
+    state_standards: string | null;
     avatar_url: string | null;
     created_at: string;
     skills_earned: number;
@@ -402,6 +404,22 @@ export default function TeacherClient({
                                 <UserPlus className="w-5 h-5" />
                                 Add Your First Student
                             </button>
+                        </div>
+                    )}
+
+                    {/* Learning Plans Section */}
+                    {students.length > 0 && (
+                        <div className="mt-12">
+                            <TeacherLearningPlans
+                                students={students
+                                    .filter(s => s.display_name && s.grade_level && s.state_standards)
+                                    .map(s => ({
+                                        id: s.id,
+                                        display_name: s.display_name!,
+                                        grade_level: s.grade_level!,
+                                        state_standards: s.state_standards!
+                                    }))}
+                            />
                         </div>
                     )}
                 </div>

@@ -50,6 +50,7 @@ import { DigitalWorksheet } from '@/components/DigitalWorksheet';
 import { CodeWorkspace } from '@/components/CodeWorkspace';
 import { OnboardingModal } from '@/components/OnboardingModal';
 import { VoiceSession } from '@/components/VoiceSession';
+import { GoalsWidget } from '@/components/GoalsWidget';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -619,6 +620,15 @@ export default function DashboardClient({
 
                         {/* Sidebar Stats */}
                         <div className="col-span-12 lg:col-span-4 space-y-6 overflow-y-auto no-scrollbar lg:h-[calc(100vh-120px)]">
+                            {/* Learning Goals Widget */}
+                            {profile?.grade_level && profile?.state_standards && (
+                                <GoalsWidget
+                                    studentId={user.id}
+                                    gradeLevel={profile.grade_level}
+                                    state={profile.state_standards}
+                                />
+                            )}
+
                             {/* Daily Bread Card */}
                             <div className="card !p-0 overflow-hidden border-2 border-[var(--ochre)]/30 group">
                                 <div className="bg-[var(--ochre)]/10 p-5 border-b border-[var(--ochre)]/20">
