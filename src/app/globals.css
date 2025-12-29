@@ -135,12 +135,12 @@
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center gap-2 px-8 py-4 bg-transparent text-forest border-2 border-forest font-bold text-sm uppercase tracking-widest rounded-full transition-all hover:bg-forest/5 active:scale-95;
+  @apply inline-flex items-center justify-center gap-2 px-8 py-4 bg-transparent text-purple border-2 border-purple font-bold text-sm uppercase tracking-widest rounded-full transition-all hover:bg-purple/5 active:scale-95;
 }
 
 /* Cards */
 .card {
-  @apply bg-white rounded-3xl p-10 border border-forest/10 transition-all hover:-translate-y-1 hover:border-ochre;
+  @apply bg-white rounded-3xl p-10 border border-purple/10 transition-all hover:-translate-y-1 hover:border-gold;
 }
 
 /* Chat Bubbles */
