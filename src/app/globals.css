@@ -148,10 +148,10 @@
   @apply p-4 rounded-3xl max-w-[85%] text-sm leading-relaxed shadow-sm;
 }
 
-.assistant-bubble {
+.chat-bubble.user {
   @apply bg-purple text-white rounded-tr-none ml-auto;
 }
 
 .chat-bubble.ai {
-  @apply bg-white text-charcoal border-2 border-cream-dark rounded-tl-none;
+  @apply bg-white text-charcoal border-2 border-purple/20 rounded-tl-none;
 }
