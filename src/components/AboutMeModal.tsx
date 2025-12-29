@@ -357,15 +357,15 @@ export function AboutMeModal({ isOpen, onClose, onComplete, studentName }: About
                         <p className="text-2xl font-body text-purple italic">
                             {(() => {
                                 if (currentQuestion.id === 'colors') {
-                                    return currentQuestion.response(data.favoriteColors || []);
+                                    return (currentQuestion.response as (answer: string[]) => string)(data.favoriteColors || []);
                                 } else if (currentQuestion.id === 'subjects') {
-                                    return currentQuestion.response(data.favoriteSubjects || []);
+                                    return (currentQuestion.response as (answer: string[]) => string)(data.favoriteSubjects || []);
                                 } else if (currentQuestion.id === 'book') {
-                                    return currentQuestion.response(data.favoriteBook || '');
+                                    return (currentQuestion.response as (answer: string) => string)(data.favoriteBook || '');
                                 } else if (currentQuestion.id === 'hobbies') {
-                                    return currentQuestion.response(data.hobbies || []);
+                                    return (currentQuestion.response as (answer: string[]) => string)(data.hobbies || []);
                                 } else {
-                                    return currentQuestion.response();
+                                    return (currentQuestion.response as () => string)();
                                 }
                             })()}
                         </p>
