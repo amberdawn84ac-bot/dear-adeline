@@ -52,10 +52,20 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
         const supabase = createClient();
 
         try {
+            // Get user email from auth
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user?.email) {
+                alert('Unable to get user email. Please try logging in again.');
+                setSaving(false);
+                return;
+            }
+
             const { error } = await supabase
                 .from('profiles')
                 .upsert({
                     id: userId,
+                    email: user.email, // Add email from authenticated user
                     display_name: data.display_name,
                     grade_level: data.grade_level,
                     state_standards: data.state_standards,
