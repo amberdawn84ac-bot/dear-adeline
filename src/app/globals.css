@@ -6,35 +6,66 @@
   --font-body: "Alexandria", sans-serif;
   --font-script: "Dancing Script", cursive;
 
-  --color-cream: #F5F2EA;
-  --color-cream-dark: #EBE5D8;
-  --color-forest: #2F4731;
-  --color-forest-light: #446146;
-  --color-sage: #76946a;
-  --color-sage-dark: #5a7350;
-  --color-ochre: #BD6809;
-  --color-ochre-light: #D47E1E;
-  --color-dusty-rose: #D98C95;
-  --color-burgundy: #3D1419;
-  --color-charcoal: #1E1E1E;
-  --color-charcoal-light: #4A4A4A;
-  --color-terracotta: #CD5C5C;
+  /* Jewel Tone Palette */
+  --color-purple: #6B4B7E;
+  --color-purple-light: #8B6B9E;
+  --color-purple-dark: #4B2B5E;
+  --color-magenta: #C7396B;
+  --color-magenta-light: #E7598B;
+  --color-magenta-dark: #A7194B;
+  --color-coral: #E89B6F;
+  --color-coral-light: #FFBB8F;
+  --color-coral-dark: #C87B4F;
+  --color-blue: #5B7B8F;
+  --color-blue-light: #7B9BAF;
+  --color-blue-dark: #3B5B6F;
+  --color-gold: #D4A574;
+  --color-gold-light: #F4C594;
+  --color-gold-dark: #B48554;
+  --color-plum: #3D2645;
+  --color-pink-soft: #F5E8F0;
+  --color-charcoal: #2D2D2D;
+  --color-cream: #FFF8F0;
 }
 
 :root {
-  --cream: #F5F2EA;
-  --cream-dark: #EBE5D8;
-  --forest: #2F4731;
-  --forest-light: #446146;
-  --sage: #76946a;
-  --sage-dark: #5a7350;
-  --ochre: #BD6809;
-  --ochre-light: #D47E1E;
-  --dusty-rose: #D98C95;
-  --burgundy: #3D1419;
-  --charcoal: #1E1E1E;
-  --charcoal-light: #4A4A4A;
-  --terracotta: #CD5C5C;
+  /* Primary Brand Colors */
+  --purple: #6B4B7E;
+  --purple-light: #8B6B9E;
+  --purple-dark: #4B2B5E;
+
+  /* Accent Colors */
+  --magenta: #C7396B;
+  --magenta-light: #E7598B;
+  --magenta-dark: #A7194B;
+
+  --coral: #E89B6F;
+  --coral-light: #FFBB8F;
+  --coral-dark: #C87B4F;
+
+  --blue: #5B7B8F;
+  --blue-light: #7B9BAF;
+  --blue-dark: #3B5B6F;
+
+  --gold: #D4A574;
+  --gold-light: #F4C594;
+  --gold-dark: #B48554;
+
+  /* Supporting Colors */
+  --plum: #3D2645;
+  --pink-soft: #F5E8F0;
+  --charcoal: #2D2D2D;
+  --cream: #FFF8F0;
+
+  /* Legacy mappings for gradual migration */
+  --forest: var(--purple-dark);
+  --forest-light: var(--purple);
+  --sage: var(--blue);
+  --sage-dark: var(--blue-dark);
+  --burgundy: var(--magenta-dark);
+  --dusty-rose: var(--coral);
+  --terracotta: var(--coral-dark);
+  --charcoal-light: #666666;
 }
 
 @layer base {
