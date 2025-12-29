@@ -185,7 +185,7 @@ When a student shares a learning goal, help them:
                     speechConfig: {
                         voiceConfig: {
                             prebuiltVoiceConfig: {
-                                voiceName: 'Zephyr' // Improved voice quality - warm and natural
+                                voiceName: 'Autonoe' // Warm, seasoned grandmother voice - late 70s matriarch
                             }
                         }
                     },
