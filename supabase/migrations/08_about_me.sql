@@ -1,7 +1,7 @@
 -- About Me Extended Profile System
 CREATE TABLE IF NOT EXISTS student_profiles_extended (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    student_id UUID NOT NULL REFERENCES profiles(id) UNIQUE ON DELETE CASCADE,
+    student_id UUID NOT NULL UNIQUE REFERENCES profiles(id) ON DELETE CASCADE,
     favorite_colors JSONB DEFAULT '[]'::jsonb,
     favorite_subjects JSONB DEFAULT '[]'::jsonb,
     favorite_book TEXT,
