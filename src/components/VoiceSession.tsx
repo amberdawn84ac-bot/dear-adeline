@@ -109,7 +109,7 @@ When a student shares a learning goal, help them:
             });
 
             const sessionPromise = ai.live.connect({
-                model: 'gemini-2.0-flash-exp',
+                model: 'gemini-2.5-flash-native-audio-preview-09-2025',
                 callbacks: {
                     onopen: () => {
                         setIsConnected(true);
@@ -185,7 +185,7 @@ When a student shares a learning goal, help them:
                     speechConfig: {
                         voiceConfig: {
                             prebuiltVoiceConfig: {
-                                voiceName: 'Puck' // Female voice - warm and friendly
+                                voiceName: 'Zephyr' // Improved voice quality - warm and natural
                             }
                         }
                     },
