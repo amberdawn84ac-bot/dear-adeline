@@ -148,8 +148,8 @@
   @apply p-4 rounded-3xl max-w-[85%] text-sm leading-relaxed shadow-sm;
 }
 
-.chat-bubble.user {
-  @apply bg-forest text-white rounded-tr-none ml-auto;
+.assistant-bubble {
+  @apply bg-purple text-white rounded-tr-none ml-auto;
 }
 
 .chat-bubble.ai {
