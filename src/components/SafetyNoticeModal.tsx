@@ -15,10 +15,12 @@ const CRISIS_RESOURCES = {
     },
     violence: {
         hotline: '911',
+        text: undefined,
         name: 'Emergency Services'
     },
     abuse: {
         hotline: '1-800-422-4453',
+        text: undefined,
         name: 'Childhelp National Child Abuse Hotline'
     }
 };
