@@ -7,7 +7,13 @@ interface SafetyNoticeModalProps {
     onClose: () => void;
 }
 
-const CRISIS_RESOURCES = {
+interface CrisisResource {
+    hotline: string;
+    text?: string;
+    name: string;
+}
+
+const CRISIS_RESOURCES: Record<string, CrisisResource> = {
     self_harm: {
         hotline: '988',
         text: 'Text HOME to 741741',
@@ -15,12 +21,10 @@ const CRISIS_RESOURCES = {
     },
     violence: {
         hotline: '911',
-        text: undefined,
         name: 'Emergency Services'
     },
     abuse: {
         hotline: '1-800-422-4453',
-        text: undefined,
         name: 'Childhelp National Child Abuse Hotline'
     }
 };
