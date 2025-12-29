@@ -151,8 +151,8 @@ export function AboutMeModal({ isOpen, onClose, onComplete, studentName }: About
                                     setData({ ...data, favoriteColors: newColors });
                                 }}
                                 className={`p-6 rounded-2xl border-2 transition-all ${data.favoriteColors?.includes(color.value)
-                                        ? 'border-purple scale-105 shadow-lg'
-                                        : 'border-gray-200 hover:border-purple-light'
+                                    ? 'border-purple scale-105 shadow-lg'
+                                    : 'border-gray-200 hover:border-purple-light'
                                     }`}
                                 style={{
                                     background: color.value === 'rainbow' ? color.color : 'white'
@@ -184,8 +184,8 @@ export function AboutMeModal({ isOpen, onClose, onComplete, studentName }: About
                                     setData({ ...data, favoriteSubjects: newSubjects });
                                 }}
                                 className={`p-6 rounded-2xl border-2 transition-all text-left ${data.favoriteSubjects?.includes(subject.value)
-                                        ? 'border-magenta bg-magenta/10 scale-105'
-                                        : 'border-gray-200 hover:border-magenta-light bg-white'
+                                    ? 'border-magenta bg-magenta/10 scale-105'
+                                    : 'border-gray-200 hover:border-magenta-light bg-white'
                                     }`}
                             >
                                 <div className="text-3xl mb-2">{subject.icon}</div>
@@ -231,8 +231,8 @@ export function AboutMeModal({ isOpen, onClose, onComplete, studentName }: About
                                     setData({ ...data, hobbies: newHobbies });
                                 }}
                                 className={`p-4 rounded-2xl border-2 transition-all ${data.hobbies?.includes(hobby.name)
-                                        ? 'border-blue bg-blue/10 scale-105'
-                                        : 'border-gray-200 hover:border-blue-light bg-white'
+                                    ? 'border-blue bg-blue/10 scale-105'
+                                    : 'border-gray-200 hover:border-blue-light bg-white'
                                     }`}
                             >
                                 <div className="text-3xl mb-1">{hobby.icon}</div>
@@ -250,8 +250,8 @@ export function AboutMeModal({ isOpen, onClose, onComplete, studentName }: About
                                 key={style.value}
                                 onClick={() => setData({ ...data, learningStyle: style.value })}
                                 className={`w-full p-6 rounded-2xl border-2 transition-all text-left flex items-center gap-4 ${data.learningStyle === style.value
-                                        ? 'border-gold bg-gold/10 scale-105'
-                                        : 'border-gray-200 hover:border-gold-light bg-white'
+                                    ? 'border-gold bg-gold/10 scale-105'
+                                    : 'border-gray-200 hover:border-gold-light bg-white'
                                     }`}
                             >
                                 <div className="text-4xl">{style.icon}</div>
@@ -344,8 +344,8 @@ export function AboutMeModal({ isOpen, onClose, onComplete, studentName }: About
                             onClick={handleNext}
                             disabled={!canContinue()}
                             className={`w-full mt-8 py-4 rounded-2xl font-bold text-lg shadow-xl transition-all ${canContinue()
-                                    ? 'bg-gradient-to-r from-purple to-magenta text-white hover:scale-105'
-                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                ? 'bg-gradient-to-r from-purple to-magenta text-white hover:scale-105'
+                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                 }`}
                         >
                             {step === QUESTIONS.length - 1 ? "Let's Start Learning! 🚀" : 'Continue →'}
@@ -355,13 +355,19 @@ export function AboutMeModal({ isOpen, onClose, onComplete, studentName }: About
                     <div className="text-center animate-in fade-in zoom-in duration-500">
                         <div className="text-6xl mb-4">✨</div>
                         <p className="text-2xl font-body text-purple italic">
-                            {currentQuestion.response(
-                                currentQuestion.id === 'colors' ? data.favoriteColors || [] :
-                                    currentQuestion.id === 'subjects' ? data.favoriteSubjects || [] :
-                                        currentQuestion.id === 'book' ? data.favoriteBook || '' :
-                                            currentQuestion.id === 'hobbies' ? data.hobbies || [] :
-                                                ''
-                            )}
+                            {(() => {
+                                if (currentQuestion.id === 'colors') {
+                                    return currentQuestion.response(data.favoriteColors || []);
+                                } else if (currentQuestion.id === 'subjects') {
+                                    return currentQuestion.response(data.favoriteSubjects || []);
+                                } else if (currentQuestion.id === 'book') {
+                                    return currentQuestion.response(data.favoriteBook || '');
+                                } else if (currentQuestion.id === 'hobbies') {
+                                    return currentQuestion.response(data.hobbies || []);
+                                } else {
+                                    return currentQuestion.response();
+                                }
+                            })()}
                         </p>
                     </div>
                 )}
