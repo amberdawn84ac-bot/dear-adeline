@@ -424,6 +424,18 @@ export default function DashboardClient({
                             <span className="text-sm">Graduation Tracker</span>
                         </Link>
 
+                        <div className="mt-6">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-2">Spiritual Growth</p>
+                            <Link href="/journal" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/journal' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
+                                <BookOpen className="w-4 h-4" />
+                                <span className="text-sm">Journal</span>
+                            </Link>
+                            <Link href="/wisdom" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/wisdom' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
+                                <Heart className="w-4 h-4" />
+                                <span className="text-sm">Wisdom in Action</span>
+                            </Link>
+                        </div>
+
                         <div className="mt-8">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-2">Learning History</p>
                             <div className="space-y-1">
