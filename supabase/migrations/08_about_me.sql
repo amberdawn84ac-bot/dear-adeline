@@ -26,6 +26,10 @@ CREATE INDEX IF NOT EXISTS idx_student_profiles_extended_completed ON student_pr
 -- Enable RLS
 ALTER TABLE student_profiles_extended ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Students can manage own extended profile" ON student_profiles_extended;
+DROP POLICY IF EXISTS "Teachers can view student extended profiles" ON student_profiles_extended;
+
 -- Policy: Students can view and edit their own extended profile
 CREATE POLICY "Students can manage own extended profile"
     ON student_profiles_extended
@@ -53,6 +57,9 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Drop existing trigger if it exists
+DROP TRIGGER IF EXISTS update_student_profiles_extended_timestamp ON student_profiles_extended;
 
 -- Trigger to auto-update timestamp
 CREATE TRIGGER update_student_profiles_extended_timestamp
