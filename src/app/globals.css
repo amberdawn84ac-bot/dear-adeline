@@ -131,7 +131,7 @@
 
 /* Buttons */
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-2 px-10 py-4 bg-burgundy text-white font-bold text-sm uppercase tracking-widest rounded-full transition-all shadow-lg hover:scale-105 hover:brightness-110 active:scale-95;
+  @apply inline-flex items-center justify-center gap-2 px-10 py-4 bg-magenta text-white font-bold text-sm uppercase tracking-widest rounded-full transition-all shadow-lg hover:scale-105 hover:brightness-110 active:scale-95;
 }
 
 .btn-secondary {
