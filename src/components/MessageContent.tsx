@@ -1,3 +1,5 @@
+'use client';
+
 import { Target, Sparkles, Gamepad2 } from 'lucide-react';
 import { formatTrack } from '@/types/learning';
 
