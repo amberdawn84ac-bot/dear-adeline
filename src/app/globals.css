@@ -56,12 +56,15 @@
   --pink-soft: #F5E8F0;
   --charcoal: #2D2D2D;
   --cream: #FFF8F0;
+  --cream-dark: #F5E8DC;
+  --ochre: #CC8B3C;
 
   /* Legacy mappings for gradual migration */
   --forest: var(--purple-dark);
   --forest-light: var(--purple);
   --sage: var(--blue);
   --sage-dark: var(--blue-dark);
+  --sage-light: var(--blue-light);
   --burgundy: var(--magenta-dark);
   --dusty-rose: var(--coral);
   --terracotta: var(--coral-dark);
