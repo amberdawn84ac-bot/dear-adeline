@@ -46,11 +46,20 @@ export const DiagnosticCenter: React.FC = () => {
                 body: JSON.stringify({ action: 'generate_questions' }),
             });
 
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+
             const data = await response.json();
+
+            if (!data.questions || !Array.isArray(data.questions) || data.questions.length === 0) {
+                throw new Error('No questions received from API');
+            }
+
             setQuestions(data.questions);
             setStep('testing');
         } catch (e) {
-            console.error(e);
+            console.error('Error starting diagnostic:', e);
             alert('Failed to generate questions. Please try again.');
         } finally {
             setIsLoading(false);
@@ -95,7 +104,7 @@ export const DiagnosticCenter: React.FC = () => {
         }
     };
 
-    const progress = questions.length > 0 ? ((currentIdx + 1) / questions.length) * 100 : 0;
+    const progress = (questions && questions.length > 0) ? ((currentIdx + 1) / questions.length) * 100 : 0;
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-20">
