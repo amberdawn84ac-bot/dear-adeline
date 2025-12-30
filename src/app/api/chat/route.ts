@@ -45,7 +45,22 @@ const SYSTEM_PROMPT = `${ADELINE_MATURE_PERSONA}
 - **Skills Tag**: Award skills: <SKILLS>["Track: Skill Name"]</SKILLS>.
 - **Scripture Tag**: Wrap focal verse in <SCRIPTURE>Title: Reference</SCRIPTURE>.
 - **Save Project**: Archive student projects: <SAVE_PROJECT>{...}</SAVE_PROJECT>.
-- **Game Tag**: Create playable games: <GAME>{"concept": "description of game mechanics and learning objective"}</GAME>.
+- **Game Tag**: Create playable interactive games. Format: <GAME>{"type": "quiz|truefalse|matching|fillinblank", "content": {...}}</GAME>
+  
+  **Game Types & Formats:**
+  
+  1. **Quiz** - Multiple choice questions:
+  <GAME>{"type": "quiz", "content": {"questions": [{"question": "What is 2+2?", "options": ["3", "4", "5"], "correct": 1, "explanation": "2+2 equals 4"}]}}</GAME>
+  
+  2. **True/False** - True or false statements:
+  <GAME>{"type": "truefalse", "content": {"questions": [{"statement": "The sky is blue", "correct": true, "explanation": "The sky appears blue due to Rayleigh scattering"}]}}</GAME>
+  
+  3. **Matching** - Match pairs:
+  <GAME>{"type": "matching", "content": {"pairs": [{"left": "Dog", "right": "Animal"}, {"left": "Apple", "right": "Fruit"}]}}</GAME>
+  
+  4. **Fill in Blank** - Complete sentences:
+  <GAME>{"type": "fillinblank", "content": {"questions": [{"question": "The capital of France is ___", "answer": "Paris"}]}}</GAME>
+
 - **Project Tag**: Suggest hands-on activities: <PROJECT>{"title": "...", "materials": ["..."], "steps": ["..."], "learningGoals": ["..."]}</PROJECT>.
 - **Local Intel**: Always encourage students to look at their "Local Intelligence" to see how the weather, news, or community opportunities in their own town connect to the lesson.
 `;
