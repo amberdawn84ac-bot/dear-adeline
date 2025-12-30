@@ -48,32 +48,40 @@ Format:
 
 Make questions engaging and thought-provoking.`;
 
-            const response = await anthropic.messages.create({
-                model: 'claude-3-5-sonnet-20241022',
-                max_tokens: 2000,
-                messages: [{ role: 'user', content: prompt }],
-            });
+            try {
+                const response = await anthropic.messages.create({
+                    model: 'claude-3-5-sonnet-20241022',
+                    max_tokens: 2000,
+                    messages: [{ role: 'user', content: prompt }],
+                });
 
-            const content = response.content[0];
-            if (content.type === 'text') {
-                // Extract JSON from markdown code blocks if present
-                let jsonText = content.text;
-                const codeBlockMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-                if (codeBlockMatch) {
-                    jsonText = codeBlockMatch[1];
-                }
+                const content = response.content[0];
+                if (content.type === 'text') {
+                    // Extract JSON from markdown code blocks if present
+                    let jsonText = content.text;
+                    const codeBlockMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                    if (codeBlockMatch) {
+                        jsonText = codeBlockMatch[1];
+                    }
 
-                try {
-                    const questions = JSON.parse(jsonText);
-                    return NextResponse.json({ questions });
-                } catch (parseError) {
-                    console.error('JSON parse error:', parseError);
-                    console.error('Raw response:', content.text);
-                    return NextResponse.json(
-                        { error: 'Failed to parse AI response' },
-                        { status: 500 }
-                    );
+                    try {
+                        const questions = JSON.parse(jsonText);
+                        return NextResponse.json({ questions });
+                    } catch (parseError) {
+                        console.error('JSON parse error:', parseError);
+                        console.error('Raw response:', content.text);
+                        return NextResponse.json(
+                            { error: 'Failed to parse AI response', details: content.text.substring(0, 200) },
+                            { status: 500 }
+                        );
+                    }
                 }
+            } catch (apiError: any) {
+                console.error('Anthropic API error:', apiError);
+                return NextResponse.json(
+                    { error: 'AI service error', details: apiError.message },
+                    { status: 500 }
+                );
             }
         }
 
