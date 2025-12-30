@@ -1,4 +1,3 @@
-import { GameRenderer } from './GameRenderer';
 import { Target, Sparkles, Gamepad2 } from 'lucide-react';
 import { formatTrack } from '@/types/learning';
 
@@ -9,30 +8,6 @@ interface MessageContentProps {
 }
 
 export function MessageContent({ content, onNavigateToGameLab, onAcceptMission }: MessageContentProps) {
-    // Parse <GAME> tags for simple games
-    const simpleGameMatch = content.match(/<GAME>([\s\S]*?)<\/GAME>/);
-    if (simpleGameMatch) {
-        try {
-            const gameData = JSON.parse(simpleGameMatch[1]);
-            const beforeGame = content.substring(0, simpleGameMatch.index);
-            const afterGame = content.substring((simpleGameMatch.index || 0) + simpleGameMatch[0].length);
-
-            return (
-                <>
-                    {beforeGame && <div className="mb-4" dangerouslySetInnerHTML={{ __html: beforeGame }} />}
-                    <GameRenderer
-                        type={gameData.type}
-                        content={gameData.content}
-                        onComplete={(score) => console.log('Game completed with score:', score)}
-                    />
-                    {afterGame && <div className="mt-4" dangerouslySetInnerHTML={{ __html: afterGame }} />}
-                </>
-            );
-        } catch (e) {
-            console.error('Failed to parse GAME tag:', e);
-        }
-    }
-
     // Parse <GAMELAB> tags for complex games
     const gameLabMatch = content.match(/<GAMELAB>([\s\S]*?)<\/GAMELAB>/);
     if (gameLabMatch) {
