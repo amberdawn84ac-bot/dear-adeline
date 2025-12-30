@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { searchWeb } from '@/lib/search';
+import { sanitizeForPrompt } from '@/lib/sanitize';
 import { ADELINE_MATURE_PERSONA, CRISIS_MENTOR_PERSONA } from '@/lib/adelinePersona';
 
 
@@ -241,9 +242,9 @@ export async function POST(req: Request) {
     try {
         console.log('--- Chat API Request Start ---');
 
-        const apiKey = (process.env.ANTHROPIC_API_KEY || '').trim();
-        if (!apiKey) {
-            console.error('CRITICAL: ANTHROPIC_API_KEY is not set');
+        const apiKey = process.env.ANTHROPIC_API_KEY;
+        if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length < 10) {
+            console.error('CRITICAL: ANTHROPIC_API_KEY is missing, invalid, or too short.');
             return NextResponse.json({ error: 'AI Service configuration error' }, { status: 500 });
         }
 
@@ -266,22 +267,38 @@ export async function POST(req: Request) {
         const { messages, projectId, studentInfo } = body;
 
         // 1. Build Student Context
-        let studentContext = studentInfo ? `
+        let studentContext = '';
+        if (studentInfo) {
+            // Define a type for the graduation progress to avoid using 'any'
+            interface GraduationProgress {
+                track: string;
+                earned: number;
+                required: number;
+            }
+            const saneName = sanitizeForPrompt(studentInfo.name || 'Student');
+            const saneGrade = sanitizeForPrompt(studentInfo.gradeLevel || 'NOT SET');
+            const saneSkills = sanitizeForPrompt(studentInfo.skills?.join(', ') || 'NONE');
+            const saneProgress = studentInfo.graduationProgress?.map((p: GraduationProgress) =>
+                `  * ${sanitizeForPrompt(p.track)}: ${sanitizeForPrompt(p.earned.toString())}/${sanitizeForPrompt(p.required.toString())} credits`
+            ).join('\n') || '  * No progress data yet';
+
+            studentContext = `
 Current Student:
-- Name: ${studentInfo.name || 'Student'}
-- Grade Level: ${studentInfo.gradeLevel || 'NOT SET'}
-- Skills already earned: ${studentInfo.skills?.join(', ') || 'NONE'}
+- Name: ${saneName}
+- Grade Level: ${saneGrade}
+- Skills already earned: ${saneSkills}
 - Graduation Progress:
-${studentInfo.graduationProgress?.map((p: any) => `  * ${p.track}: ${p.earned}/${p.required} credits`).join('\n') || '  * No progress data yet'}
+${saneProgress}
 
 💡 PRO - TIP: Adeline, be proactive! If they have 0 progress in a track, suggest a project from that track today.
-` : '';
+`;
+        }
 
         // 2. Format Messages for Anthropic
         let apiMessages = messages
             .map((m: { role: string; content: string }) => ({
                 role: m.role as 'user' | 'assistant',
-                content: m.content,
+                content: sanitizeForPrompt(m.content), // Sanitize user input
             }))
             .filter((m: any) => m.content.trim().length > 0);
 

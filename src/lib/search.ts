@@ -1,3 +1,5 @@
+import { sanitizeForPrompt } from './sanitize';
+
 // Tavily Search API helper
 // Uses direct fetch instead of SDK to avoid npm install issues
 
@@ -32,11 +34,19 @@ export async function searchWeb(query: string): Promise<string> {
 
         // Combine results into a summary
         const results = data.results || [];
+
+        // Define a type for the search results to avoid using 'any'
+        interface TavilyResult {
+            title: string;
+            content: string;
+        }
+
         const summary = results
-            .map((r: any) => `${r.title}: ${r.content}`)
+            .map((r: TavilyResult) => `${r.title}: ${r.content}`)
             .join('\n\n');
 
-        return summary;
+        // Sanitize the output to prevent prompt injection from web content
+        return sanitizeForPrompt(summary);
     } catch (error) {
         console.error('Search error:', error);
         return '';
