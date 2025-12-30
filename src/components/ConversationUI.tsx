@@ -1,6 +1,8 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { MessageContent } from './MessageContent';
+
 
 interface ConversationBubbleProps {
     speaker: 'adeline' | 'student';
@@ -30,8 +32,8 @@ export function ConversationBubble({
             {/* Avatar */}
             <div className="flex-shrink-0">
                 <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${isAdeline
-                        ? 'from-purple to-magenta'
-                        : 'from-coral to-gold'
+                    ? 'from-purple to-magenta'
+                    : 'from-coral to-gold'
                     } flex items-center justify-center shadow-lg`}>
                     <span className="text-2xl">
                         {isAdeline ? '👵' : '👧'}
@@ -49,7 +51,11 @@ export function ConversationBubble({
                     {/* Content */}
                     <div className="relative z-10">
                         <div className="text-charcoal font-body text-lg leading-relaxed">
-                            {children}
+                            {isAdeline && typeof children === 'string' ? (
+                                <MessageContent content={children} />
+                            ) : (
+                                children
+                            )}
                         </div>
 
                         {/* Illustration */}
