@@ -1,3 +1,5 @@
+'use client';
+
 import { GameLab } from '@/components/GameLab';
 
 export default function GameLabPage() {

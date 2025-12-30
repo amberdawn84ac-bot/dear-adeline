@@ -1,3 +1,5 @@
+'use client';
+
 import { DiagnosticCenter } from '@/components/DiagnosticCenter';
 
 export default function DiagnosticPage() {
