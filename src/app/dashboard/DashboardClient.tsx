@@ -436,6 +436,18 @@ export default function DashboardClient({
                             </Link>
                         </div>
 
+                        <div className="mt-6">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-2">Learning Tools</p>
+                            <Link href="/gamelab" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/gamelab' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
+                                <Gamepad2 className="w-4 h-4" />
+                                <span className="text-sm">Game Lab</span>
+                            </Link>
+                            <Link href="/diagnostic" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/diagnostic' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
+                                <Target className="w-4 h-4" />
+                                <span className="text-sm">Diagnostic Center</span>
+                            </Link>
+                        </div>
+
                         <div className="mt-8">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-2">Learning History</p>
                             <div className="space-y-1">
