@@ -51,7 +51,7 @@ import { CodeWorkspace } from '@/components/CodeWorkspace';
 import { OnboardingModal } from '@/components/OnboardingModal';
 import { VoiceSession } from '@/components/VoiceSession';
 import { GoalsWidget } from '@/components/GoalsWidget';
-import { MessageContent } from '@/components/MessageContent';
+import MessageContent from '@/components/MessageContent';
 
 interface Message {
     role: 'user' | 'assistant';
