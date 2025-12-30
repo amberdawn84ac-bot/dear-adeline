@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Target, Sparkles, Gamepad2 } from 'lucide-react';
 import { formatTrack } from '@/types/learning';
 import { GameRenderer } from './GameRenderer';
@@ -10,7 +11,7 @@ interface MessageContentProps {
     onAcceptMission?: (missionData: any) => void;
 }
 
-export function MessageContent({ content, onNavigateToGameLab, onAcceptMission }: MessageContentProps) {
+function MessageContent({ content, onNavigateToGameLab, onAcceptMission }: MessageContentProps) {
     // Parse <GAME> tags for inline games
     const gameMatch = content.match(/<GAME>([\s\S]*?)<\/GAME>/);
     if (gameMatch) {
@@ -170,3 +171,6 @@ export function MessageContent({ content, onNavigateToGameLab, onAcceptMission }
     // No special tags, render normal content
     return <div dangerouslySetInnerHTML={{ __html: content }} />;
 }
+
+// ⚡ Bolt: Export with React.memo for performance optimization
+export default React.memo(MessageContent);

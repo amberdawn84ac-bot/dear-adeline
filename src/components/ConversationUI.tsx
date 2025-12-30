@@ -1,7 +1,10 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { MessageContent } from './MessageContent';
+// ⚡ Bolt: Correctly import the memoized MessageContent component.
+// The component was using a default export with React.memo, but was being
+// imported as a named export, bypassing the memoization.
+import MessageContent from './MessageContent';
 
 
 interface ConversationBubbleProps {
