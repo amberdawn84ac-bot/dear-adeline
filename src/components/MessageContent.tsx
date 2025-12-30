@@ -174,3 +174,4 @@ function MessageContentComponent({ content, onNavigateToGameLab, onAcceptMission
 
 const MessageContent = React.memo(MessageContentComponent);
 export default MessageContent;
+
