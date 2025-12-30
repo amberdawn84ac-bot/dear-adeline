@@ -49,8 +49,24 @@ Make questions engaging and thought-provoking.`;
 
             const content = response.content[0];
             if (content.type === 'text') {
-                const questions = JSON.parse(content.text);
-                return NextResponse.json({ questions });
+                // Extract JSON from markdown code blocks if present
+                let jsonText = content.text;
+                const codeBlockMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                if (codeBlockMatch) {
+                    jsonText = codeBlockMatch[1];
+                }
+
+                try {
+                    const questions = JSON.parse(jsonText);
+                    return NextResponse.json({ questions });
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    console.error('Raw response:', content.text);
+                    return NextResponse.json(
+                        { error: 'Failed to parse AI response' },
+                        { status: 500 }
+                    );
+                }
             }
         }
 
@@ -94,7 +110,24 @@ Return JSON with this structure:
 
             const content = response.content[0];
             if (content.type === 'text') {
-                const evaluation = JSON.parse(content.text);
+                // Extract JSON from markdown code blocks if present
+                let jsonText = content.text;
+                const codeBlockMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                if (codeBlockMatch) {
+                    jsonText = codeBlockMatch[1];
+                }
+
+                let evaluation;
+                try {
+                    evaluation = JSON.parse(jsonText);
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    console.error('Raw response:', content.text);
+                    return NextResponse.json(
+                        { error: 'Failed to parse evaluation response' },
+                        { status: 500 }
+                    );
+                }
 
                 // Save to database
                 const { error: saveError } = await supabase
