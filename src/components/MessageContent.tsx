@@ -1,5 +1,4 @@
-import { GameRenderer, parseGameTags } from './GameRenderer';
-import { GameLab } from './GameLab';
+import { GameRenderer } from './GameRenderer';
 import { Target, Sparkles, Gamepad2 } from 'lucide-react';
 import { formatTrack } from '@/types/learning';
 
@@ -35,7 +34,7 @@ export function MessageContent({ content, onNavigateToGameLab, onAcceptMission }
     }
 
     // Parse <GAMELAB> tags for complex games
-    const gameLab Match = content.match(/<GAMELAB>([\s\S]*?)<\/GAMELAB>/);
+    const gameLabMatch = content.match(/<GAMELAB>([\s\S]*?)<\/GAMELAB>/);
     if (gameLabMatch) {
         try {
             const gameLabData = JSON.parse(gameLabMatch[1]);
@@ -50,9 +49,7 @@ export function MessageContent({ content, onNavigateToGameLab, onAcceptMission }
                 localStorage.setItem('pendingGameType', gameLabData.game_type || 'educational');
 
                 // Navigate to Game Lab
-                if (onNavigateToGameLab) {
-                    onNavigateToGameLab();
-                }
+                window.location.href = '/gamelab';
             };
 
             return (
@@ -106,8 +103,21 @@ export function MessageContent({ content, onNavigateToGameLab, onAcceptMission }
             const afterMission = content.substring((missionMatch.index || 0) + missionMatch[0].length);
 
             const handleAcceptMission = async () => {
-                if (onAcceptMission) {
-                    onAcceptMission(missionData);
+                try {
+                    const response = await fetch('/api/missions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(missionData),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.mission) {
+                        alert('Mission accepted! Check your portfolio to get started.');
+                    }
+                } catch (error) {
+                    console.error('Failed to accept mission:', error);
+                    alert('Failed to accept mission. Please try again.');
                 }
             };
 
