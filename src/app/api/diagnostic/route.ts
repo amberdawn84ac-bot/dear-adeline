@@ -13,6 +13,15 @@ export async function POST(request: Request) {
 
         const { action, answers } = await request.json();
 
+        // Check if API key exists
+        if (!process.env.ANTHROPIC_API_KEY) {
+            console.error('ANTHROPIC_API_KEY is not set');
+            return NextResponse.json(
+                { error: 'AI service not configured. Please contact administrator.' },
+                { status: 500 }
+            );
+        }
+
         const anthropic = new Anthropic({
             apiKey: process.env.ANTHROPIC_API_KEY,
         });
