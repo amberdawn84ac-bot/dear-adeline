@@ -51,6 +51,7 @@ import { CodeWorkspace } from '@/components/CodeWorkspace';
 import { OnboardingModal } from '@/components/OnboardingModal';
 import { VoiceSession } from '@/components/VoiceSession';
 import { GoalsWidget } from '@/components/GoalsWidget';
+import { MessageContent } from '@/components/MessageContent';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -560,7 +561,11 @@ export default function DashboardClient({
                                                         "{scriptureInfo}"
                                                     </div>
                                                 )}
-                                                <p className="whitespace-pre-wrap text-sm leading-relaxed">{cleanContent}</p>
+                                                {m.role === 'assistant' ? (
+                                                    <MessageContent content={cleanContent} />
+                                                ) : (
+                                                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{cleanContent}</p>
+                                                )}
 
                                                 {m.type === 'whiteboard_anim' && (
                                                     <button
