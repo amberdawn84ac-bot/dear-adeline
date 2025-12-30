@@ -103,19 +103,19 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--cream)]/80 backdrop-blur-xl">
-            <div className="card-glass max-w-lg w-full p-8 lg:p-12 shadow-2xl border-2 border-[var(--forest)]/10 relative overflow-hidden">
+            <div className="card-glass max-w-lg w-full p-8 lg:p-12 shadow-2xl border-2 border-[var(--purple)]/10 relative overflow-hidden">
                 {/* Decorative Elements */}
-                <div className="absolute -top-24 -right-24 w-48 h-48 bg-[var(--ochre)]/10 rounded-full blur-3xl" />
-                <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[var(--sage)]/10 rounded-full blur-3xl" />
+                <div className="absolute -top-24 -right-24 w-48 h-48 bg-[var(--gold)]/10 rounded-full blur-3xl" />
+                <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[var(--blue)]/10 rounded-full blur-3xl" />
 
                 <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-8">
-                        <div className="w-12 h-12 rounded-2xl bg-[var(--forest)] flex items-center justify-center shadow-lg transform -rotate-3">
+                        <div className="w-12 h-12 rounded-2xl bg-[var(--purple)] flex items-center justify-center shadow-lg transform -rotate-3">
                             <Sparkles className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold serif text-[var(--forest)]">Welcome to Adeline</h2>
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--ochre)]">Let's Personalize Your Journey</p>
+                            <h2 className="text-2xl font-bold serif text-[var(--purple)]">Welcome to Adeline</h2>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--gold)]">Let's Personalize Your Journey</p>
                         </div>
                     </div>
 
@@ -124,8 +124,8 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                         {[1, 2, 3, 4].map((s) => (
                             <div
                                 key={s}
-                                className={`h-1.5 rounded-full transition-all duration-500 ${step === s ? 'w-12 bg-[var(--forest)]' :
-                                    step > s ? 'w-4 bg-[var(--sage)]' : 'w-4 bg-slate-200'
+                                className={`h-1.5 rounded-full transition-all duration-500 ${step === s ? 'w-12 bg-[var(--purple)]' :
+                                    step > s ? 'w-4 bg-[var(--blue)]' : 'w-4 bg-slate-200'
                                     }`}
                             />
                         ))}
@@ -138,14 +138,14 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                                     <User className="w-4 h-4" />
                                     Who are you?
                                 </label>
-                                <h3 className="text-xl font-bold serif text-[var(--forest)] mb-6">What name should Adeline use to address you?</h3>
+                                <h3 className="text-xl font-bold serif text-[var(--purple)] mb-6">What name should Adeline use to address you?</h3>
                                 <input
                                     type="text"
                                     autoFocus
                                     value={data.display_name}
                                     onChange={(e) => setData({ ...data, display_name: e.target.value })}
                                     placeholder="Enter your name..."
-                                    className="w-full bg-white/50 border-2 border-[var(--forest)]/10 rounded-[2rem] px-8 py-6 text-2xl font-bold serif text-[var(--forest)] focus:outline-none focus:border-[var(--forest)]/30 transition-all shadow-inner"
+                                    className="w-full bg-white/50 border-2 border-[var(--purple)]/10 rounded-[2rem] px-8 py-6 text-2xl font-bold serif text-[var(--purple)] focus:outline-none focus:border-[var(--purple)]/30 transition-all shadow-inner"
                                 />
                             </div>
                         )}
@@ -156,7 +156,7 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                                     <GraduationCap className="w-4 h-4" />
                                     The Level of Discovery
                                 </label>
-                                <h3 className="text-xl font-bold serif text-[var(--forest)] mb-6">What grade or level are you currently in?</h3>
+                                <h3 className="text-xl font-bold serif text-[var(--purple)] mb-6">What grade or level are you currently in?</h3>
                                 <div className="grid grid-cols-3 gap-3">
                                     {[
                                         { v: 'K', l: 'K' }, { v: '1', l: '1st' }, { v: '2', l: '2nd' },
@@ -169,8 +169,8 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                                             key={g.v}
                                             onClick={() => setData({ ...data, grade_level: g.v })}
                                             className={`p-4 rounded-2xl border-2 transition-all font-bold text-sm ${data.grade_level === g.v
-                                                ? 'bg-[var(--forest)] border-[var(--forest)] text-white shadow-lg scale-105'
-                                                : 'bg-white border-slate-100 text-slate-400 hover:border-[var(--forest)]/20 hover:text-[var(--forest)]'
+                                                ? 'bg-[var(--purple)] border-[var(--purple)] text-white shadow-lg scale-105'
+                                                : 'bg-white border-slate-100 text-slate-400 hover:border-[var(--purple)]/20 hover:text-[var(--purple)]'
                                                 }`}
                                         >
                                             {g.l}
@@ -186,7 +186,7 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                                     <MapPin className="w-4 h-4" />
                                     Your Hub of Influence
                                 </label>
-                                <h3 className="text-xl font-bold serif text-[var(--forest)] mb-6">Which city are you in?</h3>
+                                <h3 className="text-xl font-bold serif text-[var(--purple)] mb-6">Which city are you in?</h3>
                                 <p className="text-xs text-slate-400 mb-6 leading-relaxed">
                                     Adeline uses this to gather local weather, news, and student opportunities specific to your city.
                                 </p>
@@ -196,7 +196,7 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                                     value={data.city}
                                     onChange={(e) => setData({ ...data, city: e.target.value })}
                                     placeholder="e.g. Nowata"
-                                    className="w-full bg-white/50 border-2 border-[var(--forest)]/10 rounded-[2rem] px-8 py-6 text-2xl font-bold serif text-[var(--forest)] focus:outline-none focus:border-[var(--forest)]/30 transition-all shadow-inner"
+                                    className="w-full bg-white/50 border-2 border-[var(--purple)]/10 rounded-[2rem] px-8 py-6 text-2xl font-bold serif text-[var(--purple)] focus:outline-none focus:border-[var(--purple)]/30 transition-all shadow-inner"
                                 />
                             </div>
                         )}
@@ -207,7 +207,7 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                                     <MapPin className="w-4 h-4" />
                                     Your Home State
                                 </label>
-                                <h3 className="text-xl font-bold serif text-[var(--forest)] mb-6">Which state do you live in?</h3>
+                                <h3 className="text-xl font-bold serif text-[var(--purple)] mb-6">Which state do you live in?</h3>
                                 <p className="text-xs text-slate-400 mb-6 leading-relaxed">
                                     This helps Adeline align your journey with local requirements.
                                 </p>
@@ -220,8 +220,8 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                                             key={state}
                                             onClick={() => setData({ ...data, state_standards: state.toLowerCase() })}
                                             className={`p-4 rounded-2xl border-2 text-left transition-all font-bold text-sm ${data.state_standards === state.toLowerCase()
-                                                ? 'bg-[var(--forest)] border-[var(--forest)] text-white shadow-lg'
-                                                : 'bg-white border-slate-100 text-slate-400 hover:border-[var(--forest)]/20'
+                                                ? 'bg-[var(--purple)] border-[var(--purple)] text-white shadow-lg'
+                                                : 'bg-white border-slate-100 text-slate-400 hover:border-[var(--purple)]/20'
                                                 }`}
                                         >
                                             {state}
@@ -236,7 +236,7 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                         {step > 1 ? (
                             <button
                                 onClick={() => setStep(step - 1)}
-                                className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[var(--forest)] transition-colors"
+                                className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[var(--purple)] transition-colors"
                             >
                                 Previous
                             </button>
@@ -245,7 +245,7 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                         <button
                             onClick={handleNext}
                             disabled={!isStepValid() || saving}
-                            className="flex items-center gap-3 px-8 py-4 bg-[var(--forest)] text-white rounded-[2rem] font-bold text-sm shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all group"
+                            className="flex items-center gap-3 px-8 py-4 bg-[var(--purple)] text-white rounded-[2rem] font-bold text-sm shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all group"
                         >
                             {saving ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
