@@ -1,25 +1,100 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Play, Pause, RotateCcw, Share2, BookOpen, Sparkles } from 'lucide-react';
+import { Play, Pause, RotateCcw, Share2, BookOpen, Sparkles, Loader2 } from 'lucide-react';
 import { GameProject } from '@/types/learning';
 import { formatTrack } from '@/types/learning';
 
 interface GameLabProps {
-    gameProject: GameProject;
+    gameProject?: GameProject;
     onComplete?: () => void;
     onShare?: () => void;
+    onBack?: () => void;
 }
 
-export function GameLab({ gameProject, onComplete, onShare }: GameLabProps) {
+export function GameLab({ gameProject: initialGameProject, onComplete, onShare, onBack }: GameLabProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const cleanupRef = useRef<(() => void) | null>(null);
+    const animationFrameRef = useRef<number | null>(null);
+
+    const [gameProject, setGameProject] = useState<GameProject | null>(initialGameProject || null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [showInstructions, setShowInstructions] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
 
+    // Auto-generate game from pending topic on mount
     useEffect(() => {
-        if (!canvasRef.current || !isPlaying) return;
+        const pendingTopic = localStorage.getItem('pendingGameTopic');
+        const pendingTrack = localStorage.getItem('pendingGameTrack');
+        const pendingDifficulty = localStorage.getItem('pendingGameDifficulty');
+        const pendingGameType = localStorage.getItem('pendingGameType');
+
+        if (pendingTopic && !gameProject) {
+            setIsGenerating(true);
+
+            // Call API to generate game
+            fetch('/api/games', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    concept: pendingTopic,
+                    track: pendingTrack || 'creation_science',
+                    difficulty: pendingDifficulty || 'beginner',
+                    game_type: pendingGameType || 'educational',
+                }),
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.game) {
+                        setGameProject(data.game);
+                        setShowInstructions(true);
+                    } else {
+                        setError('Failed to generate game');
+                    }
+                })
+                .catch(err => {
+                    console.error('Game generation error:', err);
+                    setError('Failed to generate game. Please try again.');
+                })
+                .finally(() => {
+                    setIsGenerating(false);
+                    // Clear pending topic
+                    localStorage.removeItem('pendingGameTopic');
+                    localStorage.removeItem('pendingGameTrack');
+                    localStorage.removeItem('pendingGameDifficulty');
+                    localStorage.removeItem('pendingGameType');
+                });
+        }
+    }, [gameProject]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (cleanupRef.current) {
+                cleanupRef.current();
+                cleanupRef.current = null;
+            }
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
+            }
+        };
+    }, []);
+
+    // Execute game code when playing
+    useEffect(() => {
+        if (!canvasRef.current || !isPlaying || !gameProject) return;
+
+        // Cleanup previous game instance
+        if (cleanupRef.current) {
+            cleanupRef.current();
+            cleanupRef.current = null;
+        }
+        if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+        }
 
         try {
             setError(null);
@@ -27,18 +102,46 @@ export function GameLab({ gameProject, onComplete, onShare }: GameLabProps) {
             canvas.width = 800;
             canvas.height = 600;
 
-            // Execute the game code in a safe context
-            const gameFunction = new Function('canvas', `
-        ${gameProject.game_code}
-        return runGame(canvas);
-      `);
+            // Clear canvas
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
 
-            const cleanup = gameFunction(canvas);
-            cleanupRef.current = cleanup;
+            // Create a safe execution context with proper cleanup
+            const executeGameCode = () => {
+                try {
+                    // Wrap the game code to ensure it returns a cleanup function
+                    const wrappedCode = `
+            (function(canvas) {
+              ${gameProject.game_code}
+              
+              // Ensure runGame is called and returns cleanup
+              if (typeof runGame === 'function') {
+                return runGame(canvas);
+              } else {
+                throw new Error('runGame function not found in game code');
+              }
+            })
+          `;
+
+                    const gameFunction = new Function('canvas', `return ${wrappedCode}`);
+                    const cleanup = gameFunction()(canvas);
+
+                    if (typeof cleanup === 'function') {
+                        cleanupRef.current = cleanup;
+                    }
+                } catch (err) {
+                    console.error('Game execution error:', err);
+                    throw err;
+                }
+            };
+
+            executeGameCode();
 
         } catch (err) {
             console.error('Game execution error:', err);
-            setError('Failed to start game. Please try again.');
+            setError('Failed to start game. The game code may have an error.');
             setIsPlaying(false);
         }
 
@@ -48,7 +151,7 @@ export function GameLab({ gameProject, onComplete, onShare }: GameLabProps) {
                 cleanupRef.current = null;
             }
         };
-    }, [isPlaying, gameProject.game_code]);
+    }, [isPlaying, gameProject]);
 
     const handleStart = () => {
         setShowInstructions(false);
@@ -60,6 +163,10 @@ export function GameLab({ gameProject, onComplete, onShare }: GameLabProps) {
             cleanupRef.current();
             cleanupRef.current = null;
         }
+        if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+        }
         setIsPlaying(false);
         setTimeout(() => setIsPlaying(true), 100);
     };
@@ -69,8 +176,49 @@ export function GameLab({ gameProject, onComplete, onShare }: GameLabProps) {
             cleanupRef.current();
             cleanupRef.current = null;
         }
+        if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+        }
         setIsPlaying(false);
     };
+
+    const handleStop = () => {
+        handlePause();
+        setShowInstructions(true);
+    };
+
+    if (isGenerating) {
+        return (
+            <div className="bg-gradient-to-br from-purple/10 to-blue/10 rounded-3xl p-12 border-2 border-purple/20">
+                <div className="text-center">
+                    <Loader2 className="w-16 h-16 text-purple mx-auto mb-4 animate-spin" />
+                    <h3 className="text-2xl font-heading text-purple mb-2">Architecting Your Learning Simulation...</h3>
+                    <p className="text-charcoal/70">Adeline is crafting a custom educational game just for you!</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!gameProject) {
+        return (
+            <div className="bg-gradient-to-br from-purple/10 to-blue/10 rounded-3xl p-12 border-2 border-purple/20">
+                <div className="text-center">
+                    <Sparkles className="w-16 h-16 text-purple mx-auto mb-4" />
+                    <h3 className="text-2xl font-heading text-purple mb-2">No Game Loaded</h3>
+                    <p className="text-charcoal/70 mb-6">Ask Adeline to create a game for you in the chat!</p>
+                    {onBack && (
+                        <button
+                            onClick={onBack}
+                            className="px-6 py-3 bg-purple text-white rounded-2xl font-bold hover:scale-105 transition-all"
+                        >
+                            Back to Chat
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-gradient-to-br from-purple/10 to-blue/10 rounded-3xl p-6 border-2 border-purple/20">
@@ -86,15 +234,25 @@ export function GameLab({ gameProject, onComplete, onShare }: GameLabProps) {
                     <h3 className="text-2xl font-heading text-purple mb-2">{gameProject.title}</h3>
                     <p className="text-charcoal/70">{gameProject.description}</p>
                 </div>
-                {onShare && (
-                    <button
-                        onClick={onShare}
-                        className="p-3 rounded-xl bg-white hover:bg-purple/10 transition-all"
-                        title="Share to Community Library"
-                    >
-                        <Share2 className="w-5 h-5 text-purple" />
-                    </button>
-                )}
+                <div className="flex gap-2">
+                    {onShare && (
+                        <button
+                            onClick={onShare}
+                            className="p-3 rounded-xl bg-white hover:bg-purple/10 transition-all"
+                            title="Share to Community Library"
+                        >
+                            <Share2 className="w-5 h-5 text-purple" />
+                        </button>
+                    )}
+                    {onBack && (
+                        <button
+                            onClick={onBack}
+                            className="px-4 py-2 rounded-xl bg-white hover:bg-purple/10 transition-all text-sm font-medium text-purple"
+                        >
+                            Back to Chat
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Track Badge */}
@@ -143,7 +301,13 @@ export function GameLab({ gameProject, onComplete, onShare }: GameLabProps) {
                     <div className="absolute inset-0 bg-red-500/10 flex items-center justify-center z-10">
                         <div className="text-center text-red-700 p-8 max-w-md bg-white rounded-2xl">
                             <p className="font-bold mb-2">Oops!</p>
-                            <p className="text-sm">{error}</p>
+                            <p className="text-sm mb-4">{error}</p>
+                            <button
+                                onClick={() => setError(null)}
+                                className="px-4 py-2 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all"
+                            >
+                                Dismiss
+                            </button>
                         </div>
                     </div>
                 )}
