@@ -11,7 +11,7 @@ interface MessageContentProps {
     onAcceptMission?: (missionData: any) => void;
 }
 
-function MessageContent({ content, onNavigateToGameLab, onAcceptMission }: MessageContentProps) {
+function MessageContentComponent({ content, onNavigateToGameLab, onAcceptMission }: MessageContentProps) {
     // Parse <GAME> tags for inline games
     const gameMatch = content.match(/<GAME>([\s\S]*?)<\/GAME>/);
     if (gameMatch) {
@@ -172,5 +172,6 @@ function MessageContent({ content, onNavigateToGameLab, onAcceptMission }: Messa
     return <div dangerouslySetInnerHTML={{ __html: content }} />;
 }
 
-// ⚡ Bolt: Export with React.memo for performance optimization
-export default React.memo(MessageContent);
+const MessageContent = React.memo(MessageContentComponent);
+export default MessageContent;
+
