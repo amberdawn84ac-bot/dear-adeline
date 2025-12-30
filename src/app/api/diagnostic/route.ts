@@ -30,10 +30,17 @@ For each question:
 2. Target middle school to high school level
 3. Allow for varied responses showing different mastery levels
 
-Return a JSON array with this structure:
+CRITICAL: Return ONLY a valid JSON array, nothing else. No explanations, no markdown, just the JSON.
+
+Format:
 [
   {
-    "id": "unique_id",
+    "id": "q1",
+    "subject": "Math Reasoning",
+    "text": "Question text here"
+  },
+  {
+    "id": "q2",
     "subject": "Math Reasoning",
     "text": "Question text here"
   }
