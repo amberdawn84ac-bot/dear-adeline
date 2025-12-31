@@ -1,6 +1,21 @@
 // src/app/api/adeline/__tests__/route.test.ts
 
-import { NextRequest } from 'next/server';
+// Mock Next.js server components
+jest.mock('next/server', () => ({
+  NextResponse: {
+    json: jest.fn((data, init) => ({
+      json: () => Promise.resolve(data),
+      status: init?.status || 200,
+    })),
+  },
+  NextRequest: jest.fn((url, init) => ({
+    url,
+    ...init,
+    json: () => Promise.resolve(JSON.parse(init?.body as string)),
+  })),
+}));
+
+import { NextRequest, NextResponse } from 'next/server';
 import { POST } from '../route'; // Assuming your route handler is an exported POST function
 import { getAnthropicApiKey } from '@/lib/server/config';
 import Anthropic from '@anthropic-ai/sdk';
@@ -27,7 +42,7 @@ describe('Adeline API Route', () => {
       content: [{ type: 'text', text: 'Hello from Adeline!' }],
     });
 
-    const request = new NextRequest('http://localhost/api/adeline', {
+    const request = new (NextRequest as any)('http://localhost/api/adeline', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -49,7 +64,7 @@ describe('Adeline API Route', () => {
   });
 
   it('should return a 400 response if prompt is missing', async () => {
-    const request = new NextRequest('http://localhost/api/adeline', {
+    const request = new (NextRequest as any)('http://localhost/api/adeline', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -68,7 +83,7 @@ describe('Adeline API Route', () => {
   it('should return a 500 response if Anthropic API call fails', async () => {
     mockAnthropicMessagesCreate.mockRejectedValueOnce(new Error('Anthropic API error'));
 
-    const request = new NextRequest('http://localhost/api/adeline', {
+    const request = new (NextRequest as any)('http://localhost/api/adeline', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -89,7 +104,7 @@ describe('Adeline API Route', () => {
       throw new Error('ANTHROPIC_API_KEY is not set');
     });
 
-    const request = new NextRequest('http://localhost/api/adeline', {
+    const request = new (NextRequest as any)('http://localhost/api/adeline', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

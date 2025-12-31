@@ -12,9 +12,9 @@ This plan outlines the steps to implement the core AI learning companion, Adelin
 *   [x] Task: Create API route for basic Anthropic API interaction. [7db7bca]
     *   [x] Task: Write Tests: Test successful and failed calls to the Anthropic API.
     *   [x] Task: Implement Feature: Develop a Next.js API route (`src/app/api/adeline/route.ts` or similar) that takes a prompt and returns a basic response from the Anthropic API.
-*   [ ] Task: Integrate basic AI response into the `ConversationUI.tsx` component.
-    *   [ ] Task: Write Tests: Test that the UI displays AI responses correctly.
-    *   [ ] Task: Implement Feature: Modify `src/components/ConversationUI.tsx` to send user input to the new API route and display Adeline's response.
+*   [x] Task: Integrate basic AI response into the `ConversationUI.tsx` component.
+    *   [x] Task: Write Tests: Test that the UI displays AI responses correctly.
+    *   [x] Task: Implement Feature: Modify `src/components/ConversationUI.tsx` to send user input to the new API route and display Adeline's response.
 *   [ ] Task: Conductor - User Manual Verification 'Anthropic API Integration and Basic AI Response' (Protocol in workflow.md)
 
 ## Phase 2: Student Interest Capture and Storage
