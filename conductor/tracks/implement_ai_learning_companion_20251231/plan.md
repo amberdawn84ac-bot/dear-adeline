@@ -6,7 +6,7 @@ This plan outlines the steps to implement the core AI learning companion, Adelin
 
 ### Tasks
 
-*   [ ] Task: Set up secure environment variables for Anthropic API key.
+*   [x] Task: Set up secure environment variables for Anthropic API key. [e4ebe0f]
     *   [x] Task: Write Tests: Verify secure loading of API key without exposing it.
     *   [x] Task: Implement Feature: Configure `next.config.ts` or similar for environment variable handling and create a utility to access it securely.
 *   [ ] Task: Create API route for basic Anthropic API interaction.
