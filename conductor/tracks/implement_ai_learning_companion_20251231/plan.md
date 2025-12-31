@@ -15,46 +15,46 @@ This plan outlines the steps to implement the core AI learning companion, Adelin
 *   [x] Task: Integrate basic AI response into the `ConversationUI.tsx` component.
     *   [x] Task: Write Tests: Test that the UI displays AI responses correctly.
     *   [x] Task: Implement Feature: Modify `src/components/ConversationUI.tsx` to send user input to the new API route and display Adeline's response.
-*   [ ] Task: Conductor - User Manual Verification 'Anthropic API Integration and Basic AI Response' (Protocol in workflow.md)
+*   [x] Task: Conductor - User Manual Verification 'Anthropic API Integration and Basic AI Response' (Protocol in workflow.md)
 
 ## Phase 2: Student Interest Capture and Storage
 
 ### Tasks
 
-*   [ ] Task: Define new database schema for student interests.
-    *   [ ] Task: Write Tests: (Not directly applicable, but verify schema creation with a migration test if possible)
-    *   [ ] Task: Implement Feature: Create a new Supabase migration (`supabase/migrations/`) to add a `student_interests` table, linking to `profiles` table.
-*   [ ] Task: Implement API route to save student interests.
-    *   [ ] Task: Write Tests: Test saving new interests and updating existing ones for a student.
-    *   [ ] Task: Implement Feature: Develop a Next.js API route (`src/app/api/student-interests/save/route.ts`) to handle POST requests for saving student interests.
-*   [ ] Task: Implement API route to retrieve student interests.
-    *   [ ] Task: Write Tests: Test retrieving interests for a given student.
-    *   [ ] Task: Implement Feature: Develop a Next.js API route (`src/app/api/student-interests/get/route.ts`) to handle GET requests for retrieving student interests.
-*   [ ] Task: Add UI elements in `ConversationUI.tsx` to capture and display student interests.
-    *   [ ] Task: Write Tests: Test interaction and display of student interests in the UI.
-    *   [ ] Task: Implement Feature: Update `src/components/ConversationUI.tsx` to allow students to input their interests and display a list of current interests.
-*   [ ] Task: Conductor - User Manual Verification 'Student Interest Capture and Storage' (Protocol in workflow.md)
+*   [x] Task: Define new database schema for student interests.
+    *   [x] Task: Write Tests: (Not directly applicable, but verify schema creation with a migration test if possible)
+    *   [x] Task: Implement Feature: Create a new Supabase migration (`supabase/migrations/`) to add a `student_interests` table, linking to `profiles` table.
+*   [x] Task: Implement API route to save student interests.
+    *   [x] Task: Write Tests: Test saving new interests and updating existing ones for a student.
+    *   [x] Task: Implement Feature: Develop a Next.js API route (`src/app/api/student-interests/save/route.ts`) to handle POST requests for saving student interests.
+*   [x] Task: Implement API route to retrieve student interests.
+    *   [x] Task: Write Tests: Test retrieving interests for a given student.
+    *   [x] Task: Implement Feature: Develop a Next.js API route (`src/app/api/student-interests/get/route.ts`) to handle GET requests for retrieving student interests.
+*   [x] Task: Add UI elements in `ConversationUI.tsx` to capture and display student interests.
+    *   [x] Task: Write Tests: Test interaction and display of student interests in the UI.
+    *   [x] Task: Implement Feature: Update `src/components/ConversationUI.tsx` to allow students to input their interests and display a list of current interests.
+*   [x] Task: Conductor - User Manual Verification 'Student Interest Capture and Storage' (Protocol in workflow.md)
 
 ## Phase 3: Personalized Lesson Generation
 
 ### Tasks
 
-*   [ ] Task: Develop a service to craft Anthropic API prompts from student interests.
-    *   [ ] Task: Write Tests: Test various interest combinations and verify the generated prompts are well-formed and contextually relevant.
-    *   [ ] Task: Implement Feature: Create a utility function (`src/lib/adelinePromptGenerator.ts`) that takes student interests and generates an optimized prompt for personalized lesson generation.
-*   [ ] Task: Create API route to trigger personalized lesson generation.
-    *   [ ] Task: Write Tests: Test the API route, ensuring it calls the prompt generator and Anthropic API correctly, and handles responses.
-    *   [ ] Task: Implement Feature: Develop a Next.js API route (`src/app/api/adeline/generate-lesson/route.ts`) that uses the prompt generator and calls the Anthropic API.
-*   [ ] Task: Define new database schema for storing generated lessons.
-    *   [ ] Task: Write Tests: (Not directly applicable, but verify schema creation with a migration test if possible)
-    *   [ ] Task: Implement Feature: Create a new Supabase migration (`supabase/migrations/`) to add a `personalized_lessons` table, linking to `profiles` and potentially `skills`.
-*   [ ] Task: Implement API route to save generated personalized lessons.
-    *   [ ] Task: Write Tests: Test saving lesson content to the database.
-    *   [ ] Task: Implement Feature: Develop a Next.js API route (`src/app/api/personalized-lessons/save/route.ts`) to persist lesson content after generation.
-*   [ ] Task: Implement API route to retrieve personalized lessons.
-    *   [ ] Task: Write Tests: Test retrieving lessons for a given student.
-    *   [ ] Task: Implement Feature: Develop a Next.js API route (`src/app/api/personalized-lessons/get/route.ts`) to fetch stored lessons.
-*   [ ] Task: Integrate lesson generation and display into the `ConversationUI.tsx` component.
-    *   [ ] Task: Write Tests: Test the full flow from interest input, lesson generation, saving, and display in the UI.
-    *   [ ] Task: Implement Feature: Enhance `src/components/ConversationUI.tsx` to trigger lesson generation and display the generated lessons to the student.
-*   [ ] Task: Conductor - User Manual Verification 'Personalized Lesson Generation' (Protocol in workflow.md)
+*   [x] Task: Develop a service to craft Anthropic API prompts from student interests.
+    *   [x] Task: Write Tests: Test various interest combinations and verify the generated prompts are well-formed and contextually relevant.
+    *   [x] Task: Implement Feature: Create a utility function (`src/lib/adelinePromptGenerator.ts`) that takes student interests and generates an optimized prompt for personalized lesson generation.
+*   [x] Task: Create API route to trigger personalized lesson generation.
+    *   [x] Task: Write Tests: Test the API route, ensuring it calls the prompt generator and Anthropic API correctly, and handles responses.
+    *   [x] Task: Implement Feature: Develop a Next.js API route (`src/app/api/adeline/generate-lesson/route.ts`) that uses the prompt generator and calls the Anthropic API.
+*   [x] Task: Define new database schema for storing generated lessons.
+    *   [x] Task: Write Tests: (Not directly applicable, but verify schema creation with a migration test if possible)
+    *   [x] Task: Implement Feature: Create a new Supabase migration (`supabase/migrations/`) to add a `personalized_lessons` table, linking to `profiles` and potentially `skills`.
+*   [x] Task: Implement API route to save generated personalized lessons.
+    *   [x] Task: Write Tests: Test saving lesson content to the database.
+    *   [x] Task: Implement Feature: Develop a Next.js API route (`src/app/api/personalized-lessons/save/route.ts`) to persist lesson content after generation.
+*   [x] Task: Implement API route to retrieve personalized lessons.
+    *   [x] Task: Write Tests: Test retrieving lessons for a given student.
+    *   [x] Task: Implement Feature: Develop a Next.js API route (`src/app/api/personalized-lessons/get/route.ts`) to fetch stored lessons.
+*   [x] Task: Integrate lesson generation and display into the `ConversationUI.tsx` component.
+    *   [x] Task: Write Tests: Test the full flow from interest input, lesson generation, saving, and display in the UI.
+    *   [x] Task: Implement Feature: Enhance `src/components/ConversationUI.tsx` to trigger lesson generation and display the generated lessons to the student.
+*   [x] Task: Conductor - User Manual Verification 'Personalized Lesson Generation' (Protocol in workflow.md)
