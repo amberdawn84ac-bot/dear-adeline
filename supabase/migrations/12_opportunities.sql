@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS opportunities (
 -- Indexes for efficient searching
 CREATE INDEX idx_opportunities_disciplines ON opportunities USING GIN(disciplines);
 CREATE INDEX idx_opportunities_status ON opportunities(status) WHERE status = 'active';
-CREATE INDEX idx_opportunities_deadline ON opportunities(deadline) WHERE deadline > NOW();
+CREATE INDEX idx_opportunities_deadline ON opportunities(deadline);
 CREATE INDEX idx_opportunities_track_credits ON opportunities USING GIN(track_credits);
 
 -- Updated timestamp trigger
