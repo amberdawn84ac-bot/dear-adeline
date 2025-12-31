@@ -95,10 +95,10 @@ export const DiagnosticCenter: React.FC = () => {
         if (!sessionId) return;
 
         try {
-            const res = await fetch('/api/diagnostic/complete', {
+            const res = await fetch('/api/diagnostic', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId })
+                body: JSON.stringify({ action: 'complete', sessionId })
             });
 
             const data = await res.json();
@@ -225,10 +225,10 @@ export const DiagnosticCenter: React.FC = () => {
                                     onClick={() => !feedback && submitAnswer(letter)}
                                     disabled={isLoading || feedback !== null}
                                     className={`w-full p-4 rounded-xl text-left transition-all border-2 ${selectedAnswer === letter
-                                            ? feedback?.correct
-                                                ? 'border-green-500 bg-green-50'
-                                                : 'border-red-500 bg-red-50'
-                                            : 'border-[var(--cream-dark)] hover:border-[var(--sage)] hover:bg-[var(--cream)]'
+                                        ? feedback?.correct
+                                            ? 'border-green-500 bg-green-50'
+                                            : 'border-red-500 bg-red-50'
+                                        : 'border-[var(--cream-dark)] hover:border-[var(--sage)] hover:bg-[var(--cream)]'
                                         } ${feedback ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                                 >
                                     <div className="flex items-center gap-3">
@@ -296,8 +296,8 @@ export const DiagnosticCenter: React.FC = () => {
                                         <div className="flex-1 bg-[var(--cream-dark)] rounded-full h-2">
                                             <div
                                                 className={`h-2 rounded-full ${assessment.confidence === 'high' ? 'bg-green-500' :
-                                                        assessment.confidence === 'medium' ? 'bg-yellow-500' :
-                                                            'bg-red-500'
+                                                    assessment.confidence === 'medium' ? 'bg-yellow-500' :
+                                                        'bg-red-500'
                                                     }`}
                                                 style={{ width: `${(assessment.correct / assessment.total) * 100}%` }}
                                             ></div>
