@@ -1,286 +1,361 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Sparkles, CheckCircle2, XCircle, ArrowRight, Brain } from 'lucide-react';
 
-interface Question {
-    id: string;
-    subject: string;
-    text: string;
+interface QuestionData {
+    track: string;
+    question: string;
+    options: Record<string, string>;
+    correctAnswer: string;
+    explanation: string;
+    difficulty: number;
 }
 
-interface Answer {
-    questionId: string;
-    subject: string;
-    questionText: string;
-    answerText: string;
-}
-
-interface Assessment {
-    subject: string;
-    estimatedLevel: string;
-    strengths: string[];
-    gaps: string[];
-}
-
-interface DiagnosticResult {
-    assessments: Assessment[];
-    twoWeekPlan: string;
+interface Progress {
+    current: number;
+    total: number;
 }
 
 export const DiagnosticCenter: React.FC = () => {
-    const [step, setStep] = useState<'welcome' | 'testing' | 'evaluating' | 'report'>('welcome');
-    const [questions, setQuestions] = useState<Question[]>([]);
-    const [currentIdx, setCurrentIdx] = useState(0);
-    const [answers, setAnswers] = useState<Answer[]>([]);
-    const [currentAnswer, setCurrentAnswer] = useState('');
-    const [result, setResult] = useState<DiagnosticResult | null>(null);
+    const [step, setStep] = useState<'welcome' | 'testing' | 'results'>('welcome');
+    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
+    const [progress, setProgress] = useState<Progress>({ current: 0, total: 20 });
+    const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+    const [feedback, setFeedback] = useState<{ correct: boolean; explanation: string } | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [report, setReport] = useState<any>(null);
 
-    const startTest = async () => {
+    const startDiagnostic = async () => {
         setIsLoading(true);
         try {
-            const response = await fetch('/api/diagnostic', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'generate_questions' }),
-            });
+            const res = await fetch('/api/diagnostic/start', { method: 'POST' });
+            const data = await res.json();
 
-            if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (!data.questions || !Array.isArray(data.questions) || data.questions.length === 0) {
-                throw new Error('No questions received from API');
-            }
-
-            setQuestions(data.questions);
+            setSessionId(data.sessionId);
+            setCurrentQuestion(data.question);
+            setProgress(data.progress);
             setStep('testing');
-        } catch (e) {
-            console.error('Error starting diagnostic:', e);
-            alert('Failed to generate questions. Please try again.');
+        } catch (error) {
+            console.error('Failed to start diagnostic:', error);
+            alert('Failed to start diagnostic. Please try again.');
         } finally {
             setIsLoading(false);
         }
     };
 
-    const nextQuestion = () => {
-        const newAnswers = [
-            ...answers,
-            {
-                questionId: questions[currentIdx].id,
-                subject: questions[currentIdx].subject,
-                questionText: questions[currentIdx].text,
-                answerText: currentAnswer
-            }
-        ];
-        setAnswers(newAnswers);
-        setCurrentAnswer('');
+    const submitAnswer = async (answer: string) => {
+        if (!sessionId || !currentQuestion) return;
 
-        if (currentIdx < questions.length - 1) {
-            setCurrentIdx(prev => prev + 1);
-        } else {
-            finishTest(newAnswers);
-        }
-    };
+        setSelectedAnswer(answer);
+        setIsLoading(true);
 
-    const finishTest = async (finalAnswers: Answer[]) => {
-        setStep('evaluating');
         try {
-            const response = await fetch('/api/diagnostic', {
+            const res = await fetch('/api/diagnostic/answer', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'evaluate', answers: finalAnswers }),
+                body: JSON.stringify({
+                    sessionId,
+                    answer,
+                    questionData: currentQuestion
+                })
             });
 
-            const evaluation = await response.json();
-            setResult(evaluation);
-            setStep('report');
-        } catch (e) {
-            console.error(e);
-            alert('Failed to evaluate responses. Please try again.');
+            const data = await res.json();
+
+            // Show feedback
+            setFeedback({
+                correct: data.correct,
+                explanation: data.explanation
+            });
+
+            // Wait 2 seconds before moving to next question
+            setTimeout(async () => {
+                if (data.complete) {
+                    // Complete diagnostic
+                    await completeDiagnostic();
+                } else {
+                    // Move to next question
+                    setCurrentQuestion(data.nextQuestion);
+                    setProgress(data.progress);
+                    setSelectedAnswer(null);
+                    setFeedback(null);
+                }
+            }, 2000);
+        } catch (error) {
+            console.error('Failed to submit answer:', error);
+            alert('Failed to submit answer. Please try again.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const progress = (questions && questions.length > 0) ? ((currentIdx + 1) / questions.length) * 100 : 0;
+    const completeDiagnostic = async () => {
+        if (!sessionId) return;
 
-    return (
-        <div className="max-w-4xl mx-auto space-y-8 pb-20">
-            {step === 'welcome' && (
-                <div className="bg-white p-12 rounded-[3rem] border border-slate-200 shadow-xl text-center space-y-8 animate-fade-in">
-                    <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-4xl mx-auto">🔍</div>
-                    <div className="space-y-4">
-                        <h2 className="text-4xl font-serif text-slate-900">Academic Compass</h2>
-                        <p className="text-slate-500 text-lg max-w-lg mx-auto leading-relaxed">
-                            "To know where we are going, we must first understand where we stand."
-                            Let's take 5-10 minutes to observe your current mastery levels across different subjects.
-                        </p>
+        try {
+            const res = await fetch('/api/diagnostic/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId })
+            });
+
+            const data = await res.json();
+            setReport(data.report);
+            setStep('results');
+        } catch (error) {
+            console.error('Failed to complete diagnostic:', error);
+            alert('Failed to complete diagnostic. Please try again.');
+        }
+    };
+
+    // Welcome Screen
+    if (step === 'welcome') {
+        return (
+            <div className="min-h-screen bg-[var(--cream)] flex items-center justify-center p-6">
+                <div className="max-w-2xl w-full">
+                    <div className="card p-12 text-center space-y-8">
+                        <div className="w-20 h-20 bg-[var(--sage)]/10 rounded-full flex items-center justify-center mx-auto">
+                            <Brain className="w-10 h-10 text-[var(--sage)]" />
+                        </div>
+
+                        <div className="space-y-4">
+                            <h1 className="text-4xl font-bold text-[var(--charcoal)] serif">
+                                Academic Compass
+                            </h1>
+                            <p className="text-xl text-[var(--charcoal-light)]">
+                                Let's discover where you are in your learning journey
+                            </p>
+                        </div>
+
+                        <div className="bg-[var(--cream)] p-6 rounded-xl space-y-3 text-left">
+                            <p className="text-sm text-[var(--charcoal-light)]">
+                                <strong className="text-[var(--charcoal)]">What to expect:</strong>
+                            </p>
+                            <ul className="text-sm text-[var(--charcoal-light)] space-y-2">
+                                <li className="flex items-start gap-2">
+                                    <CheckCircle2 className="w-4 h-4 text-[var(--sage)] mt-0.5 flex-shrink-0" />
+                                    <span>18 questions across 9 learning tracks</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <CheckCircle2 className="w-4 h-4 text-[var(--sage)] mt-0.5 flex-shrink-0" />
+                                    <span>Questions adapt to your level</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <CheckCircle2 className="w-4 h-4 text-[var(--sage)] mt-0.5 flex-shrink-0" />
+                                    <span>Takes about 10-15 minutes</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <CheckCircle2 className="w-4 h-4 text-[var(--sage)] mt-0.5 flex-shrink-0" />
+                                    <span>Get a personalized 2-week learning plan</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <button
+                            onClick={startDiagnostic}
+                            disabled={isLoading}
+                            className="btn-primary px-12 py-4 text-lg disabled:opacity-50 flex items-center gap-3 mx-auto"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    Starting...
+                                </>
+                            ) : (
+                                <>
+                                    Start Assessment
+                                    <ArrowRight className="w-5 h-5" />
+                                </>
+                            )}
+                        </button>
                     </div>
-                    <div className="bg-slate-50 p-6 rounded-2xl text-left border border-slate-100 max-w-md mx-auto">
-                        <h4 className="font-bold text-slate-800 text-xs uppercase tracking-widest mb-3">Diagnostic Focus:</h4>
-                        <ul className="grid grid-cols-2 gap-2 text-sm text-slate-600">
-                            <li className="flex items-center gap-2">🟢 Math Reasoning</li>
-                            <li className="flex items-center gap-2">🟢 Literary Analysis</li>
-                            <li className="flex items-center gap-2">🟢 Science Logic</li>
-                            <li className="flex items-center gap-2">🟢 Expressive Writing</li>
-                        </ul>
-                    </div>
-                    <button
-                        onClick={startTest}
-                        disabled={isLoading}
-                        className="px-12 py-5 bg-indigo-600 text-white rounded-2xl font-bold text-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-3 mx-auto disabled:opacity-50"
-                    >
-                        {isLoading ? (
-                            <><Loader2 className="w-6 h-6 animate-spin" /> Preparing Assessment...</>
-                        ) : (
-                            'Begin Diagnostic'
-                        )}
-                    </button>
                 </div>
-            )}
+            </div>
+        );
+    }
 
-            {step === 'testing' && questions[currentIdx] && (
-                <div className="space-y-8 animate-slide-up">
-                    <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-xl space-y-8">
-                        <div className="flex justify-between items-center">
-                            <span className="px-4 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold uppercase tracking-widest">
-                                {questions[currentIdx].subject}
+    // Testing Screen
+    if (step === 'testing' && currentQuestion) {
+        const progressPercent = (progress.current / progress.total) * 100;
+
+        return (
+            <div className="min-h-screen bg-[var(--cream)] p-6">
+                <div className="max-w-3xl mx-auto space-y-6">
+                    {/* Progress Bar */}
+                    <div className="card p-4">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-bold text-[var(--charcoal)]">
+                                Question {progress.current} of {progress.total}
                             </span>
-                            <div className="flex items-center gap-2">
-                                <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                    <div className="h-full bg-indigo-600 transition-all duration-500" style={{ width: `${progress}%` }}></div>
-                                </div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase">{currentIdx + 1} of {questions.length}</span>
+                            <span className="text-xs text-[var(--charcoal-light)]">
+                                {Math.round(progressPercent)}% Complete
+                            </span>
+                        </div>
+                        <div className="w-full bg-[var(--cream)] rounded-full h-2">
+                            <div
+                                className="bg-[var(--sage)] h-2 rounded-full transition-all duration-500"
+                                style={{ width: `${progressPercent}%` }}
+                            ></div>
+                        </div>
+                    </div>
+
+                    {/* Question Card */}
+                    <div className="card p-8 space-y-6">
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 bg-[var(--sage)]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                <Sparkles className="w-6 h-6 text-[var(--sage)]" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-xs font-bold uppercase tracking-wider text-[var(--sage)] mb-2">
+                                    {currentQuestion.track.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                                </p>
+                                <p className="text-xl font-medium text-[var(--charcoal)] leading-relaxed">
+                                    {currentQuestion.question}
+                                </p>
                             </div>
                         </div>
 
-                        <h3 className="text-3xl font-serif text-slate-800 leading-snug">
-                            {questions[currentIdx].text}
-                        </h3>
-
-                        <textarea
-                            value={currentAnswer}
-                            onChange={e => setCurrentAnswer(e.target.value)}
-                            autoFocus
-                            placeholder="Share your thoughts or work through the problem here..."
-                            className="w-full p-8 bg-slate-50 border-2 border-slate-100 rounded-3xl focus:bg-white focus:border-indigo-500 outline-none transition-all min-h-[200px] text-lg font-serif"
-                        />
-
-                        <div className="flex justify-between items-center">
-                            <p className="text-xs text-slate-400 font-serif italic">Take your time. There are no wrong steps in learning.</p>
-                            <button
-                                onClick={nextQuestion}
-                                disabled={!currentAnswer.trim()}
-                                className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-lg active:scale-95 disabled:opacity-30"
-                            >
-                                {currentIdx < questions.length - 1 ? 'Next Question →' : 'Finish Assessment →'}
-                            </button>
+                        {/* Answer Options */}
+                        <div className="space-y-3">
+                            {Object.entries(currentQuestion.options).map(([letter, text]) => (
+                                <button
+                                    key={letter}
+                                    onClick={() => !feedback && submitAnswer(letter)}
+                                    disabled={isLoading || feedback !== null}
+                                    className={`w-full p-4 rounded-xl text-left transition-all border-2 ${selectedAnswer === letter
+                                            ? feedback?.correct
+                                                ? 'border-green-500 bg-green-50'
+                                                : 'border-red-500 bg-red-50'
+                                            : 'border-[var(--cream-dark)] hover:border-[var(--sage)] hover:bg-[var(--cream)]'
+                                        } ${feedback ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-8 h-8 bg-[var(--cream-dark)] rounded-full flex items-center justify-center font-bold text-sm">
+                                            {letter}
+                                        </span>
+                                        <span className="flex-1">{text}</span>
+                                        {selectedAnswer === letter && feedback && (
+                                            feedback.correct ? (
+                                                <CheckCircle2 className="w-6 h-6 text-green-600" />
+                                            ) : (
+                                                <XCircle className="w-6 h-6 text-red-600" />
+                                            )
+                                        )}
+                                    </div>
+                                </button>
+                            ))}
                         </div>
+
+                        {/* Feedback */}
+                        {feedback && (
+                            <div className={`p-4 rounded-xl ${feedback.correct ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                                <p className={`text-sm font-medium ${feedback.correct ? 'text-green-800' : 'text-red-800'}`}>
+                                    {feedback.correct ? '✓ Correct!' : '✗ Not quite'}
+                                </p>
+                                <p className="text-sm text-[var(--charcoal-light)] mt-1">
+                                    {feedback.explanation}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
-            )}
+            </div>
+        );
+    }
 
-            {step === 'evaluating' && (
-                <div className="bg-white p-12 rounded-[3rem] border border-slate-200 shadow-xl text-center space-y-8">
-                    <Loader2 className="w-20 h-20 text-indigo-600 mx-auto animate-spin" />
-                    <div className="space-y-2">
-                        <h2 className="text-3xl font-serif text-slate-900">Reviewing your patterns...</h2>
-                        <p className="text-slate-500">Adeline is discerning your current levels and identifying paths for growth.</p>
-                    </div>
-                </div>
-            )}
-
-            {step === 'report' && result && (
-                <div className="space-y-8 animate-fade-in">
-                    <header className="bg-slate-900 text-white p-12 rounded-[2.5rem] flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
-                        <div className="z-10 text-center md:text-left space-y-2">
-                            <h2 className="text-4xl font-serif">Diagnostic Summary</h2>
-                            <p className="text-slate-400">Captured on {new Date().toLocaleDateString()}</p>
+    // Results Screen
+    if (step === 'results' && report) {
+        return (
+            <div className="min-h-screen bg-[var(--cream)] p-6">
+                <div className="max-w-4xl mx-auto space-y-6">
+                    <div className="card p-12 text-center space-y-6">
+                        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                            <CheckCircle2 className="w-10 h-10 text-green-600" />
                         </div>
-                        <div className="z-10 flex gap-6">
-                            {result.assessments.map(a => (
-                                <div key={a.subject} className="text-center group">
-                                    <div className="text-3xl font-bold text-indigo-400">{a.estimatedLevel}</div>
-                                    <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold group-hover:text-slate-300 transition-colors">{a.subject}</div>
+                        <h1 className="text-4xl font-bold text-[var(--charcoal)] serif">
+                            Assessment Complete!
+                        </h1>
+                        <p className="text-xl text-[var(--charcoal-light)]">
+                            Overall Level: <strong className="text-[var(--charcoal)]">{report.overallLevel}</strong>
+                        </p>
+                    </div>
+
+                    {/* Track Levels */}
+                    <div className="card p-8 space-y-6">
+                        <h2 className="text-2xl font-bold text-[var(--charcoal)] serif">Your Learning Profile</h2>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {report.subjectAssessments?.map((assessment: any, i: number) => (
+                                <div key={i} className="p-4 bg-[var(--cream)] rounded-xl">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="font-bold text-[var(--charcoal)]">{assessment.track}</span>
+                                        <span className="text-sm font-bold text-[var(--sage)]">{assessment.level}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex-1 bg-[var(--cream-dark)] rounded-full h-2">
+                                            <div
+                                                className={`h-2 rounded-full ${assessment.confidence === 'high' ? 'bg-green-500' :
+                                                        assessment.confidence === 'medium' ? 'bg-yellow-500' :
+                                                            'bg-red-500'
+                                                    }`}
+                                                style={{ width: `${(assessment.correct / assessment.total) * 100}%` }}
+                                            ></div>
+                                        </div>
+                                        <span className="text-xs text-[var(--charcoal-light)]">
+                                            {assessment.correct}/{assessment.total}
+                                        </span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
-                        <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-indigo-600 rounded-full blur-[100px] opacity-10"></div>
-                    </header>
+                    </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div className="space-y-6">
-                            <h3 className="font-serif text-2xl text-slate-900">Subject Mastery Observed</h3>
-                            <div className="space-y-4">
-                                {result.assessments.map(a => (
-                                    <div key={a.subject} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-                                        <div className="flex justify-between items-center">
-                                            <h4 className="font-bold text-slate-800 text-sm uppercase tracking-widest">{a.subject}</h4>
-                                            <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold">{a.estimatedLevel}</span>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <span className="text-[10px] font-bold text-green-600 uppercase">Strengths</span>
-                                                <ul className="text-sm text-slate-600 space-y-1">
-                                                    {a.strengths.map((s, i) => <li key={i}>• {s}</li>)}
-                                                </ul>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <span className="text-[10px] font-bold text-amber-600 uppercase">Gaps</span>
-                                                <ul className="text-sm text-slate-600 space-y-1">
-                                                    {a.gaps.map((g, i) => <li key={i}>• {g}</li>)}
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
+                    {/* Strengths & Growth Areas */}
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div className="card p-6 space-y-4">
+                            <h3 className="text-xl font-bold text-[var(--charcoal)] serif">💪 Your Strengths</h3>
+                            <ul className="space-y-2">
+                                {report.strengths?.map((strength: string, i: number) => (
+                                    <li key={i} className="flex items-center gap-2 text-[var(--charcoal-light)]">
+                                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                        {strength}
+                                    </li>
                                 ))}
-                            </div>
+                            </ul>
                         </div>
 
-                        <div className="space-y-6">
-                            <h3 className="font-serif text-2xl text-slate-900">Your 2-Week Growth Plan</h3>
-                            <div className="bg-indigo-600 text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-                                <div className="relative z-10 prose prose-invert prose-sm max-w-none text-lg leading-relaxed whitespace-pre-wrap">
-                                    {result.twoWeekPlan}
-                                </div>
-                                <div className="mt-8 pt-8 border-t border-white/20 relative z-10 flex justify-between items-center">
-                                    <button
-                                        onClick={() => {
-                                            setStep('welcome');
-                                            setQuestions([]);
-                                            setCurrentIdx(0);
-                                            setAnswers([]);
-                                            setCurrentAnswer('');
-                                            setResult(null);
-                                        }}
-                                        className="text-white/60 hover:text-white text-xs font-bold uppercase tracking-widest"
-                                    >
-                                        Retake in 2 weeks
-                                    </button>
-                                    <button
-                                        onClick={() => alert('Plan saved! Check your dashboard for progress tracking.')}
-                                        className="px-6 py-2 bg-white text-indigo-600 rounded-xl font-bold text-sm shadow-lg hover:bg-indigo-50"
-                                    >
-                                        Commit to Plan
-                                    </button>
-                                </div>
-                                <div className="absolute top-0 right-0 p-4 opacity-10">
-                                    <span className="text-9xl">📖</span>
-                                </div>
-                            </div>
+                        <div className="card p-6 space-y-4">
+                            <h3 className="text-xl font-bold text-[var(--charcoal)] serif">🌱 Growth Opportunities</h3>
+                            <ul className="space-y-2">
+                                {report.growthAreas?.map((area: string, i: number) => (
+                                    <li key={i} className="flex items-center gap-2 text-[var(--charcoal-light)]">
+                                        <Sparkles className="w-4 h-4 text-[var(--sage)]" />
+                                        {area}
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
                     </div>
-                </div>
-            )}
 
-            <style>{`
-        .animate-fade-in { animation: fade 0.6s ease-out forwards; }
-        .animate-slide-up { animation: slide 0.6s ease-out forwards; }
-        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slide { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
-        </div>
-    );
+                    {/* 2-Week Plan */}
+                    <div className="card p-8 space-y-4">
+                        <h2 className="text-2xl font-bold text-[var(--charcoal)] serif">Your 2-Week Learning Plan</h2>
+                        <div className="prose prose-sm max-w-none text-[var(--charcoal-light)] whitespace-pre-wrap">
+                            {report.twoWeekPlan}
+                        </div>
+                    </div>
+
+                    <div className="text-center">
+                        <a href="/dashboard" className="btn-primary px-12 py-4 text-lg inline-flex items-center gap-3">
+                            Start Learning
+                            <ArrowRight className="w-5 h-5" />
+                        </a>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return null;
 };
