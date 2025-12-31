@@ -10,8 +10,8 @@ This plan outlines the steps to implement the core AI learning companion, Adelin
     *   [x] Task: Write Tests: Verify secure loading of API key without exposing it.
     *   [x] Task: Implement Feature: Configure `next.config.ts` or similar for environment variable handling and create a utility to access it securely.
 *   [ ] Task: Create API route for basic Anthropic API interaction.
-    *   [ ] Task: Write Tests: Test successful and failed calls to the Anthropic API.
-    *   [ ] Task: Implement Feature: Develop a Next.js API route (`src/app/api/adeline/route.ts` or similar) that takes a prompt and returns a basic response from the Anthropic API.
+    *   [x] Task: Write Tests: Test successful and failed calls to the Anthropic API.
+    *   [x] Task: Implement Feature: Develop a Next.js API route (`src/app/api/adeline/route.ts` or similar) that takes a prompt and returns a basic response from the Anthropic API.
 *   [ ] Task: Integrate basic AI response into the `ConversationUI.tsx` component.
     *   [ ] Task: Write Tests: Test that the UI displays AI responses correctly.
     *   [ ] Task: Implement Feature: Modify `src/components/ConversationUI.tsx` to send user input to the new API route and display Adeline's response.
