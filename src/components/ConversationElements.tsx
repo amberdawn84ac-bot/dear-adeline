@@ -1,9 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
-// ⚡ Bolt: Correctly import the memoized MessageContent component.
-// The component was using a default export with React.memo, but was being
-// imported as a named export, bypassing the memoization.
+import { ReactNode, memo } from 'react';
 import MessageContent from './MessageContent';
 
 
@@ -14,12 +11,17 @@ interface ConversationBubbleProps {
     colorTheme?: 'purple' | 'magenta' | 'coral' | 'blue' | 'gold';
 }
 
-export function ConversationBubble({
+// ⚡ Bolt: Memoize ConversationBubble to prevent unnecessary re-renders.
+// By wrapping the component in React.memo, we ensure it only re-renders when
+// its props (speaker, children, etc.) have actually changed. This is a big
+// performance win in long conversations, as it prevents the entire list of
+// messages from re-rendering every time a new one is added.
+const Bubble = ({
     speaker,
     children,
     illustration,
     colorTheme = 'purple'
-}: ConversationBubbleProps) {
+}: ConversationBubbleProps) => {
     const isAdeline = speaker === 'adeline';
 
     const bubbleColors = {
@@ -72,7 +74,8 @@ export function ConversationBubble({
             </div>
         </div>
     );
-}
+};
+export const ConversationBubble = memo(Bubble);
 
 interface ConversationOptionProps {
     children: ReactNode;
