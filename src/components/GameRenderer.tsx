@@ -56,6 +56,14 @@ function QuizGame({ content, onComplete }: { content: any; onComplete?: (score: 
         }, 2000);
     };
 
+    if (!question) {
+        return (
+            <div className="bg-gradient-to-br from-purple/10 to-blue/10 rounded-3xl p-6 border-2 border-purple/20">
+                <p className="text-center text-charcoal/50">Question data unavailable</p>
+            </div>
+        );
+    }
+
     if (completed) {
         const finalScore = Math.round((score / questions.length) * 100);
         return (
