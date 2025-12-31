@@ -1,6 +1,15 @@
 -- Opportunities Library: Main opportunities table
 -- Stores real-world opportunities (grants, contests, scholarships, etc.)
 
+-- Create trigger function for updating updated_at timestamp (if not exists)
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TABLE IF NOT EXISTS opportunities (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     created_at TIMESTAMPTZ DEFAULT NOW(),
