@@ -30,7 +30,11 @@ export const DiagnosticCenter: React.FC = () => {
     const startDiagnostic = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch('/api/diagnostic/start', { method: 'POST' });
+            const res = await fetch('/api/diagnostic', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'start' })
+            });
             const data = await res.json();
 
             setSessionId(data.sessionId);
@@ -52,10 +56,11 @@ export const DiagnosticCenter: React.FC = () => {
         setIsLoading(true);
 
         try {
-            const res = await fetch('/api/diagnostic/answer', {
+            const res = await fetch('/api/diagnostic', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    action: 'answer',
                     sessionId,
                     answer,
                     questionData: currentQuestion
