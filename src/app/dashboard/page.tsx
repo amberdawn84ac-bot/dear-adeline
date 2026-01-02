@@ -40,61 +40,69 @@ export default async function DashboardPage() {
         redirect('/dashboard/teacher');
     }
 
-    // Get student's skills
-    const { data: studentSkills } = await supabase
-        .from('student_skills')
-        .select(`
+    // ⚡ Bolt: Parallelize independent data fetches
+    // All of these queries are independent, so we can run them in parallel
+    // to significantly reduce the page load time. Instead of waiting for
+    // each one to finish sequentially, we let them all run at once.
+    const [
+        { data: studentSkills },
+        { data: graduationProgress },
+        { data: allRequirements },
+        { data: portfolioItems },
+        { data: conversationHistory },
+        { data: activeConversation },
+        { data: learningGaps },
+    ] = await Promise.all([
+        supabase
+            .from('student_skills')
+            .select(`
       *,
       skill:skills(*)
     `)
-        .eq('student_id', user.id);
+            .eq('student_id', user.id),
 
-    // Get graduation progress
-    const { data: graduationProgress } = await supabase
-        .from('student_graduation_progress')
-        .select(`
+        supabase
+            .from('student_graduation_progress')
+            .select(`
       *,
       requirement:graduation_requirements(*)
     `)
-        .eq('student_id', user.id);
+            .eq('student_id', user.id),
 
-    // Get graduation requirements for initial setup
-    const { data: allRequirements } = await supabase
-        .from('graduation_requirements')
-        .select('*')
-        .eq('state_standards', profile?.state_standards || 'oklahoma');
+        supabase
+            .from('graduation_requirements')
+            .select('*')
+            .eq('state_standards', profile?.state_standards || 'oklahoma'),
 
-    // Get recent portfolio items
-    const { data: portfolioItems } = await supabase
-        .from('portfolio_items')
-        .select('*')
-        .eq('student_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
+        supabase
+            .from('portfolio_items')
+            .select('*')
+            .eq('student_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(5),
 
-    // Get conversation history
-    const { data: conversationHistory } = await supabase
-        .from('conversations')
-        .select('id, title, updated_at, topic')
-        .eq('student_id', user.id)
-        .order('updated_at', { ascending: false });
+        supabase
+            .from('conversations')
+            .select('id, title, updated_at, topic')
+            .eq('student_id', user.id)
+            .order('updated_at', { ascending: false }),
 
-    // Get active conversation
-    const { data: activeConversation } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('student_id', user.id)
-        .eq('is_active', true)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        supabase
+            .from('conversations')
+            .select('*')
+            .eq('student_id', user.id)
+            .eq('is_active', true)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
 
-    // Get learning gaps
-    const { data: learningGaps } = await supabase
-        .from('learning_gaps')
-        .select('*')
-        .eq('student_id', user.id)
-        .is('resolved_at', null);
+        supabase
+            .from('learning_gaps')
+            .select('*')
+            .eq('student_id', user.id)
+            .is('resolved_at', null),
+    ]);
+
 
     return (
         <DashboardClient
