@@ -248,7 +248,7 @@ export default function LoginPage() {
                             )}
 
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium mb-2">Email</label>
+                                <label htmlFor="email" className="block text-sm font-medium mb-2">Email <span className="text-red-500">*</span></label>
                                 <div className="relative">
                                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--charcoal-light)]" />
                                     <input
@@ -264,7 +264,7 @@ export default function LoginPage() {
                             </div>
 
                             <div>
-                                <label htmlFor="password" className="block text-sm font-medium mb-2">Password</label>
+                                <label htmlFor="password" className="block text-sm font-medium mb-2">Password <span className="text-red-500">*</span></label>
                                 <div className="relative">
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--charcoal-light)]" />
                                     <input
@@ -289,7 +289,7 @@ export default function LoginPage() {
 
                             {!isLogin && (
                                 <div>
-                                    <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2">Confirm Password</label>
+                                    <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2">Confirm Password <span className="text-red-500">*</span></label>
                                     <div className="relative">
                                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--charcoal-light)]" />
                                         <input
