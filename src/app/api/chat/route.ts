@@ -328,7 +328,7 @@ export async function POST(req: Request) {
             const saneGrade = sanitizeForPrompt(studentInfo.gradeLevel || 'NOT SET');
             const saneSkills = sanitizeForPrompt(studentInfo.skills?.join(', ') || 'NONE');
             const saneProgress = studentInfo.graduationProgress?.map((p: GraduationProgress) =>
-                `  * ${sanitizeForPrompt(p.track)}: ${sanitizeForPrompt(p.earned.toString())}/${sanitizeForPrompt(p.required.toString())} credits`
+                `  * ${sanitizeForPrompt(p.track)}: ${sanitizeForPrompt(String(p.earned))}/${sanitizeForPrompt(String(p.required))} credits`
             ).join('\n') || '  * No progress data yet';
 
             studentContext = `
