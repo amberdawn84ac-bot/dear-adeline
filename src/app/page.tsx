@@ -46,7 +46,7 @@ export default async function Home() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 bg-white/70 backdrop-blur-xl z-50 border-b border-[var(--cream-dark)]">
         <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3" aria-label="Dear Adeline Home">
             <div className="w-12 h-12 bg-[var(--forest)] rounded-xl flex items-center justify-center text-white shadow-lg transform -rotate-3">
               <Sparkles className="w-6 h-6" />
             </div>
