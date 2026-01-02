@@ -16,9 +16,9 @@ export async function searchWeb(query: string): Promise<string> {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
             },
             body: JSON.stringify({
-                api_key: apiKey,
                 query,
                 search_depth: 'basic',
                 max_results: 3,
