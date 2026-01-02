@@ -71,6 +71,9 @@ export async function middleware(request: NextRequest) {
         if (isAdminRoute && role !== 'admin') {
             return NextResponse.redirect(new URL('/dashboard', request.url));
         }
+        if (isTeacherRoute && role !== 'teacher' && role !== 'admin') {
+            return NextResponse.redirect(new URL('/dashboard', request.url));
+        }
     }
 
     return response;
