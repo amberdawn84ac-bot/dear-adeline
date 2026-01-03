@@ -8,11 +8,6 @@ export function sanitizeForPrompt(text: string): string {
     }
 
     // Remove characters that could be used to manipulate the prompt
-    // (e.g., creating fake system messages or injecting control characters)
-    return text
-        .replace(/</g, '')
-        .replace(/>/g, '')
-        .replace(/`/g, '')
-        .replace(/{/g, '')
-        .replace(/}/g, '');
+    // (e.g., creating fake system messages, markdown, or injecting control characters)
+    return text.replace(/[<>`{}[\]#*\\-]/g, '');
 }
