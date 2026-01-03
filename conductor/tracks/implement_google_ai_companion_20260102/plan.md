@@ -1,21 +1,21 @@
-# Track Plan: Implement the core AI learning companion and personalized lesson generation.
+# Track Plan: Implement the core AI learning companion using Google's Generative AI.
 
-This plan outlines the steps to implement the core AI learning companion, Adeline, and the personalized lesson generation feature. Each task follows the Test-Driven Development (TDD) workflow as defined in `conductor/workflow.md`.
+This plan outlines the steps to implement the core AI learning companion, Adeline, using Google's Generative AI. Each task follows the Test-Driven Development (TDD) workflow as defined in `conductor/workflow.md`.
 
-## Phase 1: Anthropic API Integration and Basic AI Response
+## Phase 1: Google AI API Integration and Basic AI Response
 
 ### Tasks
 
-*   [ ] Task: Set up secure environment variables for Anthropic API key.
+*   [ ] Task: Set up secure environment variables for Google AI API key.
     *   [ ] Task: Write Tests: Verify secure loading of API key without exposing it.
-    *   [ ] Task: Implement Feature: Configure `next.config.ts` or similar for environment variable handling and create a utility to access it securely.
-*   [ ] Task: Create API route for basic Anthropic API interaction.
-    *   [ ] Task: Write Tests: Test successful and failed calls to the Anthropic API.
-    *   [ ] Task: Implement Feature: Develop a Next.js API route (`src/app/api/adeline/route.ts` or similar) that takes a prompt and returns a basic response from the Anthropic API.
+    *   [ ] Task: Implement Feature: Configure environment variable handling and create a utility in `src/lib/server/config.ts` to access it securely.
+*   [ ] Task: Create API route for basic Google AI API interaction.
+    *   [ ] Task: Write Tests: Test successful and failed calls to the Google AI API.
+    *   [ ] Task: Implement Feature: Develop a Next.js API route (`src/app/api/adeline/route.ts`) that takes a prompt and returns a basic response from the Google AI API.
 *   [ ] Task: Integrate basic AI response into the `ConversationUI.tsx` component.
     *   [ ] Task: Write Tests: Test that the UI displays AI responses correctly.
     *   [ ] Task: Implement Feature: Modify `src/components/ConversationUI.tsx` to send user input to the new API route and display Adeline's response.
-*   [ ] Task: Conductor - User Manual Verification 'Anthropic API Integration and Basic AI Response' (Protocol in workflow.md)
+*   [ ] Task: Conductor - User Manual Verification 'Google AI API Integration and Basic AI Response' (Protocol in workflow.md)
 
 ## Phase 2: Student Interest Capture and Storage
 
@@ -39,12 +39,12 @@ This plan outlines the steps to implement the core AI learning companion, Adelin
 
 ### Tasks
 
-*   [ ] Task: Develop a service to craft Anthropic API prompts from student interests.
+*   [ ] Task: Develop a service to craft Google AI API prompts from student interests.
     *   [ ] Task: Write Tests: Test various interest combinations and verify the generated prompts are well-formed and contextually relevant.
     *   [ ] Task: Implement Feature: Create a utility function (`src/lib/adelinePromptGenerator.ts`) that takes student interests and generates an optimized prompt for personalized lesson generation.
 *   [ ] Task: Create API route to trigger personalized lesson generation.
-    *   [ ] Task: Write Tests: Test the API route, ensuring it calls the prompt generator and Anthropic API correctly, and handles responses.
-    *   [ ] Task: Implement Feature: Develop a Next.js API route (`src/app/api/adeline/generate-lesson/route.ts`) that uses the prompt generator and calls the Anthropic API.
+    *   [ ] Task: Write Tests: Test the API route, ensuring it calls the prompt generator and Google AI API correctly, and handles responses.
+    *   [ ] Task: Implement Feature: Develop a Next.js API route (`src/app/api/adeline/generate-lesson/route.ts`) that uses the prompt generator and calls the Google AI API.
 *   [ ] Task: Define new database schema for storing generated lessons.
     *   [ ] Task: Write Tests: (Not directly applicable, but verify schema creation with a migration test if possible)
     *   [ ] Task: Implement Feature: Create a new Supabase migration (`supabase/migrations/`) to add a `personalized_lessons` table, linking to `profiles` and potentially `skills`.
