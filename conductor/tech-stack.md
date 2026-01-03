@@ -1,22 +1,25 @@
-# Technology Stack
+# Technology Stack: Dear Adeline
 
-## Overview
+## 1. Overview
 
-This project is built using a modern web development stack, leveraging JavaScript/TypeScript for both frontend and backend operations, with a strong focus on scalability, developer experience, and AI integration.
+This project is built using a modern web development stack, leveraging TypeScript for both frontend and backend operations. The focus is on creating a scalable, performant, and AI-integrated learning platform.
 
-## Core Technologies
+## 2. Core Technologies
 
 *   **Programming Language:** TypeScript
-    *   **Rationale:** Provides static typing for improved code quality, maintainability, and developer tooling, crucial for a complex educational platform.
+    *   **Rationale:** Chosen for its strong typing capabilities, which enhance code quality, maintainability, and developer productivity in a complex application.
 
 *   **Frontend Framework:** React with Next.js
-    *   **Rationale:** React offers a component-based architecture for building interactive user interfaces efficiently. Next.js extends React with features like server-side rendering (SSR), static site generation (SSG), and API routes, optimizing performance and SEO, and enabling a full-stack development approach within a single framework.
+    *   **Rationale:** React provides a robust component-based architecture for building dynamic user interfaces. Next.js extends this by offering powerful features like Server-Side Rendering (SSR), Static Site Generation (SSG), and API routes, optimizing performance and enabling a unified full-stack development experience.
 
 *   **Backend / API:** Next.js API Routes
-    *   **Rationale:** Utilizes Next.js's built-in API routes for backend logic, providing a seamless development experience and allowing for direct integration with frontend components and database interactions.
+    *   **Rationale:** Utilizes the integrated API routes provided by Next.js, allowing for seamless backend logic development within the same framework as the frontend, simplifying deployment and development workflow.
 
 *   **Database:** Supabase (PostgreSQL)
-    *   **Rationale:** Supabase provides a powerful PostgreSQL database with real-time capabilities, authentication, and an easy-to-use API. This simplifies backend development and offers robust data management for user profiles, learning progress, and project data.
+    *   **Rationale:** A powerful open-source platform providing a PostgreSQL database, real-time capabilities, authentication, and an easy-to-use API, accelerating backend development and ensuring robust data management.
 
-*   **AI/ML Integration:** Anthropic API
-    *   **Rationale:** Integration with Anthropic API enables advanced AI capabilities, such as the AI learning companion and other intelligent features, aligning with the platform's core offering of personalized, AI-powered learning.
+*   **AI/ML Integration:** Anthropic AI SDK and Google Generative AI
+    *   **Rationale:** Integration with cutting-edge AI models from Anthropic and Google enables the core AI learning companion features, providing personalized and intelligent educational experiences.
+
+*   **Styling:** Tailwind CSS
+    *   **Rationale:** A utility-first CSS framework that allows for rapid UI development and highly customizable designs directly within the markup, ensuring a consistent and maintainable visual style.
