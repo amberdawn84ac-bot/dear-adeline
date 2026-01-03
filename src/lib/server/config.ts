@@ -1,14 +1,22 @@
 // src/lib/server/config.ts
 
-export function getAnthropicApiKey(): string {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+/**
+ * Retrieves server-side configuration, ensuring that all necessary
+ * environment variables are set.
+ *
+ * This function is intended to be used only in server-side code.
+ *
+ * @throws {Error} If a required environment variable is not set.
+ * @returns An object containing the server-side configuration.
+ */
+export function getConfig() {
+  const googleApiKey = process.env.GOOGLE_API_KEY;
 
-  if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY is not set in environment variables.');
+  if (!googleApiKey) {
+    throw new Error('GOOGLE_API_KEY is not set in environment variables');
   }
 
-  // In a real application, you might add checks here to ensure it's not a NEXT_PUBLIC_ key
-  // For now, the error if not found is sufficient for "secure loading" test.
-
-  return apiKey;
+  return {
+    googleApiKey,
+  };
 }
