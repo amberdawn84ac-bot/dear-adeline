@@ -32,7 +32,7 @@ function QuizGame({ content, onComplete }: { content: any; onComplete?: (score: 
     const [score, setScore] = useState(0);
     const [completed, setCompleted] = useState(false);
 
-    const questions = content.questions || [];
+    const questions = content?.questions || [];
     const question = questions[currentQuestion];
 
     const handleAnswer = (index: number) => {
@@ -143,7 +143,7 @@ function TrueFalseGame({ content, onComplete }: { content: any; onComplete?: (sc
     const [score, setScore] = useState(0);
     const [completed, setCompleted] = useState(false);
 
-    const questions = content.questions || [];
+    const questions = content?.questions || [];
     const question = questions[currentQuestion];
 
     const handleAnswer = (answer: boolean) => {
@@ -238,7 +238,7 @@ function MatchingGame({ content, onComplete }: { content: any; onComplete?: (sco
     const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
     const [completed, setCompleted] = useState(false);
 
-    const pairs = content.pairs || [];
+    const pairs = content?.pairs || [];
 
     const handleLeftClick = (index: number) => {
         setSelectedLeft(index);
@@ -319,7 +319,7 @@ function FillInBlankGame({ content, onComplete }: { content: any; onComplete?: (
     const [answers, setAnswers] = useState<Record<number, string>>({});
     const [showResults, setShowResults] = useState(false);
 
-    const questions = content.questions || [];
+    const questions = content?.questions || [];
 
     const handleSubmit = () => {
         setShowResults(true);
