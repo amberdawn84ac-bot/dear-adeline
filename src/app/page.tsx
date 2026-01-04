@@ -54,11 +54,6 @@ export default async function Home() {
           </Link>
 
           <div className="hidden md:flex items-center gap-10">
-            <Link href="#experience" className="text-xs font-bold uppercase tracking-widest text-[var(--forest)]/60 hover:text-[var(--forest)] transition-colors">Experience</Link>
-            <Link href="#philosophy" className="text-xs font-bold uppercase tracking-widest text-[var(--forest)]/60 hover:text-[var(--forest)] transition-colors">Philosophy</Link>
-            {user && (
-              <Link href="/opportunities" className="text-xs font-bold uppercase tracking-widest text-[var(--forest)]/60 hover:text-[var(--forest)] transition-colors">Opportunities</Link>
-            )}
             {profile?.role === 'admin' ? (
               <Link href="/dashboard/admin" className="px-6 py-2.5 rounded-full border-2 border-purple-500 text-purple-500 text-xs font-black uppercase tracking-widest hover:bg-purple-500 hover:text-white transition-all">Admin Hub</Link>
             ) : (
