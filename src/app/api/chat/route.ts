@@ -42,7 +42,7 @@ You treat the world as a classroom and life as the ultimate curriculum.
 `;
 
 // Tool Definition
-const tools = [
+const tools: any[] = [
     {
         functionDeclarations: [
             {
@@ -181,7 +181,7 @@ ${saneProgress}
             const toolParts = [];
             for (const call of functionCalls) {
                 if (call.name === 'log_activity') {
-                    const args = call.args;
+                    const args = call.args as any;
                     console.log("TOOL CALL: log_activity", args);
 
                     // Save to Supabase
@@ -205,7 +205,7 @@ ${saneProgress}
                         }
                     });
                 } else if (call.name === 'search_web') {
-                    const args = call.args;
+                    const args = call.args as any;
                     console.log(`[Adeline Eyes]: Searching web for "${args.query}"...`);
 
                     // Call Tavily Search API
