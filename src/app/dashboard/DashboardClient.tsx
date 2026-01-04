@@ -53,6 +53,34 @@ import { VoiceSession } from '@/components/VoiceSession';
 import { GoalsWidget } from '@/components/GoalsWidget';
 import MessageContent from '@/components/MessageContent';
 
+// Moved from DashboardClient to prevent re-declaration on every render
+const dailyScriptures = [
+    { verse: "Micah 6:8", text: "He has shown you, O mortal, what is good. And what does the Lord require of you? To act justly and to love mercy and to walk humbly with your God." },
+    { verse: "Joshua 1:9", text: "Have I not commanded you? Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go." },
+    { verse: "Proverbs 3:5-6", text: "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight." },
+    { verse: "Matthew 6:33", text: "But seek first his kingdom and his righteousness, and all these things will be given to you as well." },
+    { verse: "Isaiah 40:31", text: "But those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint." }
+];
+
+const trackConfig: Record<string, { icon: any; color: string; badgeColor: string }> = {
+    "God's Creation & Science": { icon: FlaskConical, color: 'text-[var(--forest)]', badgeColor: 'bg-[var(--forest)]/10 text-[var(--forest)] border-[var(--forest)]/20' },
+    "Health/Naturopathy": { icon: Heart, color: 'text-[var(--dusty-rose)]', badgeColor: 'bg-[var(--dusty-rose)]/10 text-[var(--dusty-rose)] border-[var(--dusty-rose)]/20' },
+    "Food Systems": { icon: Leaf, color: 'text-[var(--ochre)]', badgeColor: 'bg-[var(--ochre)]/10 text-[var(--ochre)] border-[var(--ochre)]/20' },
+    "Government/Economics": { icon: BarChart3, color: 'text-[var(--forest-light)]', badgeColor: 'bg-[var(--forest-light)]/10 text-[var(--forest-light)] border-[var(--forest-light)]/20' },
+    "Justice": { icon: Scale, color: 'text-[var(--ochre-light)]', badgeColor: 'bg-[var(--ochre-light)]/10 text-[var(--ochre-light)] border-[var(--ochre-light)]/20' },
+    "Discipleship": { icon: Sparkles, color: 'text-[var(--burgundy)]', badgeColor: 'bg-[var(--burgundy)]/5 text-[var(--burgundy)] border-[var(--burgundy)]/10' },
+    "History": { icon: Globe, color: 'text-[var(--burgundy)]', badgeColor: 'bg-[var(--burgundy)]/5 text-[var(--burgundy)] border-[var(--burgundy)]/10' },
+    "English/Lit": { icon: BookOpen, color: 'text-[var(--ochre)]', badgeColor: 'bg-[var(--ochre)]/10 text-[var(--ochre)] border-[var(--ochre)]/20' },
+    "Math": { icon: Calculator, color: 'text-[var(--charcoal)]', badgeColor: 'bg-[var(--charcoal)]/5 text-[var(--charcoal)] border-[var(--charcoal)]/10' },
+};
+
+const quickPrompts = [
+    { icon: Lightbulb, text: "I want to learn something new" },
+    { icon: Gamepad2, text: "Let's play a learning game" },
+    { icon: Target, text: "Help me with a project" },
+    { icon: BookOpen, text: "What should I study today?" },
+];
+
 interface Message {
     role: 'user' | 'assistant';
     content: string;
@@ -177,13 +205,6 @@ export default function DashboardClient({
     const [showCelebration, setShowCelebration] = useState<string[] | null>(null);
     const [showVoiceSession, setShowVoiceSession] = useState(false);
 
-    const dailyScriptures = [
-        { verse: "Micah 6:8", text: "He has shown you, O mortal, what is good. And what does the Lord require of you? To act justly and to love mercy and to walk humbly with your God." },
-        { verse: "Joshua 1:9", text: "Have I not commanded you? Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go." },
-        { verse: "Proverbs 3:5-6", text: "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight." },
-        { verse: "Matthew 6:33", text: "But seek first his kingdom and his righteousness, and all these things will be given to you as well." },
-        { verse: "Isaiah 40:31", text: "But those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint." }
-    ];
     const todayScripture = dailyScriptures[new Date().getDate() % dailyScriptures.length];
 
     const scrollToBottom = () => {
@@ -224,6 +245,7 @@ export default function DashboardClient({
     const earnedBadges = useMemo(() => {
         return graduationProgress.filter(p => p.credits_earned >= 0.5); // Example threshold for a badge
     }, [graduationProgress]);
+    const earnedBadges = graduationProgress.filter(p => p.credits_earned >= 0.5); // Example threshold for a badge
 
     const speakText = (text: string) => {
         if ('speechSynthesis' in window) {
@@ -369,13 +391,6 @@ export default function DashboardClient({
         router.push('/login');
         router.refresh();
     };
-
-    const quickPrompts = [
-        { icon: Lightbulb, text: "I want to learn something new" },
-        { icon: Gamepad2, text: "Let's play a learning game" },
-        { icon: Target, text: "Help me with a project" },
-        { icon: BookOpen, text: "What should I study today?" },
-    ];
 
     return (
         <div className="min-h-screen flex bg-[var(--cream)]">
