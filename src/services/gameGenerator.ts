@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { GameProject, GameGenerationRequest } from '@/types/learning';
+import { sanitizeForPrompt } from '@/lib/sanitize';
 
 export async function generateGameCode(
     request: GameGenerationRequest
@@ -8,7 +9,7 @@ export async function generateGameCode(
         apiKey: process.env.ANTHROPIC_API_KEY,
     });
 
-    const prompt = `You are an expert game developer and educator. Create a self-contained HTML5 Canvas game that teaches: ${request.concept}
+    const prompt = `You are an expert game developer and educator. Create a self-contained HTML5 Canvas game that teaches: ${sanitizeForPrompt(request.concept)}
 
 REQUIREMENTS:
 1. Use only vanilla JavaScript and HTML5 Canvas API
@@ -16,9 +17,9 @@ REQUIREMENTS:
 3. Include clear win/lose conditions or learning checkpoints
 4. Add score tracking or progress indicators
 5. Make it fun, engaging, and age-appropriate
-6. Difficulty: ${request.difficulty}
-7. Track: ${request.track}
-8. Game Type: ${request.game_type}
+6. Difficulty: ${sanitizeForPrompt(request.difficulty)}
+7. Track: ${sanitizeForPrompt(request.track)}
+8. Game Type: ${sanitizeForPrompt(request.game_type)}
 
 IMPORTANT CODE STRUCTURE:
 The game_code must be a complete, self-contained function that:
@@ -90,11 +91,11 @@ Return ONLY a valid JSON object with this exact structure:
   "learning_objectives": ["Specific learning objective 1", "Specific learning objective 2"],
   "concepts_taught": ["Concept 1", "Concept 2"],
   "estimated_play_time": "5-10 minutes",
-  "difficulty": "${request.difficulty}",
-  "primary_track": "${request.track}"
+  "difficulty": "${sanitizeForPrompt(request.difficulty)}",
+  "primary_track": "${sanitizeForPrompt(request.track)}"
 }
 
-Make the game educational, fun, and directly related to ${request.concept}.`;
+Make the game educational, fun, and directly related to ${sanitizeForPrompt(request.concept)}.`;
 
     const response = await anthropic.messages.create({
         model: 'claude-3-5-sonnet-20241022',

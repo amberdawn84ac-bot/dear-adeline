@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { AcademicMission, Track } from '@/types/learning';
+import { sanitizeForPrompt } from '@/lib/sanitize';
 
 export async function generateStructuredLesson(
     topic: string,
@@ -15,12 +16,12 @@ export async function generateStructuredLesson(
     const prompt = `You are Adeline, an expert curriculum designer specializing in Oklahoma homeschool standards and the 8 Tracks framework.
 
 STUDENT CONTEXT:
-- Grade Level: ${studentGrade}
-- Interests: ${studentInterests.join(', ')}
-- Current Conversation: ${conversationContext}
-${suggestedTrack ? `- Suggested Track: ${suggestedTrack}` : ''}
+- Grade Level: ${sanitizeForPrompt(studentGrade)}
+- Interests: ${studentInterests.map(sanitizeForPrompt).join(', ')}
+- Current Conversation: ${sanitizeForPrompt(conversationContext)}
+${suggestedTrack ? `- Suggested Track: ${sanitizeForPrompt(suggestedTrack)}` : ''}
 
-TOPIC: ${topic}
+TOPIC: ${sanitizeForPrompt(topic)}
 
 Generate a comprehensive Academic Mission that:
 1. Maps to one or more of the 8 Tracks:
