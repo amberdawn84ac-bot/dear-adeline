@@ -137,7 +137,7 @@ export function GameCenter({ type, onClose, gameData }: GameCenterProps) {
             { question: 'Fix: console.log("Hello World)', answer: 'console.log("Hello World")' }
         ];
         let currentChallenge = 0;
-        let input = '';
+        const input = '';
 
         const codingDisplay = document.createElement('div');
         codingDisplay.className = 'absolute inset-0 flex flex-col items-center justify-center p-6';

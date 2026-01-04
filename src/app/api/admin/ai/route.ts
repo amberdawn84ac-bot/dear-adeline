@@ -204,7 +204,7 @@ Current Platform State:
                 .eq('key', 'theme')
                 .maybeSingle();
 
-            let newSettings = currentSettings?.value || {
+            const newSettings = currentSettings?.value || {
                 primaryColor: '#87A878',
                 fontSize: '16px',
                 fontFamily: 'Inter'
