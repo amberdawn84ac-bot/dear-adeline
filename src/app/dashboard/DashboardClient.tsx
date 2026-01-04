@@ -257,6 +257,7 @@ export default function DashboardClient({
                             required: p.requirement.required_credits
                         })),
                     },
+                    userId: user.id,
                 }),
             });
 
@@ -543,9 +544,10 @@ export default function DashboardClient({
 
                             <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
                                 {messages.map((m, i) => {
+                                    const content = m.content || '';
                                     // Parse potential scripture tag
-                                    const scriptureMatch = m.content.match(/<SCRIPTURE>(.*?)<\/SCRIPTURE>/s);
-                                    let cleanContent = m.content;
+                                    const scriptureMatch = content.match(/<SCRIPTURE>(.*?)<\/SCRIPTURE>/s);
+                                    let cleanContent = content;
                                     let scriptureInfo = null;
 
                                     if (scriptureMatch) {

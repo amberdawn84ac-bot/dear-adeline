@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getConfig } from '@/lib/server/config';
 
 // Use the recommended "flash" model for speed and cost-effectiveness
-const GOOGLE_AI_MODEL = 'gemini-1.5-flash';
+const GOOGLE_AI_MODEL = 'gemini-2.5-flash';
 
 export async function POST(request: Request) {
   try {
