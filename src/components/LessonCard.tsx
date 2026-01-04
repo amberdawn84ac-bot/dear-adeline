@@ -8,7 +8,7 @@ interface Step {
     instruction: string;
 }
 
-interface LessonData {
+export interface LessonData {
     title: string;
     description: string;
     subject: string;
