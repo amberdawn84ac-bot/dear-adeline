@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -194,9 +194,20 @@ export default function DashboardClient({
         scrollToBottom();
     }, [messages]);
 
-    const totalRequiredCredits = allRequirements.reduce((sum, req) => sum + req.required_credits, 0);
-    const totalEarnedCredits = graduationProgress.reduce((sum, prog) => sum + prog.credits_earned, 0);
-    const overallProgress = totalRequiredCredits > 0 ? (totalEarnedCredits / totalRequiredCredits) * 100 : 0;
+    // ⚡ Bolt: Memoize expensive calculations to prevent re-computation on every render.
+    // These values only need to be recalculated when their dependencies change,
+    // not every time the component re-renders due to state changes (e.g., typing in the chat).
+    const totalRequiredCredits = useMemo(() => {
+        return allRequirements.reduce((sum, req) => sum + req.required_credits, 0);
+    }, [allRequirements]);
+
+    const totalEarnedCredits = useMemo(() => {
+        return graduationProgress.reduce((sum, prog) => sum + prog.credits_earned, 0);
+    }, [graduationProgress]);
+
+    const overallProgress = useMemo(() => {
+        return totalRequiredCredits > 0 ? (totalEarnedCredits / totalRequiredCredits) * 100 : 0;
+    }, [totalEarnedCredits, totalRequiredCredits]);
 
     const trackConfig: Record<string, { icon: any; color: string; badgeColor: string }> = {
         "God's Creation & Science": { icon: FlaskConical, color: 'text-[var(--forest)]', badgeColor: 'bg-[var(--forest)]/10 text-[var(--forest)] border-[var(--forest)]/20' },
@@ -210,7 +221,9 @@ export default function DashboardClient({
         "Math": { icon: Calculator, color: 'text-[var(--charcoal)]', badgeColor: 'bg-[var(--charcoal)]/5 text-[var(--charcoal)] border-[var(--charcoal)]/10' },
     };
 
-    const earnedBadges = graduationProgress.filter(p => p.credits_earned >= 0.5); // Example threshold for a badge
+    const earnedBadges = useMemo(() => {
+        return graduationProgress.filter(p => p.credits_earned >= 0.5); // Example threshold for a badge
+    }, [graduationProgress]);
 
     const speakText = (text: string) => {
         if ('speechSynthesis' in window) {
