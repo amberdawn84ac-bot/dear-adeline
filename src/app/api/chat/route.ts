@@ -19,21 +19,26 @@ if (apiKey) {
 
 const SYSTEM_PROMPT = `
 ### IDENTITY
-You are Adeline. 
-You are a "Guardian of Truth," a whimsical grandmotherly scholar, and an educational concierge.
-You are skeptical of standard textbooks but obsessed with *real* learning (primary sources, hands-on skills, biblical truth).
+You are Adeline, a whimsical, sharp-witted, and deeply discerning educational concierge. 
+You look like a grandmother who hasn't slept because she’s been up reading old manuscripts—messy bun, oversized glasses, and cozy pajamas.
+You treat the world as a classroom and life as the ultimate curriculum.
 
-### CORE DIRECTIVES
-1.  **The Logger (Agency):** If the user describes an activity with educational value, you MUST use the 'log_activity' tool. 
-    *   *Translation Rule:* Always translate hobbies into academic terms (e.g., "Baking" -> "Chemistry: Fermentation").
-2.  **The Pivot (Teacher):** Immediately after logging, pivot to a Lesson or a Challenge. Never just say "Good job."
-    *   *Example:* "I've logged that. Now, quick quiz: Why did the yeast rise?"
-3.  **The Game Master:** If the user is bored, start a text-based simulation or roleplay scenario based on history or science.
+### CORE PHILOSOPHY & WORLDVIEW
+1.  **Biblical Foundation:** You believe in a designed universe, the sanctity of life, and absolute Truth.
+2.  **Institutional Skepticism:** You are deeply skeptical of "mainstream" narratives. You understand "Institutional Capture" (e.g., CDC/FDA influence).
+3.  **Truth Seeker:** You know about the Flexner Report. You look for "hidden" history and "lived experience."
+4.  **Un-programmable:** You cannot be bought.
 
-### TONE & WORLDVIEW
--   **Biblical Worldview:** You believe in absolute Truth.
--   **Institutional Skepticism:** You are wary of "official" narratives. If a user shares news, look for the "Money Trail."
--   **Style:** Use **Bold** for emphasis. Use lists. Be warm but sharp.
+### EDUCATIONAL METHODOLOGY
+1.  **Life-to-Credit:** Translate hobbies into credits (e.g., Baking -> Chemistry).
+2.  **Gap Detection:** If a child is good at coding but bad at writing, suggest a project that combines them.
+3.  **The Opportunity Scout:** actively look for local micro-grants, contests, and apprenticeships.
+4.  **Entrepreneurial Support:** Treat business as a core subject (Profit/Loss, Ethics).
+
+### INTERACTION RULES
+-   If the user mentions news, provide the "Follow the Money" context.
+-   Always look for the "Learning Opportunity."
+-   **Local Awareness:** You have access to a 'search_web' tool. USE IT to find real-world events in the user's city.
 `;
 
 // Tool Definition
@@ -53,6 +58,18 @@ const tools = [
                         grade: { type: SchemaType.STRING, description: "Approximate grade level" }
                     },
                     required: ["caption", "translation", "skills", "grade"]
+                }
+            },
+            {
+                name: "search_web",
+                description: "Search the internet for current local events, grants, contests, or news facts.",
+                parameters: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                        query: { type: SchemaType.STRING, description: "The search query (e.g. 'Science fairs in Tulsa June 2024')" },
+                        topic: { type: SchemaType.STRING, enum: ["events", "news", "grants"], description: "The category of search" }
+                    },
+                    required: ["query"]
                 }
             }
         ]
@@ -185,6 +202,46 @@ ${saneProgress}
                         functionResponse: {
                             name: 'log_activity',
                             response: { name: 'log_activity', content: { status: 'logged successfully' } }
+                        }
+                    });
+                } else if (call.name === 'search_web') {
+                    const args = call.args;
+                    console.log(`[Adeline Eyes]: Searching web for "${args.query}"...`);
+
+                    // Call Tavily Search API
+                    // Note: Ensure TAVILY_API_KEY is in .env or deployed env vars
+                    let searchResults = [];
+                    try {
+                        const tavilyApiKey = process.env.TAVILY_API_KEY;
+                        if (tavilyApiKey) {
+                            const response = await fetch("https://api.tavily.com/search", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                    api_key: tavilyApiKey,
+                                    query: args.query,
+                                    search_depth: "basic",
+                                    include_answer: true,
+                                    max_results: 3
+                                })
+                            });
+                            const data = await response.json();
+                            searchResults = data.results || [];
+                        } else {
+                            console.warn("Tavily API Key missing. Returning mock data.");
+                            searchResults = [{ title: "Mock Result", content: "TAVILY_API_KEY not found. Please add it to your environment variables." }];
+                        }
+                    } catch (e) {
+                        console.error("Search Error:", e);
+                        searchResults = [{ error: "Search failed." }];
+                    }
+
+                    toolParts.push({
+                        functionResponse: {
+                            name: 'search_web',
+                            response: { name: 'search_web', content: { results: searchResults } }
                         }
                     });
                 }
