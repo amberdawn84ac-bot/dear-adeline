@@ -120,7 +120,9 @@ export default async function Home() {
               <div className="bg-[var(--cream)] rounded-[1.8rem] overflow-hidden">
                 <div className="p-6 bg-[var(--forest)] text-white flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">🧠</div>
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                      <span role="img" aria-label="AI Mentor">🧠</span>
+                    </div>
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest opacity-60">AI Mentor</p>
                       <p className="font-bold serif">Adeline v2.4</p>

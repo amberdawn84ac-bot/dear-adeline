@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { sanitizeForPrompt } from '@/lib/sanitize';
 
 // Initialize Gemini
 const apiKey = process.env.GOOGLE_API_KEY;
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { messages, userId } = body; // Expect userId to be passed or auth context
+        const { messages, userId, studentInfo } = body; // Expect userId to be passed or auth context
 
         if (!messages || messages.length === 0) {
             return NextResponse.json({ error: 'Messages are required.' }, { status: 400 });
@@ -79,8 +80,41 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
         }
 
+        // 1. Build Student Context (Merged from remote)
+        let studentContext = '';
+        if (studentInfo) {
+            interface GraduationProgress {
+                track: string;
+                earned: number;
+                required: number;
+            }
+            const saneName = sanitizeForPrompt(studentInfo.name || 'Student');
+            const saneGrade = sanitizeForPrompt(studentInfo.gradeLevel || 'NOT SET');
+            const saneSkills = sanitizeForPrompt(studentInfo.skills?.map((s: any) => s.skill?.name || s).join(', ') || 'NONE');
+            const saneProgress = studentInfo.graduationProgress?.map((p: GraduationProgress) =>
+                `  * ${sanitizeForPrompt(p.track)}: ${sanitizeForPrompt(String(p.earned))}/${sanitizeForPrompt(String(p.required))} credits`
+            ).join('\n') || '  * No progress data yet';
+
+            studentContext = `
+Current Student:
+- Name: ${saneName}
+- Grade Level: ${saneGrade}
+- Skills already earned: ${saneSkills}
+- Graduation Progress:
+${saneProgress}
+
+💡 PRO - TIP: Adeline, be proactive! If they have 0 progress in a track, suggest a project from that track today.
+`;
+        }
+
         // --- THE DISCERNMENT CHECK & MODEL ROUTING ---
         let currentSystemPrompt = SYSTEM_PROMPT;
+
+        // Append Student Context if available
+        if (studentContext) {
+            currentSystemPrompt += `\n\n${studentContext}`;
+        }
+
         let selectedModel = "gemini-2.5-flash"; // Default: High Speed, Low Cost
 
         // If she sees a URL, she enters "Deconstruct Mode" AND upgrades the model
@@ -108,7 +142,6 @@ export async function POST(req: Request) {
         });
 
         // Start Chat with History (mapping standard roles to Gemini roles)
-        // Note: In a real persistent chat, we'd load this from DB. For now, we use the client-sent history.
         const history = messages.slice(0, -1).map((m: any) => ({
             role: m.role === 'assistant' ? 'model' : 'user',
             parts: [{ text: m.content || '' }]
@@ -135,11 +168,10 @@ export async function POST(req: Request) {
                     console.log("TOOL CALL: log_activity", args);
 
                     // Save to Supabase
-                    // Note: In production we need the user's ID. Using a placeholder or passed ID.
                     const { error } = await supabase
                         .from('activity_logs')
                         .insert({
-                            student_id: userId, // Ensure userId is passed from frontend!
+                            student_id: userId,
                             type: args.type || 'text',
                             caption: args.caption,
                             translation: args.translation,
