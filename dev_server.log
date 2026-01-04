@@ -1,0 +1,22 @@
+
+> dear-adeline@0.1.0 dev /app
+> next dev
+
+   ▲ Next.js 16.0.10 (Turbopack)
+   - Local:         http://localhost:3000
+   - Network:       http://192.168.0.2:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+ ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+ ✓ Ready in 1721ms
+ ○ Compiling / ...
+ GET / 200 in 4.3s (compile: 3.6s, render: 656ms)
+ GET / 200 in 557ms (compile: 10ms, render: 547ms)
+ GET / 200 in 317ms (compile: 4ms, render: 313ms)
+ GET / 200 in 622ms (compile: 7ms, render: 615ms)
