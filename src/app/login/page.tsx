@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -26,6 +26,7 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const passwordRef = useRef<HTMLInputElement>(null);
 
     const [role, setRole] = useState<'student' | 'teacher'>('student');
 
@@ -269,6 +270,7 @@ export default function LoginPage() {
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--charcoal-light)]" />
                                     <input
                                         id="password"
+                                        ref={passwordRef}
                                         type={showPassword ? 'text' : 'password'}
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
@@ -350,7 +352,7 @@ export default function LoginPage() {
                                     <button
                                         onClick={() => {
                                             setEmail('amber@dearadeline.co');
-                                            // Focus password field
+                                            passwordRef.current?.focus();
                                         }}
                                         className="w-full py-3 rounded-xl border-2 border-purple-100 text-purple-600 font-bold text-sm hover:bg-purple-50 hover:border-purple-200 transition-all flex items-center justify-center gap-2"
                                     >
