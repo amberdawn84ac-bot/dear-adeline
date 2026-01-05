@@ -120,7 +120,7 @@ export default async function Home() {
                     </div>
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest opacity-60">AI Mentor</p>
-                      <p className="font-bold serif">Adeline v2.5 (Fixed)</p>
+                      <p className="font-bold serif">Adeline v2.6 (Fresh Build)</p>
                     </div>
                   </div>
                   <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
