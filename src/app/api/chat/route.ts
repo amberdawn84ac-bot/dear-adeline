@@ -118,13 +118,18 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { messages, userId, studentInfo } = body; // Expect userId to be passed or auth context
+const { messages, userId, studentInfo } = body;
+
+// CLEAN incoming messages so Gemini is not re-trained by UI persona text
+const cleanedMessages = (messages || []).filter(
+  (m: any) => m?.role === 'user' || m?.role === 'assistant'
+);
 
         if (!messages || messages.length === 0) {
             return NextResponse.json({ error: 'Messages are required.' }, { status: 400 });
         }
 
-        const lastMessage = messages[messages.length - 1];
+const lastMessage = cleanedMessages[cleanedMessages.length - 1];
         const prompt = lastMessage.content;
 
         if (!prompt) {
@@ -192,11 +197,12 @@ ${saneProgress}
             tools: tools
         });
 
-        // Start Chat with History (mapping standard roles to Gemini roles)
-        const history = messages.slice(0, -1).map((m: any) => ({
-            role: m.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: m.content || '' }]
-        }));
+       // Start Chat with History (mapping standard roles to Gemini roles)
+const history = cleanedMessages.slice(0, -1).map((m: any) => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: String(m.content || '') }]
+}));
+
 
         const chat = model.startChat({
             history: history
