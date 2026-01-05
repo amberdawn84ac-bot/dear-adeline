@@ -238,11 +238,14 @@ export default function DashboardClient({
             timestamp: new Date(),
         };
 
-        setMessages((prev) => [...prev, userMessage]);
-        setInput('');
-        setIsTyping(true);
+        // Optimistically update UI with the user's message
+const updatedMessages = [...messages, userMessage];
+setMessages(updatedMessages);
+setInput('');
+setIsTyping(true);
 
-        try {
+try {
+
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
