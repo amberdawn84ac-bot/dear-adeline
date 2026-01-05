@@ -176,21 +176,17 @@ export default function DashboardClient({
     }, []);
 
     useEffect(() => {
-        setIsClient(true);
-        if (activeConversation?.messages) {
-            setMessages(activeConversation.messages);
-        } else {
-            setMessages([
-                {
-                    role: 'assistant',
-                    content: profile?.display_name
-                        ? `Hello there, ${profile.display_name}. I'm Adeline! I was just thinking that "wisdom is like a garden; if it is not cultivated, it cannot be harvested." What shall we build or discover together today, dear?`
-                        : "Hello! I am Adeline, your learning companion. I always say that a curious mind is the best tool on the farm. What shall we discover together today, dear?",
-                    timestamp: new Date(),
-                },
-            ]);
-        }
-    }, [activeConversation, profile?.display_name]);
+    setIsClient(true);
+
+    if (activeConversation?.messages) {
+        setMessages(activeConversation.messages);
+    } else {
+        // Start with an empty chat. Adeline's identity comes from the server SYSTEM_PROMPT,
+        // not a seeded client message (which can contaminate tone and behavior).
+        setMessages([]);
+    }
+}, [activeConversation]);
+
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
