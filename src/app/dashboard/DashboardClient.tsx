@@ -370,7 +370,8 @@ export default function DashboardClient({
 
     const handleDeepDive = async () => {
         if (!currentPassage) return;
-        await handleSendMessage(`Deep Dive Study: ${currentPassage}`);
+        const prompt = `Deep Dive Study: ${currentPassage}\n\nCRITICAL: You MUST begin your response with a header image from Unsplash. Use this exact format: ![Magic Header](https://source.unsplash.com/1600x900/?{keywords}). Replace {keywords} with visual terms related to the topic (e.g., 'ancient parchment, microscope, library'). Then start the content with '# 📖 '.`;
+        await handleSendMessage(prompt);
     };
 
     return (

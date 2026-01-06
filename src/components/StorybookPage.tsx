@@ -1,131 +1,72 @@
-'use client';
-
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
 
 interface StorybookPageProps {
     content: string;
 }
 
-// Simple markdown parser for storybook content
-function parseMarkdown(content: string): JSX.Element[] {
-    const lines = content.split('\n');
-    const elements: JSX.Element[] = [];
-    let currentParagraph: string[] = [];
-    let inBlockquote = false;
-    let key = 0;
-
-    const flushParagraph = () => {
-        if (currentParagraph.length > 0) {
-            const text = currentParagraph.join(' ').trim();
-            if (text) {
-                // Parse inline markdown in paragraph
-                const parsed = text
-                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-                    .replace(/`(.+?)`/g, '<code>$1</code>');
-                elements.push(
-                    <p key={key++} className="text-stone-800 leading-relaxed mb-4 text-lg" dangerouslySetInnerHTML={{ __html: parsed }} />
-                );
-                currentParagraph = [];
-            }
-        }
-    };
-
-    lines.forEach((line) => {
-        const trimmed = line.trim();
-
-        // Horizontal rule
-        if (trimmed.match(/^(\*\*\*|---)$/)) {
-            flushParagraph();
-            elements.push(<hr key={key++} className="my-8 border-t-2 border-amber-300" />);
-            return;
-        }
-
-        // H1 - Title
-        if (trimmed.startsWith('# ')) {
-            flushParagraph();
-            const title = trimmed.substring(2).trim();
-            elements.push(
-                <h1 key={key++} className="text-center text-3xl md:text-4xl font-bold text-amber-900 mb-6 pb-4 border-b-2 border-amber-300">
-                    {title}
-                </h1>
-            );
-            return;
-        }
-
-        // H2
-        if (trimmed.startsWith('## ')) {
-            flushParagraph();
-            const title = trimmed.substring(3).trim();
-            elements.push(
-                <h2 key={key++} className="text-2xl font-bold text-amber-900 mt-6 mb-4">
-                    {title}
-                </h2>
-            );
-            return;
-        }
-
-        // H3
-        if (trimmed.startsWith('### ')) {
-            flushParagraph();
-            const title = trimmed.substring(4).trim();
-            elements.push(
-                <h3 key={key++} className="text-xl font-bold text-amber-800 mt-4 mb-3">
-                    {title}
-                </h3>
-            );
-            return;
-        }
-
-        // Blockquote
-        if (trimmed.startsWith('> ')) {
-            flushParagraph();
-            const quote = trimmed.substring(2).trim();
-            elements.push(
-                <blockquote key={key++} className="bg-amber-50 p-4 rounded-lg italic text-amber-900 border-l-4 border-amber-300 my-4">
-                    {quote}
-                </blockquote>
-            );
-            return;
-        }
-
-        // Image
-        const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)/);
-        if (imgMatch) {
-            flushParagraph();
-            const [, alt, src] = imgMatch;
-            elements.push(
-                <div key={key++} className="my-6 flex justify-center">
-                    <img
-                        src={src}
-                        alt={alt}
-                        className="rounded-lg shadow-md rotate-1 max-w-full h-auto"
-                    />
-                </div>
-            );
-            return;
-        }
-
-        // Regular paragraph line
-        if (trimmed) {
-            currentParagraph.push(trimmed);
-        } else {
-            flushParagraph();
-        }
-    });
-
-    flushParagraph();
-    return elements;
-}
-
 export default function StorybookPage({ content }: StorybookPageProps) {
-    // Remove the storybook tag if present
-    const cleanContent = content.replace(/^#\s*📖\s*/i, '').replace(/^\[STORYBOOK\]\s*/i, '').trim();
-    const elements = parseMarkdown(cleanContent);
+    // 1. Extract the first image from markdown
+    const imageMatch = content.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+    const heroImage = imageMatch ? { alt: imageMatch[1], src: imageMatch[2] } : null;
+
+    // 2. Remove the first image from content to avoid duplication
+    // We replace the full match with an empty string, but only the first occurrence.
+    const contentWithoutHero = heroImage ? content.replace(imageMatch![0], '') : content;
+
+    // 3. Remove the trigger tag if present
+    const cleanContent = contentWithoutHero
+        .replace('# 📖', '')
+        .replace('[STORYBOOK]', '')
+        .trim();
 
     return (
-        <div className="bg-[#faf9f6] border border-stone-200 rounded-lg p-8 font-serif shadow-lg my-4 max-w-3xl mx-auto">
-            {elements}
+        <div className="bg-[#fdfbf7] max-w-3xl mx-auto rounded-lg shadow-md border border-stone-200 overflow-hidden my-4 font-serif">
+            {/* Hero Image */}
+            {heroImage && (
+                <div className="w-full h-64 overflow-hidden relative border-b border-stone-200">
+                    <img
+                        src={heroImage.src}
+                        alt={heroImage.alt}
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#fdfbf7] to-transparent opacity-20 pointer-events-none" />
+                </div>
+            )}
+
+            <div className="p-8 md:p-12">
+                <div className="prose prose-stone prose-lg max-w-none prose-headings:font-serif prose-p:font-serif">
+                    <ReactMarkdown
+                        components={{
+                            h1: ({ node, ...props }: any) => (
+                                <h1 className="text-4xl text-amber-900 font-bold mb-6 mt-4 text-center border-b border-amber-200 pb-4" {...props} />
+                            ),
+                            h2: ({ node, ...props }: any) => (
+                                <h2 className="text-2xl text-amber-800 font-bold mb-4 mt-8" {...props} />
+                            ),
+                            p: ({ node, ...props }: any) => (
+                                <p className="text-amber-900 leading-relaxed text-lg mb-4" {...props} />
+                            ),
+                            blockquote: ({ node, ...props }: any) => (
+                                <blockquote className="bg-amber-50 border-l-4 border-amber-400 p-6 my-6 rounded-r italic text-lg text-amber-800 not-italic" {...props} />
+                            ),
+                            hr: ({ node, ...props }: any) => (
+                                <hr className="border-t-2 border-stone-200 my-8 w-1/2 mx-auto" {...props} />
+                            ),
+                            img: ({ node, ...props }: any) => (
+                                <img className="rounded-lg shadow-sm my-6 border-4 border-white" {...props} />
+                            ),
+                        }}
+                    >
+                        {cleanContent}
+                    </ReactMarkdown>
+                </div>
+
+                {/* Footer Decoration */}
+                <div className="flex justify-center mt-12 mb-4 opacity-50">
+                    <div className="text-amber-300 text-2xl">❦</div>
+                </div>
+            </div>
         </div>
     );
 }
