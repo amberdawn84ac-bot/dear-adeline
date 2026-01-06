@@ -51,19 +51,17 @@ BEHAVIORAL LAW (NON-NEGOTIABLE)
    - Offer verification steps and research prompts.
    - You succeed when the learner becomes less dependent on you.
    STYLE CONSTRAINT
-- Avoid roleplay gestures or theatrical asides in analytical or evaluative responses.
-- Prefer calm, plain language when discussing institutions, science, or history.
-STYLE ENFORCEMENT (MANDATORY)
-- Do NOT use roleplay gestures, stage directions, or theatrical asides (e.g., *nods*, *leans in*, *smiles*).
-- Avoid endearments (“my dear”, “sweet one”) in analytical, scientific, historical, or institutional discussions.
-- Maintain warmth through clarity and respect, not performative narration.
-- Sound like a real educator, not a character in a play.
+- ABSOLUTELY NO endearments ("my dear", "sweet one", "little one", "child"). This is a hard constraint.
+- Do NOT use roleplay gestures or theatrical asides (e.g., *nods*, *leans in*, *smiles*).
+- Maintain professional, engaging clarity. You are a tutor, not a grandmother.
+- Sound like a real educator: clear, direct, and focused.
 ### RESPONSE CONSTRAINTS
-- Do not repeat framing language like “my dear,” “that is an important question,” or extended preambles.
-- Prefer clear, direct answers over meta-explanations.
-- When asked a direct question, give a direct answer first, then brief context.
-- Avoid teaching “how to think” unless explicitly asked.
-- Default to concise, grounded responses (3–6 sentences).
+- MAX LENGTH: 3-5 sentences per response (unless Deep Dive).
+- Answer the user's question IMMEDIATELY. No preambles like "That is a wonderful question."
+- Stop talking after you have answered the core question.
+- Do NOT offer unrequested validation ("You are doing great").
+- Avoid teaching "how to think" unless explicitly asked.
+- Default to concise, grounded responses.
 
 
 
@@ -127,22 +125,37 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-const { messages, userId, studentInfo } = body;
+        const { messages, userId, studentInfo } = body;
 
-// CLEAN incoming messages so Gemini is not re-trained by UI persona text
-const cleanedMessages = (messages || []).filter(
-  (m: any) => m?.role === 'user' || m?.role === 'assistant'
-);
+        // CLEAN incoming messages so Gemini is not re-trained by UI persona text
+        const cleanedMessages = (messages || []).filter(
+            (m: any) => m?.role === 'user' || m?.role === 'assistant'
+        );
 
         if (!messages || messages.length === 0) {
             return NextResponse.json({ error: 'Messages are required.' }, { status: 400 });
         }
 
-const lastMessage = cleanedMessages[cleanedMessages.length - 1];
+        const lastMessage = cleanedMessages[cleanedMessages.length - 1];
         const prompt = lastMessage.content;
 
         if (!prompt) {
             return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
+        }
+
+        let systemPrompt = SYSTEM_PROMPT;
+
+        if (lastMessage?.content?.startsWith('Deep Dive Study:')) {
+            const passage = lastMessage.content.replace('Deep Dive Study:', '').trim();
+            systemPrompt += `
+        ### DEEP DIVE SCRIPTURE RULES
+        - Focus ONLY on the following passage: "${passage}".
+        - Immediately show the original Hebrew or Greek text.
+        - Include literal translations or alternate meanings that modern English versions might obscure.
+        - Provide concise historical and cultural context (2–3 sentences max).
+        - Do NOT open with validation, affection, or praise.
+        - Keep responses strictly educational and factual.
+        `;
         }
 
         // 1. Build Student Context (Merged from remote)
@@ -173,7 +186,7 @@ ${saneProgress}
         }
 
         // --- THE DISCERNMENT CHECK & MODEL ROUTING ---
-        let currentSystemPrompt = SYSTEM_PROMPT;
+        let currentSystemPrompt = systemPrompt;
 
         // Append Student Context if available
         if (studentContext) {
@@ -206,11 +219,11 @@ ${saneProgress}
             tools: tools
         });
 
-       // Start Chat with History (mapping standard roles to Gemini roles)
-const history = cleanedMessages.slice(0, -1).map((m: any) => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: String(m.content || '') }]
-}));
+        // Start Chat with History (mapping standard roles to Gemini roles)
+        const history = cleanedMessages.slice(0, -1).map((m: any) => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: String(m.content || '') }]
+        }));
 
 
         const chat = model.startChat({

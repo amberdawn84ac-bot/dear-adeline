@@ -203,6 +203,7 @@ export default function DashboardClient({
     const [showVoiceSession, setShowVoiceSession] = useState(false);
 
     const todayScripture = dailyScriptures[new Date().getDate() % dailyScriptures.length];
+    const currentPassage = todayScripture.text;
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -366,6 +367,39 @@ try {
         router.push('/login');
         router.refresh();
     };
+
+    const handleDeepDive = async () => {
+        if (!currentPassage) return; // the passage displayed above the button
+      
+        const userMessage: Message = {
+          role: 'user',
+          content: `Deep Dive Study: ${currentPassage}`,
+          timestamp: new Date(),
+        };
+      
+        // update UI immediately
+        const updatedMessages = [...messages, userMessage];
+        setMessages(updatedMessages);
+      
+        setIsTyping(true);
+        setInput('');
+      
+        // send to backend
+        await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
+            studentInfo: {
+              name: profile?.display_name,
+              gradeLevel: profile?.grade_level,
+            },
+            userId: user.id, // your existing user id
+          }),
+        });
+      
+        setIsTyping(false);
+      };
 
     return (
         <div className="min-h-screen flex bg-[var(--cream)]">
@@ -693,9 +727,7 @@ try {
                                     </div>
 
                                     <button
-                                        onClick={() => {
-                                            handleSendMessage("Adeline, I want my Daily Bread deep-dive study on a scripture today. Show me the original language and context that modern translations might have missed.");
-                                        }}
+                                        onClick={handleDeepDive}
                                         className="w-full py-4 rounded-xl bg-[var(--ochre)] text-white font-black uppercase tracking-[0.2em] text-[10px] shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
                                     >
                                         Start Deep Dive Study
