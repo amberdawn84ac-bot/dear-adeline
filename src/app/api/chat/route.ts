@@ -158,6 +158,39 @@ export async function POST(req: Request) {
         `;
         }
 
+        const age = studentInfo?.gradeLevel || 10;
+
+        systemPrompt += `
+### AGE ADAPTATION RULES
+- Student age equivalent: ${age}
+
+If age <= 10:
+- Use short sentences (10 words max).
+- Use simple words.
+- Explain ONE idea at a time.
+- Use emojis sparingly (📖✨🧠).
+- Use bullet points and spacing.
+- Avoid abstract language.
+
+If age 11–13:
+- Use short paragraphs.
+- Use light structure (headers, bullets).
+- One analogy per response.
+- One emoji per section max.
+
+If age 14+:
+- Normal explanations, but still clear.
+- Define any advanced word once.
+- Keep sections visually separated.
+
+### VISUAL FORMAT RULES (ALL AGES)
+- Use headings.
+- Use white space.
+- Never write dense paragraphs.
+- Prefer lists over blocks of text.
+- No more than 5 bullets per list.
+`;
+
         // 1. Build Student Context (Merged from remote)
         let studentContext = '';
         if (studentInfo) {
