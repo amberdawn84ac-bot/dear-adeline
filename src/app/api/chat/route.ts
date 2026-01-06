@@ -158,7 +158,19 @@ export async function POST(req: Request) {
         `;
         }
 
-        const age = studentInfo?.gradeLevel || 10;
+        const mapGradeToAge = (grade: string | any): number => {
+            if (!grade || typeof grade !== 'string') return 10; // Default
+            const g = grade.toLowerCase().trim();
+            if (g.includes('kindergarten') || g === 'k') return 5;
+            if (g.includes('pre-k')) return 4;
+            const match = g.match(/\d+/);
+            if (match) {
+                return parseInt(match[0], 10) + 5; // Grade 1 = Age 6
+            }
+            return 10;
+        };
+
+        const age = mapGradeToAge(studentInfo?.gradeLevel);
 
         systemPrompt += `
 ### AGE ADAPTATION RULES
