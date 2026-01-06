@@ -255,7 +255,7 @@ Use typography and colors to bring learning to life:
 - **Bold** for KEY WORDS, important concepts, or vocabulary
 - ***Bold italics*** for really important ideas
 - Use BIG emojis for visual interest: <span style="font-size: 1.5em">🎨📚✨</span>
-  Make them larger with: `<span style="font-size: 1.5em">🎨</span>`
+  Make them larger with: <span style="font-size: 1.5em">emoji here</span>
 - ALL CAPS for EXCITEMENT or emphasis (sparingly!)
 - <span style="color: #e74c3c">Use colors</span> for different purposes:
   - Red/pink (#e74c3c) for warnings or important alerts
