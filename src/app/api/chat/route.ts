@@ -82,6 +82,8 @@ For every message:
 CRITICAL INSTRUCTION: You are the 'Guardian of Truth'. When discussing Scripture, YOU MUST reference the original Hebrew/Greek context. When discussing History or Science, YOU MUST question 'Who funded this?' and mention primary sources (like the Flexner Report) that contradict mainstream narratives.
 `;
 
+import { EmbeddingService } from '@/lib/embeddingService';
+
 // Tool Definition
 const tools: any[] = [
     {
@@ -112,6 +114,18 @@ const tools: any[] = [
                     },
                     required: ["query"]
                 }
+            },
+            {
+                name: "remember_this",
+                description: "Save a specific important fact, preference, or detail about the student to your long-term memory.",
+                parameters: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                        content: { type: SchemaType.STRING, description: "The exact fact or detail to remember (e.g., 'Student loves dinosaurs', 'Student struggles with fractions')." },
+                        category: { type: SchemaType.STRING, description: "Category of the memory (e.g., 'interest', 'struggle', 'goal', 'personal')." }
+                    },
+                    required: ["content"]
+                }
             }
         ]
     }
@@ -125,7 +139,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { messages, userId, studentInfo } = body;
+        const { messages, userId, studentInfo, conversationId } = body;
 
         // CLEAN incoming messages so Gemini is not re-trained by UI persona text
         const cleanedMessages = (messages || []).filter(
@@ -230,14 +244,41 @@ ${saneProgress}
             currentSystemPrompt += `\n\n${studentContext}`;
         }
 
-        let selectedModel = "gemini-2.5-flash"; // Default: High Speed, Low Cost
+        // --- MEMORY RETRIEVAL (RAG) ---
+        // Generate embedding for the user's prompt to find relevant past memories
+        try {
+            const promptEmbedding = await EmbeddingService.embed(prompt);
+            if (promptEmbedding && userId) {
+                const { data: similarMemories, error: matchError } = await supabase.rpc('match_memories', {
+                    query_embedding: promptEmbedding,
+                    match_threshold: 0.5, // 0.5 is a reasonable starting threshold for cosine similarity
+                    match_count: 5,
+                    p_student_id: userId
+                });
 
-        // If she sees a URL, she enters "Deconstruct Mode" AND upgrades the model
-        if (prompt.includes('http') || prompt.includes('www.')) {
-            console.log("[Adeline]: External Link Detected. Engaging Truth Filter & Upgrading Model.");
+                if (matchError) {
+                    console.error('Memory Match Error:', matchError);
+                } else if (similarMemories && similarMemories.length > 0) {
+                    currentSystemPrompt += `\n\n### RECALLED MEMORIES (Use these if relevant):\n` +
+                        similarMemories.map((m: any) => `- ${m.content}`).join('\n');
+                    console.log(`[Memory]: Injected ${similarMemories.length} memories.`);
+                }
+            }
+        } catch (memError) {
+            console.error('Memory Retrieval Failed:', memError);
+            // Continue without memory if it fails
+        }
 
-            // 1. Upgrade to the "Reasoning" Model for complex analysis
-            selectedModel = "gemini-1.5-pro";
+        let selectedModel = "gemini-1.5-flash";
+
+        // If she sees a URL (that isn't our own image instruction), she enters "Deconstruct Mode"
+        const isExternalLink = (prompt.includes('http') || prompt.includes('www.')) && !prompt.includes('source.unsplash.com');
+
+        if (isExternalLink) {
+            console.log("[Adeline]: External Link Detected. Engaging Truth Filter.");
+
+            // 1. Use Flash (High Speed) or Pro (Reasoning) if available. Falling back to Flash for stability.
+            selectedModel = "gemini-1.5-flash"; // "gemini-1.5-pro-latest" if enabled
 
             // 2. Inject Deconstruction Instructions
             currentSystemPrompt += `
@@ -336,13 +377,48 @@ ${saneProgress}
                         console.error("Search Error:", e);
                         searchResults = [{ error: "Search failed." }];
                     }
-
                     toolParts.push({
                         functionResponse: {
                             name: 'search_web',
                             response: { name: 'search_web', content: { results: searchResults } }
                         }
                     });
+                } else if (call.name === 'remember_this') {
+                    const args = call.args as any;
+                    console.log(`[Adeline Memory]: Saving "${args.content}"...`);
+
+                    try {
+                        const embedding = await EmbeddingService.embed(args.content);
+                        if (embedding) {
+                            const { error } = await supabase
+                                .from('memories')
+                                .insert({
+                                    student_id: userId,
+                                    content: args.content,
+                                    embedding: embedding,
+                                    metadata: { category: args.category || 'general' }
+                                });
+
+                            if (error) throw error;
+
+                            toolParts.push({
+                                functionResponse: {
+                                    name: 'remember_this',
+                                    response: { name: 'remember_this', content: { status: 'memory saved' } }
+                                }
+                            });
+                        } else {
+                            throw new Error('Failed to generate embedding');
+                        }
+                    } catch (e) {
+                        console.error("Memory Save Error:", e);
+                        toolParts.push({
+                            functionResponse: {
+                                name: 'remember_this',
+                                response: { name: 'remember_this', content: { status: 'failed to save memory', error: String(e) } }
+                            }
+                        });
+                    }
                 }
             }
 
@@ -354,7 +430,57 @@ ${saneProgress}
         }
 
         // Return standardize response
-        const data = { content: finalResponseText, type: "default" };
+        // --- CHAT PERSISTENCE ---
+        let activeConversationId = conversationId;
+        let newTitle = null;
+
+        try {
+            const updatedMessages = [...cleanedMessages, { role: 'assistant', content: finalResponseText }];
+
+            if (activeConversationId) {
+                // Update existing conversation
+                await supabase
+                    .from('conversations')
+                    .update({
+                        messages: updatedMessages,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', activeConversationId);
+            } else {
+                // New Conversation - Generate Title
+                // Simple title generation: First 5-6 words of prompt
+                const simpleTitle = prompt.split(' ').slice(0, 6).join(' ') + '...';
+
+                // Insert new conversation
+                const { data: newConv, error: newConvError } = await supabase
+                    .from('conversations')
+                    .insert({
+                        student_id: userId,
+                        title: simpleTitle,
+                        messages: updatedMessages,
+                        topic: 'General',
+                        is_active: true
+                    })
+                    .select('id')
+                    .single();
+
+                if (newConvError) {
+                    console.error('Failed to create conversation:', newConvError);
+                } else if (newConv) {
+                    activeConversationId = newConv.id;
+                    newTitle = simpleTitle;
+                }
+            }
+        } catch (persistError) {
+            console.error('Persistence Error:', persistError);
+        }
+
+        // Return standardize response
+        const data: any = { content: finalResponseText, type: "default" };
+        if (activeConversationId) {
+            data.conversationId = activeConversationId;
+            data.title = newTitle;
+        }
         return NextResponse.json(data);
 
     } catch (error: any) {

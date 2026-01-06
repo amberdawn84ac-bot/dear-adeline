@@ -188,6 +188,15 @@ export default function DashboardClient({
         }
     }, [activeConversation]);
 
+    const [currentChatId, setCurrentChatId] = useState<string | null>(activeConversation?.id || null);
+
+    // Update currentChatId when activeConversation changes prop (e.g. navigation)
+    useEffect(() => {
+        if (activeConversation?.id) {
+            setCurrentChatId(activeConversation.id);
+        }
+    }, [activeConversation]);
+
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -268,6 +277,7 @@ export default function DashboardClient({
                         })),
                     },
                     userId: user.id,
+                    conversationId: currentChatId,
                 }),
             });
 
@@ -283,6 +293,16 @@ export default function DashboardClient({
             // if (data.speak) {
             //     speakText(data.speak);
             // }
+
+            // Handle New Conversation Creation
+            if (data.conversationId && data.conversationId !== currentChatId) {
+                setCurrentChatId(data.conversationId);
+                // Update URL without full reload (shallow routing if possible, but we want to refresh sidebar data)
+                // For simplicity and to refresh server components (sidebar list), we push the new route.
+                // Replace ensures we don't have a history entry for the "optimistic" empty state.
+                router.replace(`/dashboard?chatId=${data.conversationId}`);
+                router.refresh();
+            }
 
             // Parse game tags from response
             let gameType: string | undefined;
