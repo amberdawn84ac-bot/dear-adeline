@@ -52,6 +52,7 @@ import { OnboardingModal } from '@/components/OnboardingModal';
 import { VoiceSession } from '@/components/VoiceSession';
 import { GoalsWidget } from '@/components/GoalsWidget';
 import MessageContent from '@/components/MessageContent';
+import DailyManna from '@/components/DailyManna';
 
 // Moved from DashboardClient to prevent re-declaration on every render
 const dailyScriptures = [
@@ -519,6 +520,11 @@ try {
                                 }}
                             />
                         )}
+
+                        {/* Daily Manna - Truth Engine */}
+                        <div className="col-span-12">
+                            <DailyManna />
+                        </div>
 
                         {/* Chat Area */}
                         <div className="col-span-12 lg:col-span-8 flex flex-col h-[500px] md:h-[600px] lg:h-[calc(100vh-120px)] bg-white rounded-2xl shadow-sm border border-[var(--cream-dark)] overflow-hidden">
