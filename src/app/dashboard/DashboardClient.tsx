@@ -177,16 +177,16 @@ export default function DashboardClient({
     }, []);
 
     useEffect(() => {
-    setIsClient(true);
+        setIsClient(true);
 
-    if (activeConversation?.messages) {
-        setMessages(activeConversation.messages);
-    } else {
-        // Start with an empty chat. Adeline's identity comes from the server SYSTEM_PROMPT,
-        // not a seeded client message (which can contaminate tone and behavior).
-        setMessages([]);
-    }
-}, [activeConversation]);
+        if (activeConversation?.messages) {
+            setMessages(activeConversation.messages);
+        } else {
+            // Start with an empty chat. Adeline's identity comes from the server SYSTEM_PROMPT,
+            // not a seeded client message (which can contaminate tone and behavior).
+            setMessages([]);
+        }
+    }, [activeConversation]);
 
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
@@ -241,12 +241,12 @@ export default function DashboardClient({
         };
 
         // Optimistically update UI with the user's message
-const updatedMessages = [...messages, userMessage];
-setMessages(updatedMessages);
-setInput('');
-setIsTyping(true);
+        const updatedMessages = [...messages, userMessage];
+        setMessages(updatedMessages);
+        setInput('');
+        setIsTyping(true);
 
-try {
+        try {
 
             const response = await fetch('/api/chat', {
                 method: 'POST',
@@ -369,37 +369,9 @@ try {
     };
 
     const handleDeepDive = async () => {
-        if (!currentPassage) return; // the passage displayed above the button
-      
-        const userMessage: Message = {
-          role: 'user',
-          content: `Deep Dive Study: ${currentPassage}`,
-          timestamp: new Date(),
-        };
-      
-        // update UI immediately
-        const updatedMessages = [...messages, userMessage];
-        setMessages(updatedMessages);
-      
-        setIsTyping(true);
-        setInput('');
-      
-        // send to backend
-        await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
-            studentInfo: {
-              name: profile?.display_name,
-              gradeLevel: profile?.grade_level,
-            },
-            userId: user.id, // your existing user id
-          }),
-        });
-      
-        setIsTyping(false);
-      };
+        if (!currentPassage) return;
+        await handleSendMessage(`Deep Dive Study: ${currentPassage}`);
+    };
 
     return (
         <div className="min-h-screen flex bg-[var(--cream)]">
