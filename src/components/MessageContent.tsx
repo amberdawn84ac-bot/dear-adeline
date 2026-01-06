@@ -4,6 +4,7 @@ import React from 'react';
 import { Target, Sparkles, Gamepad2 } from 'lucide-react';
 import { formatTrack } from '@/types/learning';
 import { GameRenderer } from './GameRenderer';
+import StorybookPage from './StorybookPage';
 
 interface MessageContentProps {
     content: string;
@@ -14,6 +15,14 @@ function MessageContentComponent({ content }: MessageContentProps) {
     // This prevents the component from re-parsing the content string on every
     // render, which is a significant performance improvement when the parent
     // component re-renders but the `content` prop remains the same.
+    
+    // Check if this is a Storybook message
+    const isStorybook = content.startsWith('# 📖') || content.startsWith('[STORYBOOK]') || content.startsWith('# 📖 ') || content.startsWith('[STORYBOOK] ');
+    
+    if (isStorybook) {
+        return <StorybookPage content={content} />;
+    }
+    
     const parsedContent = React.useMemo(() => {
         // Parse <GAME> tags for inline games
         const gameMatch = content.match(/<GAME>([\s\S]*?)<\/GAME>/);

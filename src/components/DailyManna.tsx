@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Scroll, FlaskConical, BookOpen } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Scroll, FlaskConical, BookOpen, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface DailyTruth {
@@ -25,7 +26,12 @@ const topicColors: Record<string, string> = {
     Science: 'text-amber-900',
 };
 
-export default function DailyManna() {
+interface DailyMannaProps {
+    onStartDeepDive?: (prompt: string) => void;
+}
+
+export default function DailyManna({ onStartDeepDive }: DailyMannaProps) {
+    const router = useRouter();
     const [truth, setTruth] = useState<DailyTruth | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -101,7 +107,48 @@ export default function DailyManna() {
                 </div>
             )}
 
-            <p className="text-amber-900 leading-relaxed text-base">{truth.content}</p>
+            <p className="text-amber-900 leading-relaxed text-base mb-4">{truth.content}</p>
+
+            <button
+                onClick={() => {
+                    const prompt = `# 📖
+
+Generate a DALL-E 3 image description for the header. Format it as: ![Header Image](https://source.unsplash.com/1600x900/?vintage,parchment,${encodeURIComponent(truth.topic.toLowerCase())}). Use keywords like 'vintage, parchment, ${truth.topic.toLowerCase()}'.
+
+Create a visual storybook deep dive about: ${truth.title}
+
+Use this format:
+- # for Titles (H1) - centered, large
+- > for Blockquotes (Scripture) - styled as parchment snippets
+- *** for horizontal dividers
+
+Create a layout with 3 sections:
+
+## The Original Manuscript
+${truth.original_text ? `Original text: **${truth.original_text}**` : 'Show the original source material'}
+${truth.translation_notes ? `\n> ${truth.translation_notes}` : ''}
+
+## The Lost Page (Who changed it?)
+Explain who modified or misinterpreted this truth and why. Question: "Who funded this?" and mention primary sources.
+
+## The Truth
+${truth.content}
+
+Make this engaging and visual for children, using clear language and compelling storytelling. Format your entire response starting with "# 📖" to activate Storybook Mode.`;
+
+                    if (onStartDeepDive) {
+                        onStartDeepDive(prompt);
+                    } else {
+                        // Fallback: redirect to dashboard with message
+                        const encoded = encodeURIComponent(prompt);
+                        router.push(`/dashboard?initialMessage=${encoded}`);
+                    }
+                }}
+                className="w-full py-3 rounded-xl bg-amber-600 text-white font-bold uppercase tracking-wider text-sm shadow-lg hover:bg-amber-700 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+                Start Visual Storybook Deep Dive
+                <ArrowRight className="w-4 h-4" />
+            </button>
         </div>
     );
 }
