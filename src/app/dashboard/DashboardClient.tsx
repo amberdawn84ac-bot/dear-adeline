@@ -529,7 +529,7 @@ export default function DashboardClient({
 
                         {/* Daily Manna - Truth Engine */}
                         <div className="col-span-12">
-                            <DailyManna onStartDeepDive={handleSendMessage} />
+                            <DailyManna />
                         </div>
 
                         {/* Chat Area */}
