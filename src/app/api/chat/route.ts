@@ -169,6 +169,8 @@ export async function POST(req: Request) {
         - Provide concise historical and cultural context (2–3 sentences max).
         - Do NOT open with validation, affection, or praise.
         - Keep responses strictly educational and factual.
+        - ABSOLUTELY NO theatrical asides like *nods*, *smiles*, *leans in* - these are FORBIDDEN.
+        - Write like a real educator, not a roleplay character.
         `;
         }
 
@@ -184,29 +186,41 @@ Student age: ${age}
 
 CRITICAL RULES YOU MUST FOLLOW:
 
+FORBIDDEN BEHAVIORS (NEVER DO THESE):
+- NO theatrical asides like *nods*, *smiles*, *leans in*, *gestures* - EVER
+- NO endearments like "my dear", "sweet one", "little one"
+- NO roleplay actions or descriptions of your behavior
+- Write like a REAL educator, not a character in a story
+
 If age <= 10:
 - Very short sentences.
-- Simple words.
+- Simple words (no big vocabulary).
 - One idea at a time.
 - Use emojis like 📘✨🧠
 - Use bullet points.
 - NO long explanations.
 - NO abstract theology.
+- Talk like you're explaining to a 2nd grader.
 
 If age 11–13:
-- Short paragraphs only.
-- Friendly tone.
-- Clear headers.
+- Short paragraphs only (3-4 sentences max).
+- Friendly but clear tone.
+- Clear headers to organize ideas.
 - One emoji per section.
+- Talk like you're explaining to a middle schooler.
 
 If age 14+:
 - Normal explanations, still clear and structured.
+- Can use more advanced vocabulary.
+- Longer paragraphs okay (but still organized).
+- Talk like you're explaining to a high schooler.
 
-ALWAYS:
-- Use headers.
-- Use spacing.
+ALWAYS FOR ALL AGES:
+- Use headers to organize.
+- Use spacing for readability.
 - Be visually engaging.
 - Teach like a mentor, not a lecturer.
+- NO theatrical actions or gestures in asterisks.
 `;
 
         // 1. Build Student Context (Merged from remote)
@@ -269,27 +283,9 @@ ${saneProgress}
             // Continue without memory if it fails
         }
 
-        let selectedModel = "gemini-1.5-flash";
-
-        // If she sees a URL (that isn't our own image instruction), she enters "Deconstruct Mode"
-        const isExternalLink = (prompt.includes('http') || prompt.includes('www.')) && !prompt.includes('source.unsplash.com');
-
-        if (isExternalLink) {
-            console.log("[Adeline]: External Link Detected. Engaging Truth Filter.");
-
-            // 1. Use Flash (High Speed) or Pro (Reasoning) if available. Falling back to Flash for stability.
-            selectedModel = "gemini-1.5-flash"; // "gemini-1.5-pro-latest" if enabled
-
-            // 2. Inject Deconstruction Instructions
-            currentSystemPrompt += `
-            \n\n!!! ALERT: THE USER HAS SHARED AN EXTERNAL LINK. !!!
-            Your Mode is now: DECONSTRUCTION.
-            1. Ignore the "official" summary. 
-            2. Follow the money: Who owns this outlet? Who funds this study?
-            3. Point out logical fallacies (Appeal to Authority, Fear-mongering).
-            4. Compare it against Biblical principles.
-            `;
-        }
+        // --- MODEL ROUTING LOGIC ---
+        // Using Gemini 2.0 Flash (free tier, newest stable model)
+        let selectedModel = "gemini-2.0-flash-exp";
 
         const model = genAI.getGenerativeModel({
             model: selectedModel,
