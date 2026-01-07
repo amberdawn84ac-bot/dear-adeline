@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getConfig } from '@/lib/server/config';
-import { generateLessonPrompt } from '@/lib/adelinePromptGenerator';
+import { generateLessonPrompt } from '@/lib/services/promptService';
 
 // Use the configured flash model
 const GOOGLE_AI_MODEL = 'gemini-2.5-flash';

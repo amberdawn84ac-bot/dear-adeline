@@ -4,9 +4,6 @@ import type { NextConfig } from "next";
 const nextConfig = {
   transpilePackages: ["posthog-js", "lucide-react", "@supabase/ssr", "@supabase/supabase-js"],
 
-  typescript: {
-    ignoreBuildErrors: true,
-  },
 };
 
 export default nextConfig;

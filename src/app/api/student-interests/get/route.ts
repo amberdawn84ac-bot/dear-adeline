@@ -10,30 +10,20 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { data, error } = await supabase
+        const { data: interestsData, error } = await supabase
             .from('student_interests')
-            .select('*')
-            .eq('student_id', user.id)
-            .maybeSingle();
+            .select('interest') // Select only the 'interest' column
+            .eq('user_id', user.id);
 
         if (error) {
             console.error('Error fetching student interests:', error);
             return NextResponse.json({ error: 'Failed to fetch interests' }, { status: 500 });
         }
 
-        // If no record exists, return an empty default object structure or null
-        if (!data) {
-            return NextResponse.json({
-                data: {
-                    interests: [],
-                    hobbies: [],
-                    favorite_subjects: [],
-                    // ... defaults
-                }
-            }, { status: 200 });
-        }
+        // Extract the interest strings from the returned objects
+        const interests = interestsData ? interestsData.map(item => item.interest) : [];
 
-        return NextResponse.json({ data }, { status: 200 });
+        return NextResponse.json({ data: { interests } }, { status: 200 });
 
     } catch (error) {
         console.error('Unexpected error in student-interests/get:', error);

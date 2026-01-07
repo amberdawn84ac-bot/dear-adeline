@@ -23,12 +23,12 @@ export default function OpportunitiesPage() {
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-    const [aiSummary, setAiSummary] = useState('');
     const [savedIds, setSavedIds] = useState<string[]>([]);
 
-    // Load saved opportunities on mount
+    // Load saved opportunities on mount and initial opportunities
     useEffect(() => {
         loadSavedOpportunities();
+        handleSearch(); // Load all opportunities initially
     }, []);
 
     const loadSavedOpportunities = async () => {
@@ -45,14 +45,11 @@ export default function OpportunitiesPage() {
         e?.preventDefault();
         setLoading(true);
         try {
-            const res = await fetch('/api/opportunities', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query })
-            });
+            // Modify to GET request
+            const res = await fetch('/api/opportunities');
             const data = await res.json();
-            setOpportunities(data.opportunities || []);
-            setAiSummary(data.aiSummary || '');
+            setOpportunities(data.data || []); // Adjust to the new API response structure
+            // Remove setAiSummary as the new API does not provide it
         } catch (error) {
             console.error('Search failed:', error);
         } finally {
@@ -165,17 +162,7 @@ export default function OpportunitiesPage() {
                 </div>
 
                 {/* AI Summary */}
-                {aiSummary && (
-                    <div className="card p-6 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Sparkles className="w-5 h-5 text-[var(--rose)]" />
-                            <h3 className="text-lg font-bold">Adeline's Findings</h3>
-                        </div>
-                        <p className="text-[var(--charcoal-light)] whitespace-pre-wrap leading-relaxed">
-                            {aiSummary}
-                        </p>
-                    </div>
-                )}
+
 
                 {/* Opportunities Grid */}
                 {opportunities.length > 0 && (

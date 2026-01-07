@@ -76,7 +76,9 @@ export default function PortfolioClient({
         type: 'project' as PortfolioItem['type'],
         content: '',
         is_public: false,
+        skills_demonstrated: [] as string[], // Add skills_demonstrated
     });
+    const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
     const handleLogout = async () => {
         const supabase = createClient();
@@ -93,6 +95,7 @@ export default function PortfolioClient({
         try {
             await supabase.from('portfolio_items').insert({
                 ...newItem,
+                skills_demonstrated: selectedSkills, // Include selected skills
                 student_id: (await supabase.auth.getUser()).data.user?.id,
             });
 
@@ -103,7 +106,9 @@ export default function PortfolioClient({
                 type: 'project',
                 content: '',
                 is_public: false,
+                skills_demonstrated: [],
             });
+            setSelectedSkills([]); // Clear selected skills
             router.refresh();
         } catch (error) {
             console.error('Error adding item:', error);
@@ -352,6 +357,26 @@ export default function PortfolioClient({
                                     className="input w-full h-32 resize-none"
                                     placeholder="Write your content or reflection here..."
                                 />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Skills Demonstrated</label>
+                                <select
+                                    multiple
+                                    value={selectedSkills}
+                                    onChange={(e) => {
+                                        const options = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                                        setSelectedSkills(options);
+                                    }}
+                                    className="input w-full h-32"
+                                >
+                                    {allSkills.map((skill) => (
+                                        <option key={skill.id} value={skill.id}>
+                                            {skill.name} ({skill.category})
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple skills.</p>
                             </div>
 
                             <div className="flex items-center gap-3">

@@ -145,6 +145,20 @@ interface DashboardClientProps {
         suggested_activities: { title: string; description: string }[];
     }>;
     profileError?: any;
+    // New props for teacher dashboard
+    students: Array<{
+        id: string;
+        display_name: string | null;
+        avatar_url: string | null;
+        grade_level: string | null;
+    }>;
+    selectedStudent: {
+        id: string;
+        display_name: string | null;
+        avatar_url: string | null;
+        grade_level: string | null;
+    } | null;
+    currentViewingUserId: string; // The ID of the user whose data is currently displayed
 }
 
 export default function DashboardClient({
@@ -158,6 +172,9 @@ export default function DashboardClient({
     conversationHistory,
     learningGaps,
     profileError,
+    students, // New prop
+    selectedStudent, // New prop
+    currentViewingUserId, // New prop
 }: DashboardClientProps) {
     const router = useRouter();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -267,8 +284,8 @@ export default function DashboardClient({
                         content: m.content,
                     })),
                     studentInfo: {
-                        name: profile?.display_name,
-                        gradeLevel: profile?.grade_level,
+                        name: (selectedStudent || profile)?.display_name,
+                        gradeLevel: (selectedStudent || profile)?.grade_level,
                         skills: studentSkills.map(s => s.skill.name),
                         graduationProgress: graduationProgress.map(p => ({
                             track: p.requirement.name,
@@ -276,7 +293,7 @@ export default function DashboardClient({
                             required: p.requirement.required_credits
                         })),
                     },
-                    userId: user.id,
+                    userId: currentViewingUserId, // Use currentViewingUserId
                     conversationId: currentChatId,
                 }),
             });
@@ -417,13 +434,36 @@ export default function DashboardClient({
                     </div>
 
                     <div className="p-4 border-b border-[var(--cream-dark)]">
+                        {profile?.role === 'teacher' && students.length > 0 && (
+                            <div className="mb-4">
+                                <label htmlFor="student-select" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                                    Viewing Student:
+                                </label>
+                                <select
+                                    id="student-select"
+                                    value={selectedStudent?.id || ''}
+                                    onChange={(e) => {
+                                        const newStudentId = e.target.value;
+                                        router.push(`/dashboard?studentId=${newStudentId}`);
+                                        router.refresh();
+                                    }}
+                                    className="w-full p-2 text-sm border border-gray-300 rounded-lg bg-white"
+                                >
+                                    {students.map((s) => (
+                                        <option key={s.id} value={s.id}>
+                                            {s.display_name || 'Unnamed Student'}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--dusty-rose)] to-[var(--terracotta)] flex items-center justify-center text-white font-semibold shadow-sm">
-                                {profile?.display_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
+                                {(selectedStudent || profile)?.display_name?.[0]?.toUpperCase() || (selectedStudent || user)?.email?.[0]?.toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{profile?.display_name || 'Student'}</p>
-                                <p className="text-sm text-[var(--charcoal-light)] truncate">{profile?.grade_level || 'Grade not set'}</p>
+                                <p className="font-medium truncate">{(selectedStudent || profile)?.display_name || 'Student'}</p>
+                                <p className="text-sm text-[var(--charcoal-light)] truncate">{(selectedStudent || profile)?.grade_level || 'Grade not set'}</p>
                             </div>
                         </div>
                     </div>
@@ -536,7 +576,7 @@ export default function DashboardClient({
                         {/* Onboarding Flow */}
                         {showOnboarding && (
                             <OnboardingModal
-                                userId={user.id}
+                                userId={currentViewingUserId} // Use currentViewingUserId
                                 onComplete={() => {
                                     setShowOnboarding(false);
                                     // Remove the onboarding parameter from URL
@@ -683,12 +723,35 @@ export default function DashboardClient({
                             </div>
                         </div>
 
-                        {/* Sidebar Stats */}
-                        <div className="col-span-12 lg:col-span-4 space-y-6 overflow-y-auto no-scrollbar lg:h-[calc(100vh-120px)]">
+                            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
+                                <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2 mb-4">
+                                    <Lightbulb className="w-5 h-5 text-[var(--sage)]" />
+                                    Adeline's Insights
+                                </h3>
+                                {learningGaps.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {learningGaps.map((gap, i) => (
+                                            <div key={i} className="text-sm">
+                                                <p className="font-medium text-[var(--forest)]">{gap.skill_area}</p>
+                                                <p className="text-xs text-slate-600">{gap.description}</p>
+                                                {gap.suggested_activities && gap.suggested_activities.length > 0 && (
+                                                    <ul className="list-disc list-inside text-xs text-slate-500 mt-1">
+                                                        {gap.suggested_activities.map((activity, j) => (
+                                                            <li key={j}>{activity.title}</li>
+                                                        ))}
+                                                    </ul>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-slate-400 italic">No current learning gaps or suggestions from Adeline.</p>
+                                )}
+                            </div>
                             {/* Learning Goals Widget */}
                             {profile?.grade_level && profile?.state_standards && (
                                 <GoalsWidget
-                                    studentId={user.id}
+                                    studentId={currentViewingUserId}
                                     gradeLevel={profile.grade_level}
                                     state={profile.state_standards}
                                 />
