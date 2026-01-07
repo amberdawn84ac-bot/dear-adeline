@@ -8,30 +8,7 @@ export const handleToolCalls = async (
 ) => {
     const toolParts = [];
     for (const call of functionCalls) {
-        if (call.name === 'log_activity') {
-            const args = call.args as any;
-            console.log("TOOL CALL: log_activity", args);
-
-            const { error } = await supabase
-                .from('activity_logs')
-                .insert({
-                    student_id: userId,
-                    type: args.type || 'text',
-                    caption: args.caption,
-                    translation: args.translation,
-                    skills: args.skills,
-                    grade: args.grade
-                });
-
-            if (error) console.error("Database Log Error:", error);
-
-            toolParts.push({
-                functionResponse: {
-                    name: 'log_activity',
-                    response: { name: 'log_activity', content: { status: 'logged successfully' } }
-                }
-            });
-        } else if (call.name === 'search_web') {
+        if (call.name === 'search_web') {
             const args = call.args as any;
             console.log(`[Adeline Eyes]: Searching web for "${args.query}"...`);
 
@@ -101,6 +78,76 @@ export const handleToolCalls = async (
                     functionResponse: {
                         name: 'remember_this',
                         response: { name: 'remember_this', content: { status: 'failed to save memory', error: String(e) } }
+                    }
+                });
+            }
+        } else if (call.name === 'add_to_portfolio') {
+            const args = call.args as any;
+            console.log(`[Adeline Portfolio]: Adding "${args.title}" to portfolio...`);
+
+            try {
+                // 1. Get skill IDs and credit values from skill names
+                const { data: skillsData, error: skillsError } = await supabase
+                    .from('skills')
+                    .select('id, category, credit_value')
+                    .in('name', args.skills_demonstrated);
+
+                if (skillsError) throw new Error(`Error fetching skills: ${skillsError.message}`);
+
+                const skillIds = skillsData.map(s => s.id);
+
+                // 2. Insert into portfolio_items
+                const { error: portfolioError } = await supabase
+                    .from('portfolio_items')
+                    .insert({
+                        student_id: userId,
+                        title: args.title,
+                        description: args.description,
+                        type: args.type,
+                        skills_demonstrated: skillIds,
+                    });
+
+                if (portfolioError) throw new Error(`Error saving to portfolio: ${portfolioError.message}`);
+                
+                // 3. Insert into student_skills and update graduation progress
+                for (const skill of skillsData) {
+                    // Add to student_skills
+                    await supabase.from('student_skills').insert({
+                        student_id: userId,
+                        skill_id: skill.id,
+                        source_type: 'ai_lesson', // or another appropriate source
+                    }).select();
+
+                    // Update graduation progress
+                    const { data: requirement } = await supabase
+                        .from('graduation_requirements')
+                        .select('id')
+                        .eq('category', skill.category)
+                        .single();
+                    
+                    if(requirement) {
+                        const { error: progressError } = await supabase.rpc('update_student_progress', {
+                            p_student_id: userId,
+                            p_requirement_id: requirement.id,
+                            p_credits_to_add: skill.credit_value
+                        });
+                        if(progressError) console.error(`Error updating progress for ${skill.category}:`, progressError);
+                    }
+                }
+
+                toolParts.push({
+                    functionResponse: {
+                        name: 'add_to_portfolio',
+                        response: { name: 'add_to_portfolio', content: { status: 'portfolio item added successfully' } }
+                    }
+                });
+
+            } catch (e) {
+                console.error("Portfolio Save Error:", e);
+                toolParts.push({
+                    functionResponse: {
+                        name: 'add_to_portfolio',
+                        response: { name: 'add_to_portfolio', content: { status: 'failed to save portfolio item', error: String(e) } }
                     }
                 });
             }

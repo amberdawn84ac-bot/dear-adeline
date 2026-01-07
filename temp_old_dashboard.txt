@@ -37,8 +37,7 @@ import {
     Shield,
     Cloud,
     ArrowRight,
-    BarChart3,
-    Camera,
+    BarChart3
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -51,7 +50,6 @@ import { DigitalWorksheet } from '@/components/DigitalWorksheet';
 import { CodeWorkspace } from '@/components/CodeWorkspace';
 import { OnboardingModal } from '@/components/OnboardingModal';
 import { VoiceSession } from '@/components/VoiceSession';
-import { CameraInput } from '@/components/CameraInput';
 import { GoalsWidget } from '@/components/GoalsWidget';
 import MessageContent from '@/components/MessageContent';
 import DailyManna from '@/components/DailyManna';
@@ -147,20 +145,6 @@ interface DashboardClientProps {
         suggested_activities: { title: string; description: string }[];
     }>;
     profileError?: any;
-    // New props for teacher dashboard
-    students: Array<{
-        id: string;
-        display_name: string | null;
-        avatar_url: string | null;
-        grade_level: string | null;
-    }>;
-    selectedStudent: {
-        id: string;
-        display_name: string | null;
-        avatar_url: string | null;
-        grade_level: string | null;
-    } | null;
-    currentViewingUserId: string; // The ID of the user whose data is currently displayed
 }
 
 export default function DashboardClient({
@@ -174,9 +158,6 @@ export default function DashboardClient({
     conversationHistory,
     learningGaps,
     profileError,
-    students, // New prop
-    selectedStudent, // New prop
-    currentViewingUserId, // New prop
 }: DashboardClientProps) {
     const router = useRouter();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -207,15 +188,6 @@ export default function DashboardClient({
         }
     }, [activeConversation]);
 
-    const [currentChatId, setCurrentChatId] = useState<string | null>(activeConversation?.id || null);
-
-    // Update currentChatId when activeConversation changes prop (e.g. navigation)
-    useEffect(() => {
-        if (activeConversation?.id) {
-            setCurrentChatId(activeConversation.id);
-        }
-    }, [activeConversation]);
-
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -229,7 +201,6 @@ export default function DashboardClient({
     const [workspaceData, setWorkspaceData] = useState<any>(null);
     const [showCelebration, setShowCelebration] = useState<string[] | null>(null);
     const [showVoiceSession, setShowVoiceSession] = useState(false);
-    const [showCameraInput, setShowCameraInput] = useState(false);
 
     const todayScripture = dailyScriptures[new Date().getDate() % dailyScriptures.length];
     const currentPassage = todayScripture.text;
@@ -259,9 +230,9 @@ export default function DashboardClient({
         }
     };
 
-    const handleSendMessage = async (textOverride?: string, imageData?: string) => {
+    const handleSendMessage = async (textOverride?: string) => {
         const messageText = textOverride || input.trim();
-        if ((!messageText && !imageData) || isTyping) return;
+        if (!messageText || isTyping) return;
 
         const userMessage: Message = {
             role: 'user',
@@ -287,8 +258,8 @@ export default function DashboardClient({
                         content: m.content,
                     })),
                     studentInfo: {
-                        name: (selectedStudent || profile)?.display_name,
-                        gradeLevel: (selectedStudent || profile)?.grade_level,
+                        name: profile?.display_name,
+                        gradeLevel: profile?.grade_level,
                         skills: studentSkills.map(s => s.skill.name),
                         graduationProgress: graduationProgress.map(p => ({
                             track: p.requirement.name,
@@ -296,9 +267,7 @@ export default function DashboardClient({
                             required: p.requirement.required_credits
                         })),
                     },
-                    userId: currentViewingUserId, // Use currentViewingUserId
-                    conversationId: currentChatId,
-                    imageData: imageData, // Add image data to the request
+                    userId: user.id,
                 }),
             });
 
@@ -314,16 +283,6 @@ export default function DashboardClient({
             // if (data.speak) {
             //     speakText(data.speak);
             // }
-
-            // Handle New Conversation Creation
-            if (data.conversationId && data.conversationId !== currentChatId) {
-                setCurrentChatId(data.conversationId);
-                // Update URL without full reload (shallow routing if possible, but we want to refresh sidebar data)
-                // For simplicity and to refresh server components (sidebar list), we push the new route.
-                // Replace ensures we don't have a history entry for the "optimistic" empty state.
-                router.replace(`/dashboard?chatId=${data.conversationId}`);
-                router.refresh();
-            }
 
             // Parse game tags from response
             let gameType: string | undefined;
@@ -411,8 +370,7 @@ export default function DashboardClient({
 
     const handleDeepDive = async () => {
         if (!currentPassage) return;
-        const prompt = `Deep Dive Study: ${currentPassage}`;
-        await handleSendMessage(prompt);
+        await handleSendMessage(`Deep Dive Study: ${currentPassage}`);
     };
 
     return (
@@ -438,36 +396,13 @@ export default function DashboardClient({
                     </div>
 
                     <div className="p-4 border-b border-[var(--cream-dark)]">
-                        {profile?.role === 'teacher' && students.length > 0 && (
-                            <div className="mb-4">
-                                <label htmlFor="student-select" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                                    Viewing Student:
-                                </label>
-                                <select
-                                    id="student-select"
-                                    value={selectedStudent?.id || ''}
-                                    onChange={(e) => {
-                                        const newStudentId = e.target.value;
-                                        router.push(`/dashboard?studentId=${newStudentId}`);
-                                        router.refresh();
-                                    }}
-                                    className="w-full p-2 text-sm border border-gray-300 rounded-lg bg-white"
-                                >
-                                    {students.map((s) => (
-                                        <option key={s.id} value={s.id}>
-                                            {s.display_name || 'Unnamed Student'}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--dusty-rose)] to-[var(--terracotta)] flex items-center justify-center text-white font-semibold shadow-sm">
-                                {(selectedStudent || profile)?.display_name?.[0]?.toUpperCase() || (selectedStudent || user)?.email?.[0]?.toUpperCase()}
+                                {profile?.display_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{(selectedStudent || profile)?.display_name || 'Student'}</p>
-                                <p className="text-sm text-[var(--charcoal-light)] truncate">{(selectedStudent || profile)?.grade_level || 'Grade not set'}</p>
+                                <p className="font-medium truncate">{profile?.display_name || 'Student'}</p>
+                                <p className="text-sm text-[var(--charcoal-light)] truncate">{profile?.grade_level || 'Grade not set'}</p>
                             </div>
                         </div>
                     </div>
@@ -580,7 +515,7 @@ export default function DashboardClient({
                         {/* Onboarding Flow */}
                         {showOnboarding && (
                             <OnboardingModal
-                                userId={currentViewingUserId} // Use currentViewingUserId
+                                userId={user.id}
                                 onComplete={() => {
                                     setShowOnboarding(false);
                                     // Remove the onboarding parameter from URL
@@ -594,7 +529,7 @@ export default function DashboardClient({
 
                         {/* Daily Manna - Truth Engine */}
                         <div className="col-span-12">
-                            <DailyManna />
+                            <DailyManna onStartDeepDive={handleSendMessage} />
                         </div>
 
                         {/* Chat Area */}
@@ -720,13 +655,6 @@ export default function DashboardClient({
                                         placeholder="Message Adeline..."
                                         className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm ring-[var(--sage)] focus:ring-2 focus:outline-none"
                                     />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowCameraInput(true)}
-                                        className="bg-gray-200 text-gray-600 p-2.5 rounded-xl hover:bg-gray-300 transition-all shadow-sm"
-                                    >
-                                        <Camera className="w-5 h-5" />
-                                    </button>
                                     <button type="submit" disabled={!input.trim() || isTyping} className="bg-[var(--forest)] text-white p-2.5 rounded-xl hover:brightness-110 transition-all shadow-sm disabled:opacity-50">
                                         <Send className="w-5 h-5" />
                                     </button>
@@ -734,35 +662,12 @@ export default function DashboardClient({
                             </div>
                         </div>
 
-                            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
-                                <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2 mb-4">
-                                    <Lightbulb className="w-5 h-5 text-[var(--sage)]" />
-                                    Adeline's Insights
-                                </h3>
-                                {learningGaps.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {learningGaps.map((gap, i) => (
-                                            <div key={i} className="text-sm">
-                                                <p className="font-medium text-[var(--forest)]">{gap.skill_area}</p>
-                                                <p className="text-xs text-slate-600">{gap.description}</p>
-                                                {gap.suggested_activities && gap.suggested_activities.length > 0 && (
-                                                    <ul className="list-disc list-inside text-xs text-slate-500 mt-1">
-                                                        {gap.suggested_activities.map((activity, j) => (
-                                                            <li key={j}>{activity.title}</li>
-                                                        ))}
-                                                    </ul>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-xs text-slate-400 italic">No current learning gaps or suggestions from Adeline.</p>
-                                )}
-                            </div>
+                        {/* Sidebar Stats */}
+                        <div className="col-span-12 lg:col-span-4 space-y-6 overflow-y-auto no-scrollbar lg:h-[calc(100vh-120px)]">
                             {/* Learning Goals Widget */}
                             {profile?.grade_level && profile?.state_standards && (
                                 <GoalsWidget
-                                    studentId={currentViewingUserId}
+                                    studentId={user.id}
                                     gradeLevel={profile.grade_level}
                                     state={profile.state_standards}
                                 />
@@ -985,16 +890,6 @@ export default function DashboardClient({
                 <VoiceSession
                     onClose={() => setShowVoiceSession(false)}
                     studentName={profile?.display_name || undefined}
-                />
-            )}
-
-            {/* Camera Input Modal */}
-            {showCameraInput && (
-                <CameraInput
-                    onClose={() => setShowCameraInput(false)}
-                    onPictureTaken={(imageData) => {
-                        handleSendMessage(input, imageData);
-                    }}
                 />
             )}
         </div>

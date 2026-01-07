@@ -25,27 +25,12 @@ const tools: any[] = [
     {
         functionDeclarations: [
             {
-                name: "log_activity",
-                description: "Save a learning activity to the transcript.",
-                parameters: {
-                    type: SchemaType.OBJECT,
-                    properties: {
-                        type: { type: SchemaType.STRING, enum: ["text", "photo"] },
-                        caption: { type: SchemaType.STRING, description: "Brief description of the activity" },
-                        translation: { type: SchemaType.STRING, description: "Academic translation (e.g. Baking -> Chemistry)" },
-                        skills: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
-                        grade: { type: SchemaType.STRING, description: "Approximate grade level" }
-                    },
-                    required: ["caption", "translation", "skills", "grade"]
-                }
-            },
-            {
                 name: "search_web",
                 description: "Search the internet for current local events, grants, contests, or news facts.",
                 parameters: {
                     type: SchemaType.OBJECT,
                     properties: {
-                        query: { type: SchemaType.STRING, description: "The search query (e.g. 'Science fairs in Tulsa June 2024')" },
+                        query: { type: SchemaType.STRING, description: "The search query (e.g., 'Science fairs in Tulsa June 2024')" },
                         topic: { type: SchemaType.STRING, enum: ["events", "news", "grants"], description: "The category of search" }
                     },
                     required: ["query"]
@@ -62,6 +47,20 @@ const tools: any[] = [
                     },
                     required: ["content"]
                 }
+            },
+            {
+                name: "add_to_portfolio",
+                description: "Add a completed project, artwork, or other achievement to the student's portfolio and award credit.",
+                parameters: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                        title: { type: SchemaType.STRING, description: "The title of the portfolio item." },
+                        description: { type: SchemaType.STRING, description: "A brief description of the item." },
+                        type: { type: SchemaType.STRING, enum: ['project', 'lesson', 'artwork', 'writing', 'other'], description: "The type of portfolio item." },
+                        skills_demonstrated: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "An array of skill names demonstrated." }
+                    },
+                    required: ["title", "description", "type", "skills_demonstrated"]
+                }
             }
         ]
     }
@@ -75,7 +74,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { messages, userId, studentInfo, conversationId } = body;
+        const { messages, userId, studentInfo, conversationId, imageData } = body;
 
         const cleanedMessages = (messages || []).filter(
             (m: any) => m?.role === 'user' || m?.role === 'assistant'
@@ -88,15 +87,17 @@ export async function POST(req: Request) {
         const lastMessage = cleanedMessages[cleanedMessages.length - 1];
         const prompt = lastMessage.content;
 
-        if (!prompt) {
-            return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
+        if (!prompt && !imageData) { // Allow image-only prompts
+            return NextResponse.json({ error: 'Prompt or image is required.' }, { status: 400 });
         }
 
         const similarMemories = await retrieveSimilarMemories(prompt, userId, supabase);
 
         const systemInstruction = generateSystemPrompt(studentInfo, similarMemories, lastMessage);
 
-        const { functionCalls, chat, finalResponseText: initialResponse } = await startChat(systemInstruction, tools, prompt, genAI);
+        const history = cleanedMessages.slice(0, -1); // All messages except the last one
+
+        const { functionCalls, chat, finalResponseText: initialResponse } = await startChat(systemInstruction, tools, prompt, genAI, history, imageData);
 
         let finalResponseText = initialResponse || '';
 

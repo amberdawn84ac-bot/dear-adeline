@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Target, Sparkles, Gamepad2 } from 'lucide-react';
+import { Gamepad2, Sparkles, Target } from 'lucide-react';
 import { formatTrack } from '@/types/learning';
 import { GameRenderer } from './GameRenderer';
+import MermaidDiagram from './MermaidDiagram';
 import StorybookPage from './StorybookPage';
 
 interface MessageContentProps {
@@ -24,6 +25,30 @@ function MessageContentComponent({ content }: MessageContentProps) {
     }
 
     const parsedContent = React.useMemo(() => {
+        // Parse <DIAGRAM> tags for Mermaid diagrams
+        const diagramMatch = content.match(/<DIAGRAM>([\s\S]*?)<\/DIAGRAM>/);
+        if (diagramMatch) {
+            try {
+                const diagramCode = diagramMatch[1];
+                const beforeDiagram = content.substring(0, diagramMatch.index);
+                const afterDiagram = content.substring((diagramMatch.index || 0) + diagramMatch[0].length);
+
+                return (
+                    <>
+                        {beforeDiagram && <div className="mb-4" dangerouslySetInnerHTML={{ __html: beforeDiagram }} />}
+
+                        <div className="my-4 p-4 bg-gray-100 rounded-lg">
+                            <MermaidDiagram chart={diagramCode} />
+                        </div>
+
+                        {afterDiagram && <div className="mt-4" dangerouslySetInnerHTML={{ __html: afterDiagram }} />}
+                    </>
+                );
+            } catch (e) {
+                console.error('Failed to parse DIAGRAM tag:', e);
+            }
+        }
+        
         // Parse <GAME> tags for inline games
         const gameMatch = content.match(/<GAME>([\s\S]*?)<\/GAME>/);
         if (gameMatch) {

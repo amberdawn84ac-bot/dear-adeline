@@ -4,22 +4,35 @@ export const startChat = async (
     systemInstruction: string,
     tools: any[],
     prompt: string,
-    genAI: GoogleGenerativeAI
+    genAI: GoogleGenerativeAI,
+    history: any[],
+    imageData?: string // Add imageData parameter
 ) => {
 
     const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash-exp",
+        model: "gemini-1.5-flash-latest", // Use the vision-capable model
         systemInstruction,
         tools
     });
 
-    const history: any[] = [];
-
     const chat = model.startChat({
-        history
+        history // Use the provided history
     });
 
-    const result = await chat.sendMessage(prompt);
+    const messageParts = [
+        { text: prompt }
+    ];
+
+    if (imageData) {
+        messageParts.push({
+            inlineData: {
+                data: imageData.split(',')[1], // remove the data:image/jpeg;base64, part
+                mimeType: 'image/jpeg'
+            }
+        });
+    }
+
+    const result = await chat.sendMessage(messageParts);
     const response = await result.response;
     const functionCalls = response.functionCalls();
     
