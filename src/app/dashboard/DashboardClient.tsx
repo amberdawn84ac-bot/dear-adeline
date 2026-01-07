@@ -733,8 +733,6 @@ export default function DashboardClient({
                                 </form>
                             </div>
                         </div>
-
-                            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
                                 <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2 mb-4">
                                     <Lightbulb className="w-5 h-5 text-[var(--sage)]" />
                                     Adeline's Insights
