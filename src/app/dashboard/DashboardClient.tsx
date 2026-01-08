@@ -733,6 +733,10 @@ export default function DashboardClient({
                                 </form>
                             </div>
                         </div>
+
+                        {/* Right Sidebar */}
+                        <div className="col-span-12 lg:col-span-4 space-y-6">
+                            <div className="card !p-5">
                                 <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2 mb-4">
                                     <Lightbulb className="w-5 h-5 text-[var(--sage)]" />
                                     Adeline's Insights
@@ -757,6 +761,7 @@ export default function DashboardClient({
                                     <p className="text-xs text-slate-400 italic">No current learning gaps or suggestions from Adeline.</p>
                                 )}
                             </div>
+                            
                             {/* Learning Goals Widget */}
                             {profile?.grade_level && profile?.state_standards && (
                                 <GoalsWidget
