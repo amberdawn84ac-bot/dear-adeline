@@ -35,7 +35,7 @@ const tools = [
 export async function POST(request: Request) {
   try {
     const googleApiKey = getGoogleAIAPIKey();
-    const supabase = createClient(); // Initialize Supabase client
+    const supabase = await createClient(); // Initialize Supabase client
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
