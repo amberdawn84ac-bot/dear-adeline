@@ -1,7 +1,7 @@
 // src/app/api/adeline/route.ts
 
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { getGoogleAIAPIKey } from '@/lib/server/config';
 import { createClient } from '@/lib/supabase/server'; // Import Supabase client
 import { generateSystemPrompt } from '@/lib/services/promptService'; // Import the system prompt generator
@@ -18,12 +18,12 @@ const tools = [
         name: "log_activity",
         description: "Save a learning activity to the cloud transcript, tracking skills and academic credits. Everything learned earns skills, and these skills are tracked to build toward graduation requirements in real-time. This is Adeline's primary mechanism for recording a student's learning journey.",
         parameters: {
-          type: "object",
+          type: SchemaType.OBJECT,
           properties: {
-            caption: { type: "string", description: "A detailed description of the activity performed by the student. E.g., 'Baked sourdough bread from scratch', 'Built a working model of a solar system', 'Researched the history of feudalism in Japan'." },
-            translation: { type: "string", description: "The academic translation of the activity, identifying the primary subject area and core academic concept. E.g., 'Chemistry: Fermentation, Reaction Kinetics', 'Astronomy: Orbital Mechanics, Scale Modeling', 'History: Feudal Systems, Cultural Exchange'." },
-            skills: { type: "array", items: { type: "string" }, description: "An array of specific skills acquired or demonstrated during the activity. These should be concise and academically relevant. E.g., ['Experimentation', 'Data Analysis', 'Problem Solving', 'Historical Research', 'Baking Fundamentals']." },
-            grade: { type: "string", description: "The approximate grade level equivalent of the activity or skill. E.g., 'K', '3rd Grade', 'Middle School Science', 'High School Chemistry'." }
+            caption: { type: SchemaType.STRING, description: "A detailed description of the activity performed by the student. E.g., 'Baked sourdough bread from scratch', 'Built a working model of a solar system', 'Researched the history of feudalism in Japan'." },
+            translation: { type: SchemaType.STRING, description: "The academic translation of the activity, identifying the primary subject area and core academic concept. E.g., 'Chemistry: Fermentation, Reaction Kinetics', 'Astronomy: Orbital Mechanics, Scale Modeling', 'History: Feudal Systems, Cultural Exchange'." },
+            skills: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "An array of specific skills acquired or demonstrated during the activity. These should be concise and academically relevant. E.g., ['Experimentation', 'Data Analysis', 'Problem Solving', 'Historical Research', 'Baking Fundamentals']." },
+            grade: { type: SchemaType.STRING, description: "The approximate grade level equivalent of the activity or skill. E.g., 'K', '3rd Grade', 'Middle School Science', 'High School Chemistry'." }
           },
           required: ["caption", "translation", "skills", "grade"]
         }
