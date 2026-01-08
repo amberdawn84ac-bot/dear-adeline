@@ -2,7 +2,7 @@
 
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getConfig } from '@/lib/server/config';
+import { getGoogleAIAPIKey } from '@/lib/server/config';
 import { createClient } from '@/lib/supabase/server'; // Import Supabase client
 import { generateSystemPrompt } from '@/lib/services/promptService'; // Import the system prompt generator
 
@@ -34,7 +34,7 @@ const tools = [
 
 export async function POST(request: Request) {
   try {
-    const { googleApiKey } = getConfig();
+    const googleApiKey = getGoogleAIAPIKey();
     const supabase = createClient(); // Initialize Supabase client
 
     const { data: { user } } = await supabase.auth.getUser();
