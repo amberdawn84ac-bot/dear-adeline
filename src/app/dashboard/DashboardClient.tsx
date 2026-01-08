@@ -446,10 +446,18 @@ export default function DashboardClient({
                                 <select
                                     id="student-select"
                                     value={selectedStudent?.id || ''}
-                                    onChange={(e) => {
-                                        const newStudentId = e.target.value;
-                                        router.push(`/dashboard?studentId=${newStudentId}`);
-                                        router.refresh();
+                             onChange={(e) => {
+  const newStudentId = e.target.value;
+
+  if (!newStudentId) {
+    router.push('/dashboard');
+  } else {
+    router.push(`/dashboard?studentId=${newStudentId}`);
+  }
+
+  router.refresh();
+}}
+
                                     }}
                                     className="w-full p-2 text-sm border border-gray-300 rounded-lg bg-white"
                                 >
