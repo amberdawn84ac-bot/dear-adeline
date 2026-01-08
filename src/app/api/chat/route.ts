@@ -57,7 +57,7 @@ export async function POST(req: Request) {
         let finalResponseText = initialResponse || '';
 
         // Handle tool calls
-        if (functionCalls?.length > 0) {
+        if (functionCalls && functionCalls.length > 0) {
             const toolParts = await handleToolCalls(functionCalls, userId, supabase);
             finalResponseText = await continueChat(chat, toolParts);
         }
