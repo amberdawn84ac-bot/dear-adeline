@@ -111,7 +111,8 @@ export async function POST(request: Request) {
 
     if (functionCall && functionCall.name === "log_activity") {
       console.log("AI called log_activity:", functionCall.args);
-      const { caption, translation, skills, grade } = functionCall.args;
+      const args = functionCall.args as any;
+      const { caption, translation, skills, grade } = args;
 
       // Execute the tool: Save activity to Supabase
       const { error: insertError } = await supabase.from('activity_logs').insert({
