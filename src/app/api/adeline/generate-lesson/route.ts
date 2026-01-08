@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getConfig } from '@/lib/server/config';
+import { getGoogleAIAPIKey } from '@/lib/server/config';
 import { generateLessonPrompt } from '@/lib/services/promptService';
 
 // Use the configured flash model
@@ -8,7 +8,7 @@ const GOOGLE_AI_MODEL = 'gemini-2.5-flash';
 
 export async function POST(request: Request) {
     try {
-        const { googleApiKey } = getConfig();
+        const googleApiKey = getGoogleAIAPIKey();
         const genAI = new GoogleGenerativeAI(googleApiKey);
         const model = genAI.getGenerativeModel({
             model: GOOGLE_AI_MODEL,
@@ -24,7 +24,6 @@ export async function POST(request: Request) {
         }
 
         const prompt = generateLessonPrompt(interests, age);
-
         const result = await model.generateContent(prompt);
         const response = result.response;
         const text = response.text();
