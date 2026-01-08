@@ -457,8 +457,6 @@ export default function DashboardClient({
 
   router.refresh();
 }}
-
-                                    }}
                                     className="w-full p-2 text-sm border border-gray-300 rounded-lg bg-white"
                                 >
                                     {students.map((s) => (
