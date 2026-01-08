@@ -20,10 +20,29 @@ const tools = [
         parameters: {
           type: SchemaType.OBJECT,
           properties: {
-            caption: { type: SchemaType.STRING, description: "A detailed description of the activity performed by the student. E.g., 'Baked sourdough bread from scratch', 'Built a working model of a solar system', 'Researched the history of feudalism in Japan'." },
-            translation: { type: SchemaType.STRING, description: "The academic translation of the activity, identifying the primary subject area and core academic concept. E.g., 'Chemistry: Fermentation, Reaction Kinetics', 'Astronomy: Orbital Mechanics, Scale Modeling', 'History: Feudal Systems, Cultural Exchange'." },
-            skills: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "An array of specific skills acquired or demonstrated during the activity. These should be concise and academically relevant. E.g., ['Experimentation', 'Data Analysis', 'Problem Solving', 'Historical Research', 'Baking Fundamentals']." },
-            grade: { type: SchemaType.STRING, description: "The approximate grade level equivalent of the activity or skill. E.g., 'K', '3rd Grade', 'Middle School Science', 'High School Chemistry'." }
+            caption: { 
+              type: SchemaType.STRING, 
+              description: "A detailed description of the activity performed by the student. E.g., 'Baked sourdough bread from scratch', 'Built a working model of a solar system', 'Researched the history of feudalism in Japan'.",
+              nullable: false
+            },
+            translation: { 
+              type: SchemaType.STRING, 
+              description: "The academic translation of the activity, identifying the primary subject area and core academic concept. E.g., 'Chemistry: Fermentation, Reaction Kinetics', 'Astronomy: Orbital Mechanics, Scale Modeling', 'History: Feudal Systems, Cultural Exchange'.",
+              nullable: false
+            },
+            skills: { 
+              type: SchemaType.ARRAY, 
+              items: { 
+                type: SchemaType.STRING 
+              }, 
+              description: "An array of specific skills acquired or demonstrated during the activity. These should be concise and academically relevant. E.g., ['Experimentation', 'Data Analysis', 'Problem Solving', 'Historical Research', 'Baking Fundamentals'].",
+              nullable: false
+            },
+            grade: { 
+              type: SchemaType.STRING, 
+              description: "The approximate grade level equivalent of the activity or skill. E.g., 'K', '3rd Grade', 'Middle School Science', 'High School Chemistry'.",
+              nullable: false
+            }
           },
           required: ["caption", "translation", "skills", "grade"]
         }
@@ -58,7 +77,7 @@ export async function POST(request: Request) {
     // For simplicity, we'll let the AI decide with function calling, but a more explicit
     // check for tool-related prompts could be added here if needed.
 
-    const model = genAI.getGenerativeModel({ model: selectedModel, tools }); // Pass tools to the model
+    const model = genAI.getGenerativeModel({ model: selectedModel, tools: tools as any }); // Pass tools to the model
 
 
     // Generate the dynamic system prompt including the "Master Soul"
