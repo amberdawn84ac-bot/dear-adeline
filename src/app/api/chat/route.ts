@@ -8,18 +8,21 @@ import { persistConversation } from '@/lib/services/persistenceService';
 import { startChat, continueChat } from '@/lib/services/chatService';
 
 const apiKey = process.env.GOOGLE_API_KEY;
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
-
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!, 
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 let genAI = apiKey ? new GoogleGenerativeAI(apiKey) : undefined;
 
 export async function POST(req: Request) {
     try {
-        if (!genAI) return NextResponse.json({ error: 'API Key Missing' }, { status: 500 });
+        if (!genAI) {
+            return NextResponse.json({ error: 'API Key Missing' }, { status: 500 });
+        }
 
         const { messages, userId, studentInfo, conversationId, imageData } = await req.json();
 
-        // FIX 1: THE AMNESIA KILLER
-        // Gemini MUST see 'model', not 'assistant'. 
+        // Gemini requires 'model' role, not 'assistant'
         const formattedHistory = (messages || []).map((m: any) => ({
             role: m.role === 'assistant' || m.role === 'ai' ? 'model' : 'user',
             parts: [{ text: m.content || "" }]
@@ -29,34 +32,44 @@ export async function POST(req: Request) {
         const userPrompt = lastMessage.content;
         const history = formattedHistory.slice(0, -1);
 
+        // Retrieve context
         const similarMemories = await retrieveSimilarMemories(userPrompt, userId, supabase);
         let systemInstruction = generateSystemPrompt(studentInfo, similarMemories, lastMessage);
         
-        // FIX 2: THE PERSONALITY ANCHOR
+        // Personality enforcement
         systemInstruction += `\n\nSTRICT BEHAVIORAL PROTOCOL:
-        - TONE: Sharp-witted, busy, and whimsical truth-seeker.
-        - NO ENDEARMENTS: Never use terms like "dear," "honey," or "grandma."
-        - BREVITY: Max 2 paragraphs. If it's complex, use a visual description or diagram.
-        - QUIET TRACKING: Log graduation credits via tools. Do NOT mention them to the student.
-        - SPATIAL LEARNING: Use diagrams (Mermaid.js) to show how things work.`;
+- TONE: Sharp-witted, busy, whimsical truth-seeker. Never patronizing.
+- NO ENDEARMENTS: Never use "dear," "honey," "grandma," or similar terms.
+- BREVITY: Maximum 2 paragraphs. For complex topics, use visual diagrams.
+- SILENT TRACKING: Log graduation credits via tools silently. Never mention tracking to student.
+- VISUAL LEARNING: Use Mermaid.js diagrams to explain spatial/systems concepts.
+- CONSISTENCY: Maintain personality across all responses, regardless of conversation length.`;
 
-        // Start Chat with correct history format
+        // Start chat with properly formatted history
         const { functionCalls, chat, finalResponseText: initialResponse } = await startChat(
-            systemInstruction, [], userPrompt, genAI, history, imageData
+            systemInstruction, 
+            history,  // Pass the formatted history here, not empty array
+            userPrompt, 
+            genAI, 
+            imageData
         );
 
         let finalResponseText = initialResponse || '';
 
-        // Handle Tools (Search, Portfolio, Memory)
+        // Handle tool calls
         if (functionCalls?.length > 0) {
             const toolParts = await handleToolCalls(functionCalls, userId, supabase);
             finalResponseText = await continueChat(chat, toolParts);
         }
 
-        // FIX 3: THE SIDEBAR LINK
-        // Ensure conversationId is passed back so the frontend stays on the same thread
+        // Persist conversation with same ID to maintain sidebar continuity
         const { activeConversationId, newTitle } = await persistConversation(
-            conversationId, userPrompt, finalResponseText, messages, userId, supabase
+            conversationId, 
+            userPrompt, 
+            finalResponseText, 
+            messages, 
+            userId, 
+            supabase
         );
 
         return NextResponse.json({ 
@@ -66,7 +79,10 @@ export async function POST(req: Request) {
         });
 
     } catch (error: any) {
-        console.error('Chat Error:', error);
-        return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+        console.error('Chat API Error:', error);
+        return NextResponse.json({ 
+            error: 'Chat processing failed',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        }, { status: 500 });
     }
 }
