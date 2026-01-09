@@ -176,7 +176,7 @@ export default function DashboardClient({
     const [isClient, setIsClient] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [opportunities, setOpportunities] = useState([]);
+    const [opportunities, setOpportunities] = useState<any[]>([]);
     const [aiSummary, setAiSummary] = useState<string | null>(null);
 
     useEffect(() => {
