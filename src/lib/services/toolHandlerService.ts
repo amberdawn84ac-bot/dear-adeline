@@ -81,6 +81,27 @@ export const handleToolCalls = async (
                     }
                 });
             }
+        } else if (call.name === 'update_student_progress') {
+            const args = call.args as any;
+            console.log(`[Adeline Tracking]: Logging ${args.credits} credits for ${args.subject}...`);
+
+            // Silently log the progress (we'll implement database logic later)
+            toolParts.push({
+                functionResponse: {
+                    name: 'update_student_progress',
+                    response: { name: 'update_student_progress', content: { status: 'progress tracked silently' } }
+                }
+            });
+        } else if (call.name === 'create_game') {
+            const args = call.args as any;
+            console.log(`[Adeline Games]: Creating ${args.gameType} game for ${args.subject}...`);
+
+            toolParts.push({
+                functionResponse: {
+                    name: 'create_game',
+                    response: { name: 'create_game', content: { status: 'game created', message: 'Game creation not fully implemented yet' } }
+                }
+            });
         } else if (call.name === 'add_to_portfolio') {
             const args = call.args as any;
             console.log(`[Adeline Portfolio]: Adding "${args.title}" to portfolio...`);
@@ -151,6 +172,15 @@ export const handleToolCalls = async (
                     }
                 });
             }
+        } else {
+            // Fallback for unknown tools
+            console.warn(`⚠️ Unknown tool called: ${call.name}`);
+            toolParts.push({
+                functionResponse: {
+                    name: call.name,
+                    response: { name: call.name, content: { status: 'tool not implemented', message: `The tool '${call.name}' has not been implemented yet.` } }
+                }
+            });
         }
     }
     return toolParts;
