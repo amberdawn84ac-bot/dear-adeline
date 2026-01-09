@@ -695,7 +695,35 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                     <Lightbulb className="w-5 h-5 text-[var(--sage)]" />
                                     Adeline's Insights
                                 </h3>
-                                {learningGaps.length > 0 ? (
+                                
+                                {/* AI Summary Section */}
+                                {aiSummary && (
+                                    <div className="mb-4 p-3 bg-[var(--sage)]/10 border-l-4 border-[var(--sage)] rounded-r-xl">
+                                        <p className="text-sm text-[var(--charcoal)]">{aiSummary}</p>
+                                    </div>
+                                )}
+                                
+                                {/* Opportunities Section */}
+                                {opportunities.length > 0 && (
+                                    <div className="space-y-2 mb-4">
+                                        {opportunities.map((opp: any, i: number) => (
+                                            <div key={i} className="p-2 bg-[var(--ochre)]/10 rounded-lg text-sm">
+                                                <p className="font-medium text-[var(--ochre)]">{opp.title}</p>
+                                                <p className="text-xs text-slate-600">{opp.description}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {/* Empty State */}
+                                {!loading && opportunities.length === 0 && !aiSummary && learningGaps.length === 0 && (
+                                    <div className="text-center py-4">
+                                        <p className="text-xs text-slate-400 italic">Chat with Adeline to get personalized insights!</p>
+                                    </div>
+                                )}
+                                
+                                {/* Learning Gaps Section */}
+                                {learningGaps.length > 0 && (
                                     <div className="space-y-3">
                                         {learningGaps.map((gap, i) => (
                                             <div key={i} className="text-sm">
@@ -714,8 +742,6 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                             </div>
                                         ))}
                                     </div>
-                                ) : (
-                                    <p className="text-xs text-slate-400 italic">No current learning gaps or suggestions from Adeline.</p>
                                 )}
                             </div>
                             
