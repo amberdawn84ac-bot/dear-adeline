@@ -39,6 +39,7 @@ import {
     ArrowRight,
     BarChart3,
     Camera,
+    Search,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -716,7 +717,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                 )}
                                 
                                 {/* Empty State */}
-                                {!loading && opportunities.length === 0 && !aiSummary && learningGaps.length === 0 && (
+                                {!loading && learningGaps.length === 0 && (
                                     <div className="text-center py-4">
                                         <p className="text-xs text-slate-400 italic">Chat with Adeline to get personalized insights!</p>
                                     </div>
