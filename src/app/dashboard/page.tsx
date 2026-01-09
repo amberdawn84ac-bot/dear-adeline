@@ -7,7 +7,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
     const supabase = await createClient();
-    const headersList = headers();
+    // 1. Add 'await' before headers()
+    const headersList = await headers();
+
+    // 2. Now headersList.get() will work correctly
     const searchParams = new URLSearchParams(headersList.get('x-url')?.split('?')[1] || '');
 
     const { data: { user } } = await supabase.auth.getUser();
