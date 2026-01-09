@@ -182,6 +182,9 @@ export default function DashboardClient({
     const [messages, setMessages] = useState<Message[]>([]);
     const [isClient, setIsClient] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [opportunities, setOpportunities] = useState([]);
+    const [aiSummary, setAiSummary] = useState<string | null>(null);
 
     useEffect(() => {
         // Only show onboarding if explicitly requested via URL parameter (set during signup)
