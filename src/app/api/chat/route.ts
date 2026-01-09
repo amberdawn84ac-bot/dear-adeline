@@ -108,6 +108,12 @@ export async function POST(req: Request) {
             finalResponseText = await continueChat(chat, toolParts);
         }
 
+        // 🛡️ SAFETY NET: Strip theatrical asides if Adeline ignored the prompt
+        finalResponseText = finalResponseText.replace(/\*[^*]+\*/g, ''); // Remove *actions*
+        finalResponseText = finalResponseText.replace(/^(Ah|Oh|Well|Now|Why),\s+/gm, ''); // Remove flowery starts
+        finalResponseText = finalResponseText.replace(/(shall we|isn't it|don't you think|you say)\?/gi, ''); // Remove theatrical questions
+        finalResponseText = finalResponseText.replace(/(music to my ears|that's a powerhouse|let's dive into)/gi, ''); // Remove clichés
+
         console.log('💾 Persisting conversation...');
 
         // Persist conversation with same ID to maintain sidebar continuity
