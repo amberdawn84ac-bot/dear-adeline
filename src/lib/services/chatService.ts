@@ -19,7 +19,8 @@ export const startChat = async (
         history // Use the provided history
     });
 
-    const messageParts = [
+    // Explicitly type messageParts to allow both text and inlineData
+    const messageParts: Array<{ text: string } | { inlineData: { data: string; mimeType: string } }> = [
         { text: prompt }
     ];
 

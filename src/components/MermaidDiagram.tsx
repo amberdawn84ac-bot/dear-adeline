@@ -18,10 +18,13 @@ const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ chart }) => {
     });
 
     if (containerRef.current) {
-        mermaid.render('mermaid-graph', chart, (svgCode) => {
+        // Use the modern async/await API instead of callback
+        mermaid.render('mermaid-graph', chart).then(({ svg }) => {
             if(containerRef.current) {
-                containerRef.current.innerHTML = svgCode;
+                containerRef.current.innerHTML = svg;
             }
+        }).catch((error) => {
+            console.error('Mermaid render error:', error);
         });
     }
   }, [chart]);

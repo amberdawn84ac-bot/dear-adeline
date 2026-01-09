@@ -256,7 +256,7 @@ export default function OpportunitiesPage() {
                 )}
 
                 {/* Empty State */}
-                {!loading && opportunities.length === 0 && !aiSummary && (
+                {!loading && opportunities.length === 0 && (
                     <div className="card p-20 text-center">
                         <div className="w-16 h-16 bg-[var(--cream)] rounded-full flex items-center justify-center text-[var(--charcoal-light)] mx-auto mb-4">
                             <Search className="w-8 h-8" />
