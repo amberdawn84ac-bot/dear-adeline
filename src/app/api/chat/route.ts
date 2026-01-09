@@ -15,12 +15,18 @@ const supabase = createClient(
 let genAI = apiKey ? new GoogleGenerativeAI(apiKey) : undefined;
 
 export async function POST(req: Request) {
+    console.log('🔵 /api/chat - Request received');
+    
     try {
         if (!genAI) {
+            console.error('❌ GOOGLE_API_KEY is missing!');
             return NextResponse.json({ error: 'API Key Missing' }, { status: 500 });
         }
 
+        console.log('✅ genAI initialized');
+
         const { messages, userId, studentInfo, conversationId, imageData } = await req.json();
+        console.log('📦 Parsed request body:', { userId, conversationId, messageCount: messages?.length });
 
         // Gemini requires 'model' role, not 'assistant'
         const formattedHistory = (messages || []).map((m: any) => ({
@@ -31,6 +37,8 @@ export async function POST(req: Request) {
         const lastMessage = messages[messages.length - 1];
         const userPrompt = lastMessage.content;
         const history = formattedHistory.slice(0, -1);
+
+        console.log('💬 User prompt:', userPrompt);
 
         // Retrieve context
         const similarMemories = await retrieveSimilarMemories(userPrompt, userId, supabase);
@@ -77,6 +85,8 @@ export async function POST(req: Request) {
             ]
         }];
 
+        console.log('🚀 Starting chat with Gemini...');
+
         // ✅ FIX: Call startChat with CORRECT parameter order!
         const { functionCalls, chat, finalResponseText: initialResponse } = await startChat(
             systemInstruction,  // 1st param: system instructions
@@ -87,13 +97,18 @@ export async function POST(req: Request) {
             imageData           // 6th param: optional image
         );
 
+        console.log('✅ Got response from Gemini');
+
         let finalResponseText = initialResponse || '';
 
         // Handle tool calls
         if (functionCalls && functionCalls.length > 0) {
+            console.log('🔧 Processing tool calls:', functionCalls.length);
             const toolParts = await handleToolCalls(functionCalls, userId, supabase);
             finalResponseText = await continueChat(chat, toolParts);
         }
+
+        console.log('💾 Persisting conversation...');
 
         // Persist conversation with same ID to maintain sidebar continuity
         const { activeConversationId, newTitle } = await persistConversation(
@@ -105,6 +120,8 @@ export async function POST(req: Request) {
             supabase
         );
 
+        console.log('✅ Chat complete!');
+
         return NextResponse.json({ 
             content: finalResponseText, 
             conversationId: activeConversationId,
@@ -112,7 +129,10 @@ export async function POST(req: Request) {
         });
 
     } catch (error: any) {
-        console.error('Chat API Error:', error);
+        console.error('❌❌❌ Chat API Error:', error);
+        console.error('Error stack:', error.stack);
+        console.error('Error message:', error.message);
+        
         return NextResponse.json({ 
             error: 'Chat processing failed',
             details: process.env.NODE_ENV === 'development' ? error.message : undefined

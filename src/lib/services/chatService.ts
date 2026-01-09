@@ -10,7 +10,7 @@ export const startChat = async (
 ) => {
 
     const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash-latest", // Use the vision-capable model
+        model: "gemini-2.5-flash", // ✅ FIXED: Using the actual model from your API!
         systemInstruction,
         tools
     });

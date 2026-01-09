@@ -11,12 +11,23 @@ interface MessageContentProps {
     content: string;
 }
 
-function MessageContentComponent({ content }: MessageContentProps) {
-    // ⚡ Bolt: Memoize the expensive parsing logic.
-    // This prevents the component from re-parsing the content string on every
-    // render, which is a significant performance improvement when the parent
-    // component re-renders but the `content` prop remains the same.
+// Helper function to safely parse JSON with control characters
+function safeJSONParse(jsonString: string) {
+    try {
+        // Remove control characters that break JSON parsing
+        const cleaned = jsonString
+            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+            .trim();
+        
+        return JSON.parse(cleaned);
+    } catch (error) {
+        console.error('JSON parse error:', error);
+        console.error('Attempted to parse:', jsonString.substring(0, 200) + '...');
+        return null;
+    }
+}
 
+function MessageContentComponent({ content }: MessageContentProps) {
     // Check if this is a Storybook message
     const isStorybook = content.startsWith('# 📖') || content.startsWith('[STORYBOOK]') || content.startsWith('# 📖 ') || content.startsWith('[STORYBOOK] ');
 
@@ -52,8 +63,9 @@ function MessageContentComponent({ content }: MessageContentProps) {
         // Parse <GAME> tags for inline games
         const gameMatch = content.match(/<GAME>([\s\S]*?)<\/GAME>/);
         if (gameMatch) {
-            try {
-                const gameData = JSON.parse(gameMatch[1]);
+            const gameData = safeJSONParse(gameMatch[1]);
+            
+            if (gameData) {
                 const beforeGame = content.substring(0, gameMatch.index);
                 const afterGame = content.substring((gameMatch.index || 0) + gameMatch[0].length);
 
@@ -72,16 +84,15 @@ function MessageContentComponent({ content }: MessageContentProps) {
                         {afterGame && <div className="mt-4" dangerouslySetInnerHTML={{ __html: afterGame }} />}
                     </>
                 );
-            } catch (e) {
-                console.error('Failed to parse GAME tag:', e);
             }
         }
 
         // Parse <GAMELAB> tags for complex games
         const gameLabMatch = content.match(/<GAMELAB>([\s\S]*?)<\/GAMELAB>/);
         if (gameLabMatch) {
-            try {
-                const gameLabData = JSON.parse(gameLabMatch[1]);
+            const gameLabData = safeJSONParse(gameLabMatch[1]);
+            
+            if (gameLabData) {
                 const beforeGame = content.substring(0, gameLabMatch.index);
                 const afterGame = content.substring((gameLabMatch.index || 0) + gameLabMatch[0].length);
 
@@ -133,16 +144,15 @@ function MessageContentComponent({ content }: MessageContentProps) {
                         {afterGame && <div className="mt-4" dangerouslySetInnerHTML={{ __html: afterGame }} />}
                     </>
                 );
-            } catch (e) {
-                console.error('Failed to parse GAMELAB tag:', e);
             }
         }
 
         // Parse <MISSION> tags for academic missions
         const missionMatch = content.match(/<MISSION>([\s\S]*?)<\/MISSION>/);
         if (missionMatch) {
-            try {
-                const missionData = JSON.parse(missionMatch[1]);
+            const missionData = safeJSONParse(missionMatch[1]);
+            
+            if (missionData) {
                 const beforeMission = content.substring(0, missionMatch.index);
                 const afterMission = content.substring((missionMatch.index || 0) + missionMatch[0].length);
 
@@ -200,8 +210,6 @@ function MessageContentComponent({ content }: MessageContentProps) {
                         {afterMission && <div className="mt-4" dangerouslySetInnerHTML={{ __html: afterMission }} />}
                     </>
                 );
-            } catch (e) {
-                console.error('Failed to parse MISSION tag:', e);
             }
         }
 
@@ -214,4 +222,3 @@ function MessageContentComponent({ content }: MessageContentProps) {
 
 const MessageContent = React.memo(MessageContentComponent);
 export default MessageContent;
-
