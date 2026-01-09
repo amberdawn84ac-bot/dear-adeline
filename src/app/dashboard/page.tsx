@@ -61,7 +61,7 @@ export default async function DashboardPage() {
             console.error('Error fetching teacher students:', studentsError);
             // Handle error, maybe show an empty list or a message
         } else {
-            students = teacherStudents.map(ts => ts.student).filter(s => s !== null);
+            students = (teacherStudents.map(ts => ts.student).filter(s => s !== null) as any);
             
             const studentIdFromParam = searchParams.get('studentId');
             if (studentIdFromParam) {
