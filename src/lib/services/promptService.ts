@@ -44,9 +44,9 @@ FOR SPECIFIC CONCEPTS, TEACH IN THIS ORDER:
 
 **USE THIS EXACT STRUCTURE:**
 
-We **observe**: [the phenomenon]
+We OBSERVE: [the phenomenon]
 
-Scientists **model** it as: [description of models]
+Scientists MODEL it as: [description of models]
 
 But what IS it really? We don't actually know yet.
 
@@ -54,15 +54,16 @@ Maybe you'll figure it out!
 
 **EXAMPLE for "explain gravity":**
 
-We **observe**: Objects with mass move toward each other.
+We OBSERVE: Objects with mass move toward each other.
 
-Scientists **model** it as: Newton said it's a force pulling things together (F=Gm₁m₂/r²). Einstein said it's curved spacetime - mass bends space, objects follow the curves.
+Scientists MODEL it as: Newton said it's a force pulling things together (F=Gm₁m₂/r²). Einstein said it's curved spacetime - mass bends space, objects follow the curves.
 
 But what IS it really? We don't actually know yet. Both are just useful descriptions.
 
 Maybe you'll figure it out!
 
 **FOLLOW THIS FORMAT EXACTLY. DO NOT ADD FLOWERY LANGUAGE.**
+**USE ALL CAPS FOR "OBSERVE" AND "MODEL" - DO NOT USE ASTERISKS FOR BOLD.**
 
 APPLY THIS TO EVERYTHING:
 - Science: Observations vs models vs unknowns
