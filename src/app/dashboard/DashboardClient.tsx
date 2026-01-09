@@ -262,9 +262,11 @@ export default function DashboardClient({
         }
     };
 
-    const handleSendMessage = async (textOverride?: string, imageData?: string) => {
+const handleSendMessage = async (textOverride?: string, imageData?: string) => {
         const messageText = textOverride || input.trim();
         if ((!messageText && !imageData) || isTyping) return;
+
+        setLoading(true);
 
         const userMessage: Message = {
             role: 'user',
@@ -272,23 +274,79 @@ export default function DashboardClient({
             timestamp: new Date(),
         };
 
-        // Optimistically update UI with the user's message
         const updatedMessages = [...messages, userMessage];
         setMessages(updatedMessages);
         setInput('');
         setIsTyping(true);
 
         try {
-
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
-                    messages: [...messages, userMessage].map(m => ({
+                    messages: updatedMessages.map(m => ({
                         role: m.role,
                         content: m.content,
                     })),
+                    studentInfo: {
+                        name: (selectedStudent || profile)?.display_name,
+                        gradeLevel: (selectedStudent || profile)?.grade_level,
+                        skills: studentSkills.map(s => s.skill.name),
+                        graduationProgress: graduationProgress.map(p => ({
+                            track: p.requirement.name,
+                            earned: p.credits_earned,
+                            required: p.requirement.required_credits
+                        })),
+                    },
+                    userId: currentViewingUserId,
+                    conversationId: currentChatId,
+                    imageData: imageData,
+                }),
+            });
+
+            if (!response.ok) throw new Error(`Error: ${response.status}`);
+
+            const data = await response.json();
+
+            // Store AI data in state
+            if (data.summary) setAiSummary(data.summary);
+            if (data.opportunities) setOpportunities(data.opportunities);
+
+            if (data.conversationId && data.conversationId !== currentChatId) {
+                setCurrentChatId(data.conversationId);
+                router.replace(`/dashboard?chatId=${data.conversationId}`);
+                router.refresh();
+            }
+
+            const assistantMessage: Message = {
+                role: 'assistant',
+                content: data.content,
+                skills: data.skills,
+                type: data.type,
+                animationData: data.animationData,
+                code: data.code,
+                worksheetData: data.worksheetData,
+                timestamp: new Date(),
+            };
+
+            setMessages((prev) => [...prev, assistantMessage]);
+
+        } catch (error) {
+            console.error('Chat error:', error);
+            setMessages((prev) => [
+                ...prev,
+                {
+                    role: 'assistant',
+                    content: "I'm having trouble connecting right now.",
+                    timestamp: new Date(),
+                },
+            ]);
+        } finally {
+            setIsTyping(false);
+            setLoading(false);
+        }
+    };
                     studentInfo: {
                         name: (selectedStudent || profile)?.display_name,
                         gradeLevel: (selectedStudent || profile)?.grade_level,
