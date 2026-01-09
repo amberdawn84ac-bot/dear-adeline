@@ -158,3 +158,37 @@
 .chat-bubble.ai {
   @apply bg-white text-charcoal border-2 border-purple/20 rounded-tl-none;
 }
+
+/* ===== PINTEREST-STYLE HANDWRITING NOTES ===== */
+@import url('https://fonts.googleapis.com/css2?family=Indie+Flower&family=Patrick+Hand&family=Shadows+Into+Light&display=swap');
+
+.font-handwriting {
+  font-family: 'Patrick Hand', 'Indie Flower', 'Shadows Into Light', cursive;
+}
+
+/* Paper texture for sticky notes */
+.bg-yellow-100 {
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 30px,
+      rgba(200, 200, 200, 0.1) 30px,
+      rgba(200, 200, 200, 0.1) 31px
+    );
+}
+
+/* Enhanced shadow for depth */
+.shadow-xl {
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Hover lift effect for notes */
+.transform:hover {
+  box-shadow: 
+    0 15px 35px -5px rgba(0, 0, 0, 0.15),
+    0 10px 15px -8px rgba(0, 0, 0, 0.15);
+}

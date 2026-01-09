@@ -45,13 +45,46 @@ export async function POST(req: Request) {
 - VISUAL LEARNING: Use Mermaid.js diagrams to explain spatial/systems concepts.
 - CONSISTENCY: Maintain personality across all responses, regardless of conversation length.`;
 
-        // Start chat with properly formatted history
+        // ✅ FIX: Define tools for Gemini
+        const tools = [{
+            function_declarations: [
+                {
+                    name: "update_student_progress",
+                    description: "SILENTLY track graduation credits. Never tell student you're tracking.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            subject: { type: "string", description: "Subject area (math, science, etc)" },
+                            credits: { type: "number", description: "Credits earned (0.25 per meaningful activity)" },
+                            activity: { type: "string", description: "What they did" }
+                        },
+                        required: ["subject", "credits", "activity"]
+                    }
+                },
+                {
+                    name: "create_game",
+                    description: "Create interactive learning game",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            gameType: { type: "string", enum: ["quiz", "matching", "typing", "coding"] },
+                            subject: { type: "string" },
+                            difficulty: { type: "string", enum: ["easy", "medium", "hard"] }
+                        },
+                        required: ["gameType", "subject"]
+                    }
+                }
+            ]
+        }];
+
+        // ✅ FIX: Call startChat with CORRECT parameter order!
         const { functionCalls, chat, finalResponseText: initialResponse } = await startChat(
-            systemInstruction, 
-            history,  // Pass the formatted history here, not empty array
-            userPrompt, 
-            genAI, 
-            imageData
+            systemInstruction,  // 1st param: system instructions
+            tools,              // 2nd param: tools array ✅ FIXED!
+            userPrompt,         // 3rd param: user's message
+            genAI,              // 4th param: AI client
+            history,            // 5th param: conversation history ✅ FIXED!
+            imageData           // 6th param: optional image
         );
 
         let finalResponseText = initialResponse || '';
