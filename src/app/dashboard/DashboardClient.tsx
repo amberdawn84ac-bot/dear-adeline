@@ -348,70 +348,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
         }
     };
 
-                        console.error('Failed to parse game JSON data', e);
-                        setGameData(null);
-                    }
-                } else {
-                    gameType = fullGameTag.trim();
-                    setGameData(null);
-                }
 
-                if (gameType) {
-                    setActiveGame(gameType);
-                }
-            }
-
-            // Parse custom game HTML
-            const customGameMatch = data.content?.match(/<CUSTOM_GAME>([\s\S]+?)<\/CUSTOM_GAME>/);
-            if (customGameMatch) {
-                const gameHtml = customGameMatch[1].trim();
-                setCustomGameHtml(gameHtml);
-            }
-
-            const assistantMessage: Message = {
-                role: 'assistant',
-                content: data.content,
-                skills: data.skills,
-                type: data.type,
-                animationData: data.animationData,
-                code: data.code,
-                worksheetData: data.worksheetData,
-                game: gameType,
-                timestamp: new Date(),
-            };
-
-            // Automatically open workspaces based on response type
-            if (data.type === 'whiteboard_anim') {
-                setWorkspaceView('whiteboard');
-                setWorkspaceData(data.animationData);
-            } else if (data.type === 'worksheet') {
-                setWorkspaceView('worksheet');
-                setWorkspaceData(data.worksheetData);
-            } else if (data.type === 'code_lesson') {
-                setWorkspaceView('code');
-                setWorkspaceData(data.code);
-            }
-
-            if (data.type === 'lesson_award' && data.skills) {
-                setShowCelebration(data.skills);
-                setTimeout(() => setShowCelebration(null), 5000);
-            }
-
-            setMessages((prev) => [...prev, assistantMessage]);
-        } catch (error) {
-            console.error('Chat error:', error);
-            setMessages((prev) => [
-                ...prev,
-                {
-                    role: 'assistant',
-                    content: "I'm having trouble connecting right now. Please try again in a moment!",
-                    timestamp: new Date(),
-                },
-            ]);
-        } finally {
-            setIsTyping(false);
-        }
-    };
 
     const handleLogout = async () => {
         const supabase = createClient();
