@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@100..900&family=Emilys+Candy&family=Dancing+Script:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@100..900&family=Emilys+Candy&family=Dancing+Script:wght@400;700&family=Indie+Flower&family=Patrick+Hand&family=Shadows+Into+Light&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -160,7 +160,7 @@
 }
 
 /* ===== PINTEREST-STYLE HANDWRITING NOTES ===== */
-@import url('https://fonts.googleapis.com/css2?family=Indie+Flower&family=Patrick+Hand&family=Shadows+Into+Light&display=swap');
+
 
 .font-handwriting {
   font-family: 'Patrick Hand', 'Indie Flower', 'Shadows Into Light', cursive;
