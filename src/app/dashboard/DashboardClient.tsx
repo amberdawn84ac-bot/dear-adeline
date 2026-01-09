@@ -347,57 +347,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
             setLoading(false);
         }
     };
-                    studentInfo: {
-                        name: (selectedStudent || profile)?.display_name,
-                        gradeLevel: (selectedStudent || profile)?.grade_level,
-                        skills: studentSkills.map(s => s.skill.name),
-                        graduationProgress: graduationProgress.map(p => ({
-                            track: p.requirement.name,
-                            earned: p.credits_earned,
-                            required: p.requirement.required_credits
-                        })),
-                    },
-                    userId: currentViewingUserId, // Use currentViewingUserId
-                    conversationId: currentChatId,
-                    imageData: imageData, // Add image data to the request
-                }),
-            });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error(`Chat API Error: ${response.status} ${response.statusText}`, errorText);
-                throw new Error(`Failed to get response: ${response.status} ${response.statusText}`);
-            }
-
-            const data = await response.json();
-
-            // Disabled robotic browser TTS - use Voice button for natural speech instead
-            // if (data.speak) {
-            //     speakText(data.speak);
-            // }
-
-            // Handle New Conversation Creation
-            if (data.conversationId && data.conversationId !== currentChatId) {
-                setCurrentChatId(data.conversationId);
-                // Update URL without full reload (shallow routing if possible, but we want to refresh sidebar data)
-                // For simplicity and to refresh server components (sidebar list), we push the new route.
-                // Replace ensures we don't have a history entry for the "optimistic" empty state.
-                router.replace(`/dashboard?chatId=${data.conversationId}`);
-                router.refresh();
-            }
-
-            // Parse game tags from response
-            let gameType: string | undefined;
-            const gameMatch = data.content?.match(/<GAME>(.+?)<\/GAME>/);
-            if (gameMatch) {
-                const fullGameTag = gameMatch[1];
-                if (fullGameTag.includes(':')) {
-                    const [type, ...jsonDataParts] = fullGameTag.split(':');
-                    gameType = type.trim();
-                    try {
-                        const parsedData = JSON.parse(jsonDataParts.join(':').trim());
-                        setGameData(parsedData);
-                    } catch (e) {
                         console.error('Failed to parse game JSON data', e);
                         setGameData(null);
                     }
