@@ -290,8 +290,8 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                         content: m.content,
                     })),
                     studentInfo: {
-                        name: (selectedStudent || profile)?.display_name,
-                        gradeLevel: (selectedStudent || profile)?.grade_level,
+                        name: selectedStudent?.display_name ?? profile?.display_name,
+                        gradeLevel: selectedStudent?.grade_level ?? profile?.grade_level,
                         skills: studentSkills.map(s => s.skill.name),
                         graduationProgress: graduationProgress.map(p => ({
                             track: p.requirement.name,
@@ -530,11 +530,11 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                         )}
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--dusty-rose)] to-[var(--terracotta)] flex items-center justify-center text-white font-semibold shadow-sm">
-{(selectedStudent || profile)?.display_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "?"}
+{(selectedStudent?.display_name ?? profile?.display_name)?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "?"}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{(selectedStudent || profile)?.display_name || 'Student'}</p>
-                                <p className="text-sm text-[var(--charcoal-light)] truncate">{(selectedStudent || profile)?.grade_level || 'Grade not set'}</p>
+                                <p className="font-medium truncate">{selectedStudent?.display_name ?? profile?.display_name ?? 'Student'}</p>
+                                <p className="text-sm text-[var(--charcoal-light)] truncate">{selectedStudent?.grade_level ?? profile?.grade_level ?? 'Grade not set'}</p>
                             </div>
                         </div>
                     </div>
