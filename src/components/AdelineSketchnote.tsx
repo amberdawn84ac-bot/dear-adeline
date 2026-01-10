@@ -6,9 +6,10 @@ import { ArrowRight, Star, Lightbulb, Pencil } from 'lucide-react';
 
 interface SketchnoteProps {
     content: string;
+    onNoteClick?: (note: string) => void;
 }
 
-const AdelineSketchnote: React.FC<SketchnoteProps> = ({ content }) => {
+const AdelineSketchnote: React.FC<SketchnoteProps> = ({ content, onNoteClick }) => {
     // Basic Parsing: Assumes first line is Title, rest are bullets
     const lines = content.split('\n').filter(line => line.trim() !== '');
     const title = lines[0] || "My Notes";
@@ -53,6 +54,7 @@ const AdelineSketchnote: React.FC<SketchnoteProps> = ({ content }) => {
                             key={index} 
                             style={{ transform: `rotate(${rotate})` }}
                             className={`relative ${isLong ? 'w-full md:w-3/4' : 'w-full md:w-[45%]'}`}
+                            onClick={() => onNoteClick && onNoteClick(cleanText)}
                         >
                             <RoughBox 
                                 type={isLong ? 'rectangle' : 'circle'} 
