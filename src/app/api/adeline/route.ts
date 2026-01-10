@@ -152,7 +152,7 @@ export async function POST(request: Request) {
 
   } catch (error) {
     if (error instanceof Error) {
-      if (error.message.includes('GOOGLE_API_KEY')) {
+      if (error.message === 'Missing GOOGLE_AI_API_KEY environment variable') {
         return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
       }
       console.error('Google AI API Error:', error.message);

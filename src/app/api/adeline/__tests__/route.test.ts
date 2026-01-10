@@ -1,6 +1,10 @@
 // src/app/api/adeline/__tests__/route.test.ts
 
-// Mock Next.js server components
+const mockSendMessage = jest.fn();
+const mockStartChat = jest.fn(() => ({
+  sendMessage: mockSendMessage,
+}));
+
 jest.mock('next/server', () => ({
   NextResponse: {
     json: jest.fn((data, init) => ({
@@ -17,30 +21,46 @@ jest.mock('next/server', () => ({
 
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
-import { getConfig } from '@/lib/server/config';
+import { getGoogleAIAPIKey } from '@/lib/server/config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-jest.mock('@google/generative-ai');
+jest.mock('@google/generative-ai', () => ({
+  GoogleGenerativeAI: jest.fn(() => ({
+    getGenerativeModel: jest.fn(() => ({
+      startChat: mockStartChat,
+    })),
+  })),
+  SchemaType: {
+    OBJECT: 'OBJECT',
+    STRING: 'STRING',
+    ARRAY: 'ARRAY',
+  },
+}));
 jest.mock('@/lib/server/config');
+jest.mock('@/lib/supabase/server');
 
 describe('Adeline API Route (Google AI)', () => {
-  const mockGetConfig = getConfig as jest.Mock;
-  const mockGenerateContent = jest.fn();
+  const mockGetGoogleAIAPIKey = getGoogleAIAPIKey as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetConfig.mockReturnValue({ googleApiKey: 'test_google_api_key' });
-    (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
-      getGenerativeModel: () => ({
-        generateContent: mockGenerateContent,
-      }),
-    }));
+    mockGetGoogleAIAPIKey.mockReturnValue('test_google_api_key');
+    const { createClient } = require('@/lib/supabase/server');
+    createClient.mockReturnValue({
+        auth: {
+            getUser: jest.fn().mockResolvedValue({
+                data: { user: { id: 'test-user-id' } },
+                error: null,
+            }),
+        },
+    });
   });
 
   it('should return a 200 response with AI message on success', async () => {
-    mockGenerateContent.mockResolvedValueOnce({
+    mockSendMessage.mockResolvedValueOnce({
       response: {
         text: () => 'Hello from Google AI!',
+        functionCall: () => null,
       },
     });
 
@@ -57,8 +77,8 @@ describe('Adeline API Route (Google AI)', () => {
 
     expect(response.status).toBe(200);
     expect(data).toEqual({ message: 'Hello from Google AI!' });
-    expect(mockGenerateContent).toHaveBeenCalledTimes(1);
-    expect(mockGenerateContent).toHaveBeenCalledWith('Tell me a story.');
+    expect(mockSendMessage).toHaveBeenCalledTimes(1);
+    expect(mockSendMessage).toHaveBeenCalledWith('Tell me a story.');
   });
 
   it('should return a 400 response if prompt is missing', async () => {
@@ -75,11 +95,11 @@ describe('Adeline API Route (Google AI)', () => {
 
     expect(response.status).toBe(400);
     expect(data).toEqual({ error: 'Prompt is required.' });
-    expect(mockGenerateContent).not.toHaveBeenCalled();
+    expect(mockSendMessage).not.toHaveBeenCalled();
   });
 
   it('should return a 500 response if Google AI API call fails', async () => {
-    mockGenerateContent.mockRejectedValueOnce(new Error('Google AI API error'));
+    mockSendMessage.mockRejectedValueOnce(new Error('Google AI API error'));
 
     const request = new (NextRequest as any)('http://localhost/api/adeline', {
       method: 'POST',
@@ -94,12 +114,12 @@ describe('Adeline API Route (Google AI)', () => {
 
     expect(response.status).toBe(500);
     expect(data).toEqual({ error: 'Failed to get response from Google AI API.' });
-    expect(mockGenerateContent).toHaveBeenCalledTimes(1);
+    expect(mockSendMessage).toHaveBeenCalledTimes(1);
   });
 
   it('should return a 500 response if API key is not configured', async () => {
-    mockGetConfig.mockImplementationOnce(() => {
-      throw new Error('GOOGLE_API_KEY is not set');
+    mockGetGoogleAIAPIKey.mockImplementationOnce(() => {
+      throw new Error('Missing GOOGLE_AI_API_KEY environment variable');
     });
 
     const request = new (NextRequest as any)('http://localhost/api/adeline', {
@@ -115,6 +135,6 @@ describe('Adeline API Route (Google AI)', () => {
 
     expect(response.status).toBe(500);
     expect(data).toEqual({ error: 'Server configuration error.' });
-    expect(mockGenerateContent).not.toHaveBeenCalled();
+    expect(mockSendMessage).not.toHaveBeenCalled();
   });
 });
