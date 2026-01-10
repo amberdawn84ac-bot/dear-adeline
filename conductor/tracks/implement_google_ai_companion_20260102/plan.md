@@ -10,7 +10,7 @@ This plan outlines the steps to implement the core AI learning companion, Adelin
     *   [x] Task: Write Tests: Verify secure loading of API key without exposing it.
     *   [x] Task: Implement Feature: Configure environment variable handling and create a utility in `src/lib/server/config.ts` to access it securely.
 *   [~] Task: Create API route for basic Google AI API interaction.
-    *   [~] Task: Write Tests: Test successful and failed calls to the Google AI API.
+    *   [x] Task: Write Tests: Test successful and failed calls to the Google AI API.
     *   [ ] Task: Implement Feature: Develop a Next.js API route (`src/app/api/adeline/route.ts`) that takes a prompt and returns a basic response from the Google AI API.
 *   [ ] Task: Integrate basic AI response into the `ConversationUI.tsx` component.
     *   [ ] Task: Write Tests: Test that the UI displays AI responses correctly.
