@@ -4,6 +4,17 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ConversationUI from '../ConversationUI';
 
+// Mock mermaid
+jest.mock('mermaid', () => ({
+  initialize: jest.fn(),
+  contentLoaded: jest.fn(),
+}));
+
+// Mock react-markdown
+jest.mock('react-markdown', () => (props: any) => {
+  return <>{props.children}</>;
+});
+
 // Mock Next.js useRouter
 jest.mock('next/navigation', () => ({
   useRouter: () => ({

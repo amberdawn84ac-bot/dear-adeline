@@ -20,6 +20,9 @@ const customJestConfig = {
   testEnvironmentOptions: {
     url: 'http://localhost/',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(mermaid|react-markdown)/)',
+  ],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts', '**/__tests__/**/*.tsx', '**/?(*.)+(spec|test).tsx'],
 };
 
