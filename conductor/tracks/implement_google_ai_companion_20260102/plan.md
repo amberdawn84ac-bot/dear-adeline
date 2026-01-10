@@ -23,7 +23,7 @@ This plan outlines the steps to implement the core AI learning companion, Adelin
 
 *   [~] Task: Define new database schema for student interests.
     *   [x] Task: Write Tests: (Not directly applicable, but verify schema creation with a migration test if possible)
-    *   [ ] Task: Implement Feature: Create a new Supabase migration (`supabase/migrations/`) to add a `student_interests` table, linking to `profiles` table.
+    *   [~] Task: Implement Feature: Create a new Supabase migration (`supabase/migrations/`) to add a `student_interests` table, linking to `profiles` table.
 *   [ ] Task: Implement API route to save student interests.
     *   [ ] Task: Write Tests: Test saving new interests and updating existing ones for a student.
     *   [ ] Task: Implement Feature: Develop a Next.js API route (`src/app/api/student-interests/save/route.ts`) to handle POST requests for saving student interests.
