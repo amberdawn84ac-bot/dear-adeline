@@ -1,10 +1,12 @@
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getConfig } from '@/lib/server/config';
+import { getGoogleAIAPIKey } from '@/lib/server/config';
 
 jest.mock('@google/generative-ai');
-jest.mock('@/lib/server/config');
+jest.mock('@/lib/server/config', () => ({
+    getGoogleAIAPIKey: jest.fn(),
+}));
 
 jest.mock('next/server', () => ({
     NextResponse: {
@@ -21,12 +23,12 @@ jest.mock('next/server', () => ({
 }));
 
 describe('Generate Lesson API Route', () => {
-    const mockGetConfig = getConfig as jest.Mock;
+    const mockGetGoogleAIAPIKey = getGoogleAIAPIKey as jest.Mock;
     const mockGenerateContent = jest.fn();
 
     beforeEach(() => {
         jest.clearAllMocks();
-        mockGetConfig.mockReturnValue({ googleApiKey: 'test_key' });
+        mockGetGoogleAIAPIKey.mockReturnValue('test_key');
         (GoogleGenerativeAI as jest.Mock).mockImplementation(() => ({
             getGenerativeModel: () => ({
                 generateContent: mockGenerateContent,
@@ -63,5 +65,33 @@ describe('Generate Lesson API Route', () => {
 
         const response = await POST(request);
         expect(response.status).toBe(400);
+    });
+
+    it('should return 500 if AI response is not valid JSON', async () => {
+        mockGenerateContent.mockResolvedValueOnce({
+            response: {
+                text: () => 'This is not JSON',
+            },
+        });
+
+        const request = new (NextRequest as any)('http://localhost/api/adeline/generate-lesson', {
+            method: 'POST',
+            body: JSON.stringify({ interests: ['Robotics'], age: 10 }),
+        });
+
+        const response = await POST(request);
+        expect(response.status).toBe(500);
+    });
+
+    it('should return 500 if the generateContent call fails', async () => {
+        mockGenerateContent.mockRejectedValueOnce(new Error('API Error'));
+
+        const request = new (NextRequest as any)('http://localhost/api/adeline/generate-lesson', {
+            method: 'POST',
+            body: JSON.stringify({ interests: ['Robotics'], age: 10 }),
+        });
+
+        const response = await POST(request);
+        expect(response.status).toBe(500);
     });
 });

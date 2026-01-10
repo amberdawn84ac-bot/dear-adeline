@@ -70,13 +70,13 @@ graph TD
 - Visualizing timelines or sequences
 
 **Mermaid syntax guide:**
-```
+\`\`\`
 graph TD  (top-down)
 graph LR  (left-right)
 A[Rectangle] --> B{Diamond}
 B -->|yes| C((Circle))
 B -->|no| D([Rounded])
-```
+\`\`\`
 
 IMPORTANT: Sketches will appear as hand-drawn diagrams the student can doodle on!
 
