@@ -47,14 +47,23 @@ describe('Student Interests API Route (Get)', () => {
             error: null,
         });
 
+        const mockInterests = [{ interest: 'coding' }, { interest: 'robots' }];
+        mockSupabase.from.mockReturnValue({
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnValue({
+                data: mockInterests,
+                error: null,
+            }),
+        } as any);
+
         const request = new (NextRequest as any)('http://localhost/api/student-interests/get');
         const response = await GET(request);
         const data = await response.json();
 
         expect(response.status).toBe(200);
-        expect(data).toEqual({ data: [{ id: '1', interest: 'coding' }, { id: '2', interest: 'robots' }] });
+        expect(data).toEqual({ data: { interests: ['coding', 'robots'] } });
         expect(mockSupabase.from).toHaveBeenCalledWith('student_interests');
-        expect(mockSupabase.from().select().eq).toHaveBeenCalledWith('user_id', 'test_user_id');
+        expect(mockSupabase.from().eq).toHaveBeenCalledWith('user_id', 'test_user_id');
     });
 
     it('should return 401 if the user is not authenticated', async () => {
@@ -76,22 +85,19 @@ describe('Student Interests API Route (Get)', () => {
             data: { user: { id: 'test_user_id' } },
             error: null,
         });
-        mockSupabase.from.mockImplementation(() => ({
-            select: jest.fn(() => ({
-                eq: jest.fn(() => ({
-                    order: jest.fn(() => ({
-                        data: null,
-                        error: { message: 'Database query failed' },
-                    })),
-                })),
-            })),
-        }));
+        mockSupabase.from.mockReturnValue({
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnValue({
+                data: null,
+                error: { message: 'Database query failed' },
+            }),
+        } as any);
 
         const request = new (NextRequest as any)('http://localhost/api/student-interests/get');
         const response = await GET(request);
 
         expect(response.status).toBe(500);
         const data = await response.json();
-        expect(data).toEqual({ error: 'Database query failed' });
+        expect(data).toEqual({ error: 'Failed to fetch interests' });
     });
 });
