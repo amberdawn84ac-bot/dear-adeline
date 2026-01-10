@@ -2,7 +2,7 @@
 
 This plan outlines the steps to implement the core AI learning companion, Adeline, using Google's Generative AI. Each task follows the Test-Driven Development (TDD) workflow as defined in `conductor/workflow.md`.
 
-## Phase 1: Google AI API Integration and Basic AI Response
+## Phase 1: Google AI API Integration and Basic AI Response [checkpoint: 3471dd8]
 
 ### Tasks
 
