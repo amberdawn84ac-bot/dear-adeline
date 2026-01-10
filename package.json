@@ -22,7 +22,8 @@
     "posthog-js": "^1.187.1",
     "react": "19.2.1",
     "react-dom": "19.2.1",
-    "react-markdown": "^10.1.0"
+    "react-markdown": "^10.1.0",
+    "roughjs": "^4.6.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

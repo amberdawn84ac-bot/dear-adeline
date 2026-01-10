@@ -55,6 +55,7 @@ import { CameraInput } from '@/components/CameraInput';
 import { GoalsWidget } from '@/components/GoalsWidget';
 import MessageContent from '@/components/MessageContent';
 import DailyManna from '@/components/DailyManna';
+import AdelineSketchnote from '@/components/AdelineSketchnote';
 
 // Moved from DashboardClient to prevent re-declaration on every render
 const dailyScriptures = [
@@ -233,6 +234,27 @@ export default function DashboardClient({
     const [showCelebration, setShowCelebration] = useState<string[] | null>(null);
     const [showVoiceSession, setShowVoiceSession] = useState(false);
     const [showCameraInput, setShowCameraInput] = useState(false);
+
+    // Smart detection: should this message be rendered as a sketchnote?
+    const shouldUseSketchnote = (content: string): boolean => {
+        // Don't use sketchnotes for very short responses
+        if (content.length < 200) return false;
+        
+        // Use sketchnotes if content has multiple paragraphs
+        const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
+        if (paragraphs.length >= 3) return true;
+        
+        // Use sketchnotes if content has lists
+        if (content.match(/^[-•*]\s/m) || content.match(/^\d+\.\s/m)) return true;
+        
+        // Use sketchnotes if content has headers
+        if (content.match(/^#+\s/m)) return true;
+        
+        // Use sketchnotes for longer educational content
+        if (content.length > 400) return true;
+        
+        return false;
+    };
 
     const todayScripture = dailyScriptures[new Date().getDate() % dailyScriptures.length];
     const currentPassage = todayScripture.text;
@@ -596,7 +618,11 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                                     </div>
                                                 )}
                                                 {m.role === 'assistant' ? (
-                                                    <MessageContent content={cleanContent} />
+                                                    shouldUseSketchnote(cleanContent) ? (
+                                                        <AdelineSketchnote content={cleanContent} />
+                                                    ) : (
+                                                        <MessageContent content={cleanContent} />
+                                                    )
                                                 ) : (
                                                     <p className="whitespace-pre-wrap text-sm leading-relaxed">{cleanContent}</p>
                                                 )}

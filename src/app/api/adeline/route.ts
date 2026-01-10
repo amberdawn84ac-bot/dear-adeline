@@ -5,6 +5,7 @@ import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { getGoogleAIAPIKey } from '@/lib/server/config';
 import { createClient } from '@/lib/supabase/server'; // Import Supabase client
 import { generateSystemPrompt } from '@/lib/services/promptService'; // Import the system prompt generator
+import { autoFormatSketchnote } from '@/lib/sketchnoteUtils';
 
 // Use the recommended "flash" model for speed and cost-effectiveness
 const GOOGLE_FLASH_MODEL = 'gemini-2.5-flash';
@@ -136,12 +137,17 @@ export async function POST(request: Request) {
       const toolSuccessResponse = await chat.sendMessage([
         { functionResponse: { name: "log_activity", response: { success: true, message: "Activity successfully logged to cloud database." } } }
       ]);
-      return NextResponse.json({ message: toolSuccessResponse.response.text() }, { status: 200 });
+      
+      let messageText = toolSuccessResponse.response.text();
+      messageText = autoFormatSketchnote(prompt, messageText);
+      
+      return NextResponse.json({ message: messageText }, { status: 200 });
 
     } else {
       // No tool call, just return the AI's text response
-      const text = response.text();
-      return NextResponse.json({ message: text }, { status: 200 });
+      let messageText = response.text();
+      messageText = autoFormatSketchnote(prompt, messageText);
+      return NextResponse.json({ message: messageText }, { status: 200 });
     }
 
   } catch (error) {

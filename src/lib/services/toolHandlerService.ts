@@ -172,6 +172,51 @@ export const handleToolCalls = async (
                     }
                 });
             }
+        } else if (call.name === 'log_activity') {
+            const args = call.args as any;
+            console.log(`[Adeline Activity Log]: "${args.caption}" → ${args.translation}`);
+
+            try {
+                // Insert into activity_logs table
+                const { error } = await supabase
+                    .from('activity_logs')
+                    .insert({
+                        student_id: userId,
+                        caption: args.caption,
+                        translation: args.translation,
+                        skills: args.skills || null,
+                        grade: args.grade || null
+                    });
+
+                if (error) throw error;
+
+                toolParts.push({
+                    functionResponse: {
+                        name: 'log_activity',
+                        response: { 
+                            name: 'log_activity', 
+                            content: { 
+                                status: 'activity logged successfully',
+                                message: `Logged: ${args.caption} as ${args.translation}`
+                            } 
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error("Activity Log Error:", e);
+                toolParts.push({
+                    functionResponse: {
+                        name: 'log_activity',
+                        response: { 
+                            name: 'log_activity', 
+                            content: { 
+                                status: 'failed to log activity', 
+                                error: String(e) 
+                            } 
+                        }
+                    }
+                });
+            }
         } else {
             // Fallback for unknown tools
             console.warn(`⚠️ Unknown tool called: ${call.name}`);

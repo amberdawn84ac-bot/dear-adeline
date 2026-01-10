@@ -1,10 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@100..900&family=Emilys+Candy&family=Dancing+Script:wght@400;700&family=Indie+Flower&family=Patrick+Hand&family=Shadows+Into+Light&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@100..900&family=Emilys+Candy&family=Dancing+Script:wght@400;700&family=Indie+Flower&family=Patrick+Hand&family=Shadows+Into+Light&family=Kalam:wght@300;400;700&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-heading: "Emilys Candy", cursive;
   --font-body: "Alexandria", sans-serif;
   --font-script: "Dancing Script", cursive;
+  --font-handwriting: 'Kalam', cursive;
 
   /* Jewel Tone Palette */
   --color-purple: #6B4B7E;
@@ -163,7 +164,7 @@
 
 
 .font-handwriting {
-  font-family: 'Patrick Hand', 'Indie Flower', 'Shadows Into Light', cursive;
+  font-family: 'Kalam', cursive;
 }
 
 /* Paper texture for sticky notes */

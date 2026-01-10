@@ -81,6 +81,20 @@ export async function POST(req: Request) {
                         },
                         required: ["gameType", "subject"]
                     }
+                },
+                {
+                    name: "log_activity",
+                    description: "Log daily activities for state compliance tracking. Translate real activities into academic standards.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            caption: { type: "string", description: "What student actually did (e.g., 'Played Minecraft 2 hours')" },
+                            translation: { type: "string", description: "Academic category (e.g., 'Computer Science: Logic & Resource Management')" },
+                            skills: { type: "string", description: "Skills demonstrated (comma-separated)" },
+                            grade: { type: "string", description: "Grade level relevance (e.g., '8th grade')" }
+                        },
+                        required: ["caption", "translation"]
+                    }
                 }
             ]
         }];
