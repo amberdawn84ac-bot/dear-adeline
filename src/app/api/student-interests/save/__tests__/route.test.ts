@@ -36,11 +36,8 @@ describe('Student Interests API Route (Save)', () => {
                     single: jest.fn(),
                 })),
             })),
-            upsert: jest.fn(() => ({
-                select: jest.fn(() => ({
-                    single: jest.fn(),
-                    maybeSingle: jest.fn(),
-                })),
+            delete: jest.fn(() => ({
+                eq: jest.fn(),
             })),
         })),
     };
@@ -56,18 +53,16 @@ describe('Student Interests API Route (Save)', () => {
             error: null,
         });
 
-        // Mock finding existing record (none)
+        const deleteMock = jest.fn().mockReturnValue({ error: null });
+        const insertMock = jest.fn().mockReturnValue({ error: null });
+
         mockSupabase.from.mockImplementation((table) => {
             if (table === 'student_interests') {
                 return {
-                    upsert: jest.fn().mockReturnValue({
-                        select: jest.fn().mockReturnValue({
-                            single: jest.fn().mockResolvedValue({
-                                data: { id: 'new_record_id' },
-                                error: null
-                            })
-                        })
-                    })
+                    delete: jest.fn().mockReturnValue({
+                        eq: deleteMock,
+                    }),
+                    insert: insertMock,
                 }
             }
             return {};
@@ -86,6 +81,11 @@ describe('Student Interests API Route (Save)', () => {
 
         expect(response.status).toBe(200);
         expect(data).toHaveProperty('success', true);
+        expect(deleteMock).toHaveBeenCalledWith('user_id', 'test_user_id');
+        expect(insertMock).toHaveBeenCalledWith([
+            { user_id: 'test_user_id', interest: 'coding' },
+            { user_id: 'test_user_id', interest: 'art' },
+        ]);
     });
 
     it('should return 401 if not authenticated', async () => {
@@ -101,5 +101,63 @@ describe('Student Interests API Route (Save)', () => {
 
         const response = await POST(request);
         expect(response.status).toBe(401);
+    });
+
+    it('should return 500 if delete fails', async () => {
+        mockSupabase.auth.getUser.mockResolvedValue({
+            data: { user: { id: 'test_user_id' } },
+            error: null,
+        });
+
+        const deleteMock = jest.fn().mockReturnValue({ error: { message: 'Delete failed' } });
+
+        mockSupabase.from.mockImplementation((table) => {
+            if (table === 'student_interests') {
+                return {
+                    delete: jest.fn().mockReturnValue({
+                        eq: deleteMock,
+                    }),
+                }
+            }
+            return {};
+        });
+
+        const request = new (NextRequest as any)('http://localhost/api/student-interests/save', {
+            method: 'POST',
+            body: JSON.stringify({ interests: ['coding'] }),
+        });
+
+        const response = await POST(request);
+        expect(response.status).toBe(500);
+    });
+
+    it('should return 500 if insert fails', async () => {
+        mockSupabase.auth.getUser.mockResolvedValue({
+            data: { user: { id: 'test_user_id' } },
+            error: null,
+        });
+
+        const deleteMock = jest.fn().mockReturnValue({ error: null });
+        const insertMock = jest.fn().mockReturnValue({ error: { message: 'Insert failed' } });
+
+        mockSupabase.from.mockImplementation((table) => {
+            if (table === 'student_interests') {
+                return {
+                    delete: jest.fn().mockReturnValue({
+                        eq: deleteMock,
+                    }),
+                    insert: insertMock,
+                }
+            }
+            return {};
+        });
+
+        const request = new (NextRequest as any)('http://localhost/api/student-interests/save', {
+            method: 'POST',
+            body: JSON.stringify({ interests: ['coding'] }),
+        });
+
+        const response = await POST(request);
+        expect(response.status).toBe(500);
     });
 });
