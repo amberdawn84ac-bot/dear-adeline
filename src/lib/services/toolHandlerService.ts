@@ -85,13 +85,99 @@ export const handleToolCalls = async (
             const args = call.args as any;
             console.log(`[Adeline Tracking]: Logging ${args.credits} credits for ${args.subject}...`);
 
-            // Silently log the progress (we'll implement database logic later)
-            toolParts.push({
-                functionResponse: {
-                    name: 'update_student_progress',
-                    response: { name: 'update_student_progress', content: { status: 'progress tracked silently' } }
+            try {
+                // Map subject to graduation requirement category
+                const subjectToCategoryMap: Record<string, string> = {
+                    'math': 'Math',
+                    'mathematics': 'Math',
+                    'science': "God's Creation & Science",
+                    'biology': "God's Creation & Science",
+                    'chemistry': "God's Creation & Science",
+                    'physics': "God's Creation & Science",
+                    'health': 'Health/Naturopathy',
+                    'naturopathy': 'Health/Naturopathy',
+                    'food': 'Food Systems',
+                    'agriculture': 'Food Systems',
+                    'farming': 'Food Systems',
+                    'government': 'Government/Economics',
+                    'economics': 'Government/Economics',
+                    'civics': 'Government/Economics',
+                    'justice': 'Justice',
+                    'law': 'Justice',
+                    'discipleship': 'Discipleship',
+                    'theology': 'Discipleship',
+                    'bible': 'Discipleship',
+                    'history': 'History',
+                    'english': 'English/Lit',
+                    'literature': 'English/Lit',
+                    'writing': 'English/Lit',
+                    'reading': 'English/Lit'
+                };
+
+                const category = subjectToCategoryMap[args.subject.toLowerCase()] || args.subject;
+
+                // Get the graduation requirement for this category
+                const { data: requirement, error: reqError } = await supabase
+                    .from('graduation_requirements')
+                    .select('id')
+                    .eq('category', category)
+                    .single();
+
+                if (reqError) {
+                    console.warn(`No graduation requirement found for category: ${category}`);
+                    throw reqError;
                 }
-            });
+
+                if (requirement) {
+                    // Update graduation progress using RPC
+                    const { error: progressError } = await supabase.rpc('update_student_progress', {
+                        p_student_id: userId,
+                        p_requirement_id: requirement.id,
+                        p_credits_to_add: args.credits
+                    });
+
+                    if (progressError) throw progressError;
+
+                    // Also log the activity for transparency
+                    await supabase.from('activity_logs').insert({
+                        student_id: userId,
+                        caption: args.activity,
+                        translation: `${category}: ${args.activity}`,
+                        skills: null,
+                        grade: null
+                    });
+
+                    console.log(`✅ Tracked ${args.credits} credits for ${category}`);
+                }
+
+                toolParts.push({
+                    functionResponse: {
+                        name: 'update_student_progress',
+                        response: { 
+                            name: 'update_student_progress', 
+                            content: { 
+                                status: 'progress tracked successfully',
+                                credits: args.credits,
+                                category: category
+                            } 
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error('Progress Tracking Error:', e);
+                toolParts.push({
+                    functionResponse: {
+                        name: 'update_student_progress',
+                        response: { 
+                            name: 'update_student_progress', 
+                            content: { 
+                                status: 'failed to track progress', 
+                                error: String(e) 
+                            } 
+                        }
+                    }
+                });
+            }
         } else if (call.name === 'create_game') {
             const args = call.args as any;
             console.log(`[Adeline Games]: Creating ${args.gameType} game for ${args.subject}...`);
