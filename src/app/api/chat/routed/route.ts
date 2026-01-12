@@ -108,9 +108,14 @@ VOICE: Talk like you're explaining something to a curious teenager over coffee. 
         // ============================================
         // STEP 4: CALL MODEL (Currently only Gemini)
         // ============================================
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.0-flash-exp",
-            systemInstruction 
+        // Map router model to actual model identifier
+        const selectedModel = route.model === 'gemini' ? 'gemini-2.5-flash' :
+                             route.model === 'grok' ? 'grok-beta' :
+                             'gpt-4'; // Future: Implement Grok and GPT-4 APIs
+
+        const model = genAI.getGenerativeModel({
+            model: selectedModel,
+            systemInstruction
         });
 
         const chat = model.startChat({

@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@100..900&family=Emilys+Candy&family=Dancing+Script:wght@400;700&family=Indie+Flower&family=Patrick+Hand&family=Shadows+Into+Light&family=Kalam:wght@300;400;700&display=swap');
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @theme {
   --font-heading: "Emilys Candy", cursive;

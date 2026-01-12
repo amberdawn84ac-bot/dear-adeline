@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateSystemPrompt } from '@/lib/services/promptService';
@@ -8,6 +8,8 @@ import { persistConversation } from '@/lib/services/persistenceService';
 import { startChat, continueChat } from '@/lib/services/chatService';
 import { autoFormatSketchnote } from '@/lib/sketchnoteUtils';
 import { LibraryService } from '@/lib/services/libraryService';
+import { ModelRouter } from '@/lib/services/modelRouter';
+import { AdaptiveDifficultyService } from '@/lib/services/adaptiveDifficultyService';
 
 const apiKey = process.env.GOOGLE_API_KEY;
 const supabase = createClient(
@@ -42,6 +44,10 @@ export async function POST(req: Request) {
 
         console.log('💬 User prompt:', userPrompt);
 
+        // Detect which AI model to use based on conversation content
+        const route = ModelRouter.detectMode(userPrompt);
+        console.log(`🎯 Model Router: ${route.model} (${route.reason})`);
+
         // Retrieve context from multiple sources
         const similarMemories = await retrieveSimilarMemories(userPrompt, userId, supabase);
         const libraryContext = await LibraryService.search(userPrompt, supabase);
@@ -53,7 +59,20 @@ export async function POST(req: Request) {
             console.log(`📚 Found ${libraryContext.length} relevant library excerpts`);
             systemInstruction += '\n\n' + LibraryService.formatForPrompt(libraryContext);
         }
-        
+
+        // Get adaptive difficulty level and inject instructions
+        const subject = 'general'; // TODO: Infer subject from conversation context
+        const gradeLevel = studentInfo?.gradeLevel || '8th grade'; // Default to 8th grade
+        const currentDifficulty = await AdaptiveDifficultyService.getStartingDifficulty(
+            userId,
+            subject,
+            gradeLevel,
+            supabase
+        );
+        console.log(`📊 Current difficulty level: ${currentDifficulty}`);
+        const difficultyLevel = AdaptiveDifficultyService.getDifficultyLevel(currentDifficulty);
+        systemInstruction += '\n' + AdaptiveDifficultyService.getDifficultyInstructions(difficultyLevel);
+
         // Voice and style
         systemInstruction += `\n\nHOW TO RESPOND:
 - Talk like a real person, not a textbook. Be conversational and direct.
@@ -113,6 +132,18 @@ export async function POST(req: Request) {
 
         console.log('🚀 Starting chat with Gemini...');
 
+        // Track response time for adaptive difficulty
+        const startTime = Date.now();
+
+        // Map router model to actual model identifier
+        let selectedModel = 'gemini-2.5-flash'; // default
+        if (route.model === 'gemini') {
+            selectedModel = 'gemini-2.5-flash';
+        } else {
+            console.warn(`⚠️ ${route.model} not yet implemented, falling back to Gemini`);
+            // Future: Add Grok and GPT-4 API implementations here
+        }
+
         // ✅ FIX: Call startChat with CORRECT parameter order!
         const { functionCalls, chat, finalResponseText: initialResponse } = await startChat(
             systemInstruction,  // 1st param: system instructions
@@ -120,7 +151,8 @@ export async function POST(req: Request) {
             userPrompt,         // 3rd param: user's message
             genAI,              // 4th param: AI client
             history,            // 5th param: conversation history ✅ FIXED!
-            imageData           // 6th param: optional image
+            imageData,          // 6th param: optional image
+            selectedModel       // 7th param: model name (NEW!)
         );
 
         console.log('✅ Got response from Gemini');
@@ -136,6 +168,60 @@ export async function POST(req: Request) {
 
         // Apply sketchnote formatting if appropriate
         finalResponseText = autoFormatSketchnote(userPrompt, finalResponseText);
+
+        // Calculate performance metrics for adaptive difficulty
+        const responseTime = Date.now() - startTime;
+
+        // Calculate accuracy from tool calls (if student made progress)
+        const toolCallsArray = functionCalls || [];
+        const successfulTools = toolCallsArray.filter((call: any) =>
+            call.name === 'update_student_progress' || call.name === 'log_activity'
+        ).length;
+        const accuracy = toolCallsArray.length > 0 ? successfulTools / toolCallsArray.length : 0.5;
+
+        // Calculate engagement score from user message
+        const messageLength = userPrompt.length;
+        const questionAsked = userPrompt.includes('?');
+        const messageFrequency = messages.length > 1 ? (messages.length / ((Date.now() - startTime) / 3600000)) : 1;
+        const engagementScore = AdaptiveDifficultyService.calculateEngagement(
+            messageLength,
+            messageFrequency,
+            questionAsked
+        );
+
+        // Track consecutive performance (simplified - ideally from session state)
+        const consecutiveCorrect = accuracy >= 0.7 ? 1 : 0;
+        const consecutiveIncorrect = accuracy < 0.7 ? 1 : 0;
+
+        const metrics = {
+            responseTime,
+            accuracy,
+            consecutiveCorrect,
+            consecutiveIncorrect,
+            engagementScore
+        };
+
+        // Analyze and track difficulty
+        try {
+            const recommendation = AdaptiveDifficultyService.analyzePerformance(
+                metrics,
+                currentDifficulty
+            );
+
+            console.log(`📊 Adaptive Difficulty: ${recommendation.action} (${currentDifficulty} → ${recommendation.newDifficulty})`);
+
+            // Track performance in database
+            await AdaptiveDifficultyService.trackDifficulty(
+                userId,
+                subject,
+                recommendation.newDifficulty.level,
+                metrics,
+                supabase
+            );
+        } catch (difficultyError) {
+            console.warn('⚠️ Adaptive difficulty tracking failed:', difficultyError);
+            // Don't fail the request if difficulty tracking fails
+        }
 
         console.log('💾 Persisting conversation...');
 

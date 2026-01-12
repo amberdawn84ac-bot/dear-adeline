@@ -8,7 +8,15 @@
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
-    "mcp": "tsx mcp-server.ts"
+    "mcp": "tsx mcp-server.ts",
+    "supabase": ".\\bin\\supabase.exe",
+    "db:start": ".\\bin\\supabase.exe start",
+    "db:stop": ".\\bin\\supabase.exe stop",
+    "db:status": ".\\bin\\supabase.exe status",
+    "db:reset": ".\\bin\\supabase.exe db reset",
+    "db:push": ".\\bin\\supabase.exe db push",
+    "db:pull": ".\\bin\\supabase.exe db pull",
+    "db:migrate": ".\\bin\\supabase.exe migration new"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
@@ -17,6 +25,7 @@
     "@modelcontextprotocol/sdk": "^1.25.2",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.88.0",
+    "@tailwindcss/typography": "^0.5.19",
     "ai": "^6.0.7",
     "lucide-react": "^0.561.0",
     "mermaid": "^11.12.2",
@@ -26,7 +35,8 @@
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "react-markdown": "^10.1.0",
-    "roughjs": "^4.6.6"
+    "roughjs": "^4.6.6",
+    "supabase": "^2.72.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -36,6 +46,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
     "jest": "^30.2.0",

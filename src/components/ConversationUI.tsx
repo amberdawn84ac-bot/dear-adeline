@@ -4,7 +4,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ConversationBubble, ConversationOption, ConversationFlow } from './ConversationElements';
 import { useRouter } from 'next/navigation';
 import LessonCard, { LessonData } from './LessonCard';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Mic, MessageSquare } from 'lucide-react';
+import DifficultyIndicator from './DifficultyIndicator';
+import VoiceChat from './VoiceChat';
 
 interface Message {
     id: number;
@@ -21,6 +23,10 @@ const ConversationUI: React.FC = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [interests, setInterests] = useState<string[]>([]);
     const [interestInput, setInterestInput] = useState<string>('');
+    const [difficultyLevel, setDifficultyLevel] = useState<number>(5); // Default intermediate
+    const [performanceTrend, setPerformanceTrend] = useState<'improving' | 'declining' | 'stable'>('stable');
+    const [engagementScore, setEngagementScore] = useState<number>(0.5);
+    const [voiceMode, setVoiceMode] = useState<boolean>(false);
 
     useEffect(() => {
         // Fetch initial interests
@@ -194,6 +200,16 @@ const ConversationUI: React.FC = () => {
                 <div ref={messagesEndRef} />
             </div>
 
+            {/* Difficulty Indicator */}
+            <div className="p-4 bg-white/50 border-t border-gray-200">
+                <DifficultyIndicator
+                    level={difficultyLevel}
+                    trend={performanceTrend}
+                    engagementScore={engagementScore}
+                    inFlowState={difficultyLevel >= 6 && difficultyLevel <= 8 && engagementScore > 0.7}
+                />
+            </div>
+
             {/* Student Interests Section */}
             <div className="p-4 bg-white/50 border-t border-gray-200 space-y-3">
                 <div className="flex justify-between items-center">
@@ -231,25 +247,63 @@ const ConversationUI: React.FC = () => {
                 </form>
             </div>
 
-            <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-200">
-                <div className="flex space-x-2">
-                    <input
-                        type="text"
-                        className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-light"
-                        placeholder="Type your message..."
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        disabled={loading}
-                    />
+            <div className="p-4 bg-white border-t border-gray-200">
+                {/* Voice Mode Toggle */}
+                <div className="flex justify-end mb-2">
                     <button
-                        type="submit"
-                        className="px-4 py-2 bg-purple text-white rounded-lg hover:bg-purple-dark focus:outline-none focus:ring-2 focus:ring-purple-light"
-                        disabled={loading}
+                        onClick={() => setVoiceMode(!voiceMode)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all ${
+                            voiceMode
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
                     >
-                        Send
+                        {voiceMode ? <Mic size={16} /> : <MessageSquare size={16} />}
+                        <span className="text-sm font-medium">
+                            {voiceMode ? 'Voice Mode' : 'Text Mode'}
+                        </span>
                     </button>
                 </div>
-            </form>
+
+                {/* Conditional Render: Voice or Text Input */}
+                {voiceMode ? (
+                    <VoiceChat
+                        userId="default-user"
+                        onMessage={(message) => {
+                            setInput(message);
+                            handleSendMessage();
+                        }}
+                        onResponse={(text) => {
+                            // Auto-speak AI response
+                            if (text && window.speechSynthesis) {
+                                const utterance = new SpeechSynthesisUtterance(text);
+                                window.speechSynthesis.speak(utterance);
+                            }
+                        }}
+                        autoSpeak={true}
+                    />
+                ) : (
+                    <form onSubmit={handleSendMessage}>
+                        <div className="flex space-x-2">
+                            <input
+                                type="text"
+                                className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-light"
+                                placeholder="Type your message..."
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                disabled={loading}
+                            />
+                            <button
+                                type="submit"
+                                className="px-4 py-2 bg-purple text-white rounded-lg hover:bg-purple-dark focus:outline-none focus:ring-2 focus:ring-purple-light"
+                                disabled={loading}
+                            >
+                                Send
+                            </button>
+                        </div>
+                    </form>
+                )}
+            </div>
         </div>
     );
 };

@@ -1,0 +1,18 @@
+# Compiled JavaScript
+mcp-server.js
+
+# Build outputs
+**/dist/**
+**/build/**
+.next/**
+out/**
+
+# Dependencies
+node_modules/**
+
+# Environment and config
+next-env.d.ts
+*.config.js
+
+# Coverage
+coverage/**

@@ -6,11 +6,12 @@ export const startChat = async (
     prompt: string,
     genAI: GoogleGenerativeAI,
     history: any[],
-    imageData?: string // Add imageData parameter
+    imageData?: string, // Add imageData parameter
+    modelName?: string // Add modelName parameter for router support
 ) => {
 
     const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash", // ✅ FIXED: Using the actual model from your API!
+        model: modelName || "gemini-2.5-flash", // Use provided model or default to flash
         systemInstruction,
         tools
     });

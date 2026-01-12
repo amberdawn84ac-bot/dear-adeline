@@ -6,6 +6,7 @@ import { getGoogleAIAPIKey } from '@/lib/server/config';
 import { createClient } from '@/lib/supabase/server'; // Import Supabase client
 import { generateSystemPrompt } from '@/lib/services/promptService'; // Import the system prompt generator
 import { autoFormatSketchnote } from '@/lib/sketchnoteUtils';
+import { ModelRouter } from '@/lib/services/modelRouter';
 
 // Use the recommended "flash" model for speed and cost-effectiveness
 const GOOGLE_FLASH_MODEL = 'gemini-2.5-flash';
@@ -69,14 +70,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Prompt is required.' }, { status: 400 });
     }
 
-    // Determine which model to use based on prompt complexity
-    let selectedModel = GOOGLE_FLASH_MODEL;
-    if (prompt.includes("Deep Dive Study:") || prompt.includes("deconstruct") || prompt.includes("analyze") || prompt.includes("critical instruction")) {
-        selectedModel = GOOGLE_PRO_MODEL;
+    // Use ModelRouter to intelligently select the best model
+    const route = ModelRouter.detectMode(prompt);
+    console.log(`🎯 Adeline Model Router: ${route.model} (${route.reason})`);
+
+    const selectedModel = route.model === 'gemini' ? GOOGLE_FLASH_MODEL : route.model;
+    if (route.model !== 'gemini') {
+        console.warn(`⚠️ ${route.model} not yet implemented in Adeline endpoint, falling back to Gemini`);
     }
-    // Also consider using the PRO model if tools are actively being considered by the AI
-    // For simplicity, we'll let the AI decide with function calling, but a more explicit
-    // check for tool-related prompts could be added here if needed.
 
     const model = genAI.getGenerativeModel({ model: selectedModel, tools: tools as any }); // Pass tools to the model
 

@@ -64,19 +64,29 @@ function MessageContentComponent({ content }: MessageContentProps) {
         const diagramMatch = content.match(/<DIAGRAM>([\s\S]*?)<\/DIAGRAM>/);
         if (diagramMatch) {
             try {
-                const diagramCode = diagramMatch[1];
+                const diagramCode = diagramMatch[1].trim();
                 const beforeDiagram = content.substring(0, diagramMatch.index);
                 const afterDiagram = content.substring((diagramMatch.index || 0) + diagramMatch[0].length);
 
                 return (
                     <>
-                        {beforeDiagram && <div className="mb-4" dangerouslySetInnerHTML={{ __html: beforeDiagram }} />}
+                        {beforeDiagram && (
+                            <div
+                                className="mb-4 prose prose-sm max-w-none"
+                                dangerouslySetInnerHTML={{ __html: beforeDiagram }}
+                            />
+                        )}
 
-                        <div className="my-4 p-4 bg-gray-100 rounded-lg">
+                        <div className="my-6 p-6 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-xl shadow-sm border border-purple-100 dark:border-gray-600">
                             <MermaidDiagram chart={diagramCode} />
                         </div>
 
-                        {afterDiagram && <div className="mt-4" dangerouslySetInnerHTML={{ __html: afterDiagram }} />}
+                        {afterDiagram && (
+                            <div
+                                className="mt-4 prose prose-sm max-w-none"
+                                dangerouslySetInnerHTML={{ __html: afterDiagram }}
+                            />
+                        )}
                     </>
                 );
             } catch (e) {
@@ -237,8 +247,13 @@ function MessageContentComponent({ content }: MessageContentProps) {
             }
         }
 
-        // No special tags, render normal content
-        return <div dangerouslySetInnerHTML={{ __html: content }} />;
+        // No special tags, render normal content with prose styling
+        return (
+            <div
+                className="prose prose-sm max-w-none prose-headings:text-purple-900 prose-a:text-purple-600 prose-strong:text-gray-900"
+                dangerouslySetInnerHTML={{ __html: content }}
+            />
+        );
     }, [content]);
 
     return <>{parsedContent}</>;
