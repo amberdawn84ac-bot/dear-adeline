@@ -7,6 +7,7 @@ import { handleToolCalls } from '@/lib/services/toolHandlerService';
 import { persistConversation } from '@/lib/services/persistenceService';
 import { startChat, continueChat } from '@/lib/services/chatService';
 import { autoFormatSketchnote } from '@/lib/sketchnoteUtils';
+import { LibraryService } from '@/lib/services/libraryService';
 
 const apiKey = process.env.GOOGLE_API_KEY;
 const supabase = createClient(
@@ -41,9 +42,17 @@ export async function POST(req: Request) {
 
         console.log('💬 User prompt:', userPrompt);
 
-        // Retrieve context
+        // Retrieve context from multiple sources
         const similarMemories = await retrieveSimilarMemories(userPrompt, userId, supabase);
+        const libraryContext = await LibraryService.search(userPrompt, supabase);
+
         let systemInstruction = generateSystemPrompt(studentInfo, similarMemories, lastMessage);
+
+        // Inject library context (truth documents) if found
+        if (libraryContext && libraryContext.length > 0) {
+            console.log(`📚 Found ${libraryContext.length} relevant library excerpts`);
+            systemInstruction += '\n\n' + LibraryService.formatForPrompt(libraryContext);
+        }
         
         // Voice and style
         systemInstruction += `\n\nHOW TO RESPOND:
