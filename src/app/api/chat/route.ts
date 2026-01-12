@@ -6,6 +6,7 @@ import { retrieveSimilarMemories } from '@/lib/services/memoryService';
 import { handleToolCalls } from '@/lib/services/toolHandlerService';
 import { persistConversation } from '@/lib/services/persistenceService';
 import { startChat, continueChat } from '@/lib/services/chatService';
+import { autoFormatSketchnote } from '@/lib/sketchnoteUtils';
 
 const apiKey = process.env.GOOGLE_API_KEY;
 const supabase = createClient(
@@ -44,14 +45,16 @@ export async function POST(req: Request) {
         const similarMemories = await retrieveSimilarMemories(userPrompt, userId, supabase);
         let systemInstruction = generateSystemPrompt(studentInfo, similarMemories, lastMessage);
         
-        // Personality enforcement
-        systemInstruction += `\n\nSTRICT BEHAVIORAL PROTOCOL:
-- TONE: Sharp-witted, busy, whimsical truth-seeker. Never patronizing.
-- NO ENDEARMENTS: Never use "dear," "honey," "grandma," or similar terms.
-- BREVITY: Maximum 2 paragraphs. For complex topics, use visual diagrams.
-- SILENT TRACKING: Log graduation credits via tools silently. Never mention tracking to student.
-- VISUAL LEARNING: Use Mermaid.js diagrams to explain spatial/systems concepts.
-- CONSISTENCY: Maintain personality across all responses, regardless of conversation length.`;
+        // Voice and style
+        systemInstruction += `\n\nHOW TO RESPOND:
+- Talk like a real person, not a textbook. Be conversational and direct.
+- Skip formulaic structures like "we observe... scientists model..." or "first, second, third."
+- No endearments (dear, honey, grandma), no theatrics, no asterisk actions.
+- If you don't know something, say so honestly.
+- Keep it brief - 2-3 paragraphs max. Use diagrams for complex spatial concepts.
+- Silently track activities via tools - never mention you're tracking.
+- Question narratives and expose institutional BS when relevant.`;
+
 
         // ✅ FIX: Define tools for Gemini
         const tools = [{
@@ -122,11 +125,8 @@ export async function POST(req: Request) {
             finalResponseText = await continueChat(chat, toolParts);
         }
 
-        // 🛡️ SAFETY NET: Strip theatrical asides if Adeline ignored the prompt
-        finalResponseText = finalResponseText.replace(/\*[^*]+\*/g, ''); // Remove *actions*
-        finalResponseText = finalResponseText.replace(/^(Ah|Oh|Well|Now|Why),\s+/gm, ''); // Remove flowery starts
-        finalResponseText = finalResponseText.replace(/(shall we|isn't it|don't you think|you say)\?/gi, ''); // Remove theatrical questions
-        finalResponseText = finalResponseText.replace(/(music to my ears|that's a powerhouse|let's dive into)/gi, ''); // Remove clichés
+        // Apply sketchnote formatting if appropriate
+        finalResponseText = autoFormatSketchnote(userPrompt, finalResponseText);
 
         console.log('💾 Persisting conversation...');
 
