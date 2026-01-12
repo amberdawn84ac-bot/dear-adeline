@@ -4,7 +4,25 @@
       "Bash(npm run dev:*)",
       "Bash(npm install:*)",
       "Bash(npm run build:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(scoop install:*)",
+      "Bash(curl:*)",
+      "Bash(unzip:*)",
+      "Bash(chmod:*)",
+      "Bash(./bin/supabase.exe:*)",
+      "Bash(supabase:*)",
+      "Bash(./supabase.exe:*)",
+      "Bash(npm run supabase:*)",
+      "Bash(git -C \"C:\\\\home\\\\claude\\\\dear-adeline\" log --oneline)",
+      "Bash(npm run lint:*)",
+      "Bash(npm test:*)",
+      "Bash(node run-migrations.js:*)",
+      "Bash(npm run db:status:*)",
+      "Bash(test:*)",
+      "Bash(git rm:*)",
+      "Bash(pnpm install:*)"
     ]
   }
 }

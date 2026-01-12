@@ -69,6 +69,22 @@ export async function POST(request: Request) {
             );
         }
 
+        // ALSO create a portfolio item so it shows in the portfolio page
+        const { error: portfolioError } = await supabase
+            .from('portfolio_items')
+            .insert({
+                student_id: user.id,
+                title: topic,
+                description: conversation_context || `Learning mission: ${topic}`,
+                type: 'lesson',
+                content: `Mission: ${topic}\nTrack: ${suggested_track || 'General'}\n\n${conversation_context || ''}`,
+                created_at: new Date().toISOString(),
+            });
+
+        if (portfolioError) {
+            console.warn('Failed to add mission to portfolio (mission still saved):', portfolioError);
+        }
+
         return NextResponse.json({ mission: savedMission });
 
     } catch (error: any) {

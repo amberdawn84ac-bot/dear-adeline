@@ -237,22 +237,29 @@ export default function DashboardClient({
 
     // Smart detection: should this message be rendered as a sketchnote?
     const shouldUseSketchnote = (content: string): boolean => {
+        // NEVER use sketchnotes if content has special tags
+        // These need to be parsed by MessageContent component
+        const specialTags = ['<GAME>', '<GAMELAB>', '<DIAGRAM>', '<MISSION>', '<SKETCH>', '<SKETCHNOTE>'];
+        if (specialTags.some(tag => content.includes(tag))) {
+            return false;
+        }
+
         // Don't use sketchnotes for very short responses
         if (content.length < 200) return false;
-        
+
         // Use sketchnotes if content has multiple paragraphs
         const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
         if (paragraphs.length >= 3) return true;
-        
+
         // Use sketchnotes if content has lists
         if (content.match(/^[-•*]\s/m) || content.match(/^\d+\.\s/m)) return true;
-        
+
         // Use sketchnotes if content has headers
         if (content.match(/^#+\s/m)) return true;
-        
+
         // Use sketchnotes for longer educational content
         if (content.length > 400) return true;
-        
+
         return false;
     };
 
@@ -551,7 +558,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                     <div className="w-6" />
                 </header>
 
-                <div className="flex-1 overflow-y-auto p-4 lg:p-6 no-scrollbar">
+                <div className="flex-1 p-4 lg:p-6 overflow-hidden">
                     <div className="grid grid-cols-12 gap-6 h-full">
                         {/* Onboarding Flow */}
                         {showOnboarding && (
@@ -715,7 +722,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                         </div>
 
                         {/* Right Sidebar */}
-                        <div className="col-span-12 lg:col-span-4 space-y-6">
+                        <div className="col-span-12 lg:col-span-4 space-y-6 overflow-y-auto max-h-[calc(100vh-120px)]">
                             <div className="card !p-5">
                                 <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2 mb-4">
                                     <Lightbulb className="w-5 h-5 text-[var(--sage)]" />

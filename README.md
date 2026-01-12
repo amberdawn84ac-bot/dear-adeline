@@ -1,184 +1,177 @@
-# Dear Adeline 🎓
+# Supabase CLI
 
-A personalized, AI-powered learning platform where education meets each student exactly where they are.
+[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
+](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
 
-![Dear Adeline](https://dearadeline.co)
+[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
 
-## ✨ Features
+This repository contains all the functionality for Supabase CLI.
 
-### For Students
-- **AI Learning Companion** - Tell Adeline what you're interested in, and she creates personalized lessons
-- **Student-Led Learning** - Your curiosity becomes your curriculum
-- **Skills & Credits Tracking** - Everything you learn earns skills toward graduation
-- **Graduation Tracker** - Visual progress toward Oklahoma (or state of choice) graduation requirements
-- **Portfolio Builder** - Automatic portfolio entries from lessons and projects
-- **Learning Games** - "Let's play a spelling game!" and other interactive activities
+- [x] Running Supabase locally
+- [x] Managing database migrations
+- [x] Creating and deploying Supabase Functions
+- [x] Generating types directly from your database schema
+- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
 
-### For Teachers
-- **Student Management** - Add and monitor assigned students
-- **Progress Monitoring** - View skills, credits, and portfolio for each student
-- **Project Assignment** - Assign library projects directly to students
-- **Privacy-First** - Only see your own students' information
+## Getting started
 
-### For Admins
-- **AI-Powered Editing** - Make platform changes using natural language (no code needed!)
-- **User Management** - Manage roles for all students, teachers, and admins
-- **Project Library** - Add/edit Art, Farm, and Science projects
-- **Skills Configuration** - Create and manage skills and credit values
-- **Graduation Requirements** - Configure requirements for different states
+### Install the CLI
 
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-- Supabase account (free tier works)
-- Anthropic API key
-
-### 1. Clone and Install
+Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
 
 ```bash
-cd dear-adeline
-npm install
+npm i supabase --save-dev
 ```
 
-### 2. Set Up Supabase
+When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
 
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Go to **Project Settings > API** and copy:
-   - Project URL
-   - `anon` public key
-   - `service_role` key (keep this secret!)
-3. Go to **SQL Editor** and run the entire contents of `supabase/schema.sql`
-
-### 3. Configure Environment Variables
-
-Create a `.env.local` file in the project root:
-
-```env
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-
-# Anthropic API Key
-ANTHROPIC_API_KEY=your_anthropic_api_key
-
-# App Configuration
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+NODE_OPTIONS=--no-experimental-fetch yarn add supabase
 ```
 
-### 4. Run the Development Server
+> **Note**
+For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
+
+<details>
+  <summary><b>macOS</b></summary>
+
+  Available via [Homebrew](https://brew.sh). To install:
+
+  ```sh
+  brew install supabase/tap/supabase
+  ```
+
+  To install the beta release channel:
+  
+  ```sh
+  brew install supabase/tap/supabase-beta
+  brew link --overwrite supabase-beta
+  ```
+  
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+</details>
+
+<details>
+  <summary><b>Windows</b></summary>
+
+  Available via [Scoop](https://scoop.sh). To install:
+
+  ```powershell
+  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+  scoop install supabase
+  ```
+
+  To upgrade:
+
+  ```powershell
+  scoop update supabase
+  ```
+</details>
+
+<details>
+  <summary><b>Linux</b></summary>
+
+  Available via [Homebrew](https://brew.sh) and Linux packages.
+
+  #### via Homebrew
+
+  To install:
+
+  ```sh
+  brew install supabase/tap/supabase
+  ```
+
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+
+  #### via Linux packages
+
+  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
+
+  ```sh
+  sudo apk add --allow-untrusted <...>.apk
+  ```
+
+  ```sh
+  sudo dpkg -i <...>.deb
+  ```
+
+  ```sh
+  sudo rpm -i <...>.rpm
+  ```
+
+  ```sh
+  sudo pacman -U <...>.pkg.tar.zst
+  ```
+</details>
+
+<details>
+  <summary><b>Other Platforms</b></summary>
+
+  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
+
+  ```sh
+  go install github.com/supabase/cli@latest
+  ```
+
+  Add a symlink to the binary in `$PATH` for easier access:
+
+  ```sh
+  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
+  ```
+
+  This works on other non-standard Linux distros.
+</details>
+
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
+
+  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+  To install in your working directory:
+
+  ```bash
+  pkgx install supabase
+  ```
+
+  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+</details>
+
+### Run the CLI
 
 ```bash
-npm run dev
+supabase bootstrap
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the landing page!
+Or using npx:
 
-### 5. Create Your Admin Account
-
-1. Click "Explore Curriculum" → Sign Up
-2. Create an account with your email
-3. Check email for confirmation link
-4. In Supabase, go to **Table Editor > profiles**
-5. Find your user and change `role` from `student` to `admin`
-6. You now have full admin access!
-
-## 📁 Project Structure
-
-```
-dear-adeline/
-├── src/
-│   ├── app/
-│   │   ├── page.tsx              # Landing page
-│   │   ├── login/                # Authentication
-│   │   ├── dashboard/            # Student dashboard + AI chat
-│   │   │   ├── admin/            # Admin panel
-│   │   │   └── teacher/          # Teacher dashboard
-│   │   ├── portfolio/            # Student portfolio
-│   │   ├── library/              # Project library (Art/Farm/Science)
-│   │   ├── tracker/              # Graduation tracker
-│   │   └── api/
-│   │       ├── chat/             # AI chat endpoint
-│   │       ├── admin/ai/         # Admin AI assistant
-│   │       └── teacher/invite/   # Add student to teacher
-│   ├── lib/
-│   │   └── supabase/             # Supabase client configuration
-│   └── middleware.ts             # Route protection & role checks
-├── supabase/
-│   └── schema.sql                # Database schema + seed data
-└── public/                       # Static assets
+```bash
+npx supabase bootstrap
 ```
 
-## 🗄️ Database Schema
+The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
 
-The platform uses these main tables:
+## Docs
 
-- `profiles` - User accounts with roles (student/teacher/admin)
-- `teacher_students` - Teacher-student relationships
-- `skills` - Learnable skills with credit values
-- `student_skills` - Skills earned by students
-- `graduation_requirements` - Oklahoma state requirements
-- `student_graduation_progress` - Credits earned per requirement
-- `portfolio_items` - Student portfolio entries
-- `library_projects` - Art, Farm, Science projects
-- `student_projects` - Project completion tracking
-- `conversations` - AI chat history
-- `learning_gaps` - Detected learning gaps
+Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
 
-## 🎨 Customization
+## Breaking changes
 
-### Theme Colors
-Edit `src/app/globals.css` to customize the color palette:
+We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
 
-```css
-:root {
-  --sage: #87A878;          /* Primary green */
-  --terracotta: #C4826E;    /* Accent orange */
-  --dusty-rose: #D4A5A5;    /* Secondary pink */
-  --cream: #FAF8F5;         /* Background */
-}
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+
+## Developing
+
+To run from source:
+
+```sh
+# Go >= 1.22
+go run . help
 ```
-
-### State Standards
-The database seeds with Oklahoma graduation requirements. To add other states:
-
-1. Go to Supabase Table Editor
-2. Add entries to `graduation_requirements` with different `state_standards` values
-3. Students can select their state in settings
-
-## 🔒 Security
-
-- Row Level Security (RLS) enforced on all tables
-- Teachers can only see their assigned students
-- Students can only see their own data
-- Admin role required for platform management
-- API keys should never be exposed client-side
-
-## 📦 Deployment
-
-### Vercel (Recommended)
-
-1. Push to GitHub
-2. Connect to Vercel
-3. Add environment variables in Vercel dashboard
-4. Deploy!
-
-### Custom Domain
-
-1. In Vercel, go to **Settings > Domains**
-2. Add `dearadeline.co`
-3. Update DNS records as instructed
-
-## 🤝 Contributing
-
-This is a private homeschool platform, but suggestions are welcome!
-
-## 📄 License
-
-Private - All rights reserved.
-
----
-
-Made with 💚 in Oklahoma for homeschool families everywhere.
