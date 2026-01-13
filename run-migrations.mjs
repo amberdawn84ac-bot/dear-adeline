@@ -44,6 +44,7 @@ async function main() {
   await runMigration('supabase/migrations/20260111_spaced_repetition_system.sql');
   await runMigration('supabase/migrations/20260111_adaptive_difficulty_engine.sql');
   await runMigration('supabase/migrations/20260112_daily_lesson_plans.sql');
+  await runMigration('supabase/migrations/20260112_add_portfolio_public.sql');
 
   console.log('\n✅ All migrations completed!');
   console.log('\n📋 Next steps:');

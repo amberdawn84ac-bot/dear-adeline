@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -23,7 +23,10 @@ import {
     X,
     Save,
     Loader2,
-    Trash2
+    Trash2,
+    Share2,
+    Copy,
+    CheckCircle
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -90,11 +93,44 @@ export default function PortfolioClient({
         skills_demonstrated: [] as string[], // Add skills_demonstrated
     });
     const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [portfolioPublic, setPortfolioPublic] = useState(false);
+    const [linkCopied, setLinkCopied] = useState(false);
 
     const handleLogout = async () => {
         const supabase = createClient();
         await supabase.auth.signOut();
         router.push('/');
+    };
+
+    const handleTogglePortfolioPublic = async () => {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return;
+
+        const newPublicState = !portfolioPublic;
+
+        const { error } = await supabase
+            .from('profiles')
+            .update({ portfolio_public: newPublicState })
+            .eq('id', user.id);
+
+        if (!error) {
+            setPortfolioPublic(newPublicState);
+        }
+    };
+
+    const handleCopyLink = () => {
+        const supabase = createClient();
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) {
+                const publicUrl = `${window.location.origin}/portfolio/public/${user.id}`;
+                navigator.clipboard.writeText(publicUrl);
+                setLinkCopied(true);
+                setTimeout(() => setLinkCopied(false), 3000);
+            }
+        });
     };
 
     const handleAddItem = async () => {
@@ -140,6 +176,25 @@ export default function PortfolioClient({
     const filteredItems = portfolioItems.filter(item =>
         filterType === 'all' || item.type === filterType
     );
+
+    // Initialize portfolio public state from profile
+    useEffect(() => {
+        const loadPortfolioPublicState = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profileData } = await supabase
+                    .from('profiles')
+                    .select('portfolio_public')
+                    .eq('id', user.id)
+                    .single();
+                if (profileData) {
+                    setPortfolioPublic(profileData.portfolio_public || false);
+                }
+            }
+        };
+        loadPortfolioPublicState();
+    }, []);
 
     return (
         <div className="min-h-screen flex bg-[var(--cream)]">
@@ -216,13 +271,22 @@ export default function PortfolioClient({
                                 A showcase of your learning journey and accomplishments
                             </p>
                         </div>
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="btn-primary"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Add Item
-                        </button>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowShareModal(true)}
+                                className="btn-secondary flex items-center gap-2"
+                            >
+                                <Share2 className="w-5 h-5" />
+                                Share
+                            </button>
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className="btn-primary"
+                            >
+                                <Plus className="w-5 h-5" />
+                                Add Item
+                            </button>
+                        </div>
                     </div>
 
                     {/* Filters */}
@@ -522,6 +586,92 @@ export default function PortfolioClient({
                                 Close
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Share Portfolio Modal */}
+            {showShareModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-md w-full p-8">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <Share2 className="w-6 h-6 text-[var(--sage)]" />
+                                <h2 className="text-2xl font-bold">Share Portfolio</h2>
+                            </div>
+                            <button onClick={() => setShowShareModal(false)}>
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <p className="text-sm text-[var(--charcoal-light)] mb-6">
+                            Make your portfolio public and share it with colleges, employers, or family!
+                        </p>
+
+                        {/* Public Toggle */}
+                        <div className="mb-6">
+                            <label className="flex items-center justify-between p-4 bg-[var(--cream)] rounded-xl cursor-pointer">
+                                <div>
+                                    <p className="font-medium text-[var(--forest)]">Public Portfolio</p>
+                                    <p className="text-xs text-[var(--charcoal-light)] mt-1">
+                                        Anyone with the link can view your portfolio
+                                    </p>
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={portfolioPublic}
+                                    onChange={handleTogglePortfolioPublic}
+                                    className="w-5 h-5 rounded"
+                                />
+                            </label>
+                        </div>
+
+                        {portfolioPublic && (
+                            <>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-[var(--charcoal)] mb-2">
+                                        Shareable Link
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            readOnly
+                                            value={`${typeof window !== 'undefined' ? window.location.origin : ''}/portfolio/public/${profile?.id || ''}`}
+                                            className="flex-1 px-4 py-3 bg-[var(--cream)] border border-[var(--cream-dark)] rounded-xl text-sm"
+                                        />
+                                        <button
+                                            onClick={handleCopyLink}
+                                            className="btn-primary px-4"
+                                        >
+                                            {linkCopied ? (
+                                                <CheckCircle className="w-5 h-5" />
+                                            ) : (
+                                                <Copy className="w-5 h-5" />
+                                            )}
+                                        </button>
+                                    </div>
+                                    {linkCopied && (
+                                        <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
+                                            <CheckCircle className="w-4 h-4" />
+                                            Link copied to clipboard!
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                    <p className="text-sm text-blue-800">
+                                        <strong>Tip:</strong> Share this link with colleges, employers, or anyone who wants to see your work!
+                                    </p>
+                                </div>
+                            </>
+                        )}
+
+                        <button
+                            onClick={() => setShowShareModal(false)}
+                            className="btn-primary w-full mt-6"
+                        >
+                            Done
+                        </button>
                     </div>
                 </div>
             )}
