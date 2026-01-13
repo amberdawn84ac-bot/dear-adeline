@@ -235,31 +235,8 @@ export default function DashboardClient({
     const [showVoiceSession, setShowVoiceSession] = useState(false);
     const [showCameraInput, setShowCameraInput] = useState(false);
 
-    // Smart detection: should this message be rendered as a sketchnote?
+    // Sketchnotes disabled - always use MessageContent for proper rendering
     const shouldUseSketchnote = (content: string): boolean => {
-        // NEVER use sketchnotes if content has special tags
-        // These need to be parsed by MessageContent component
-        const specialTags = ['<GAME>', '<GAMELAB>', '<DIAGRAM>', '<MISSION>', '<SKETCH>', '<SKETCHNOTE>'];
-        if (specialTags.some(tag => content.includes(tag))) {
-            return false;
-        }
-
-        // Don't use sketchnotes for very short responses
-        if (content.length < 200) return false;
-
-        // Use sketchnotes if content has multiple paragraphs
-        const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
-        if (paragraphs.length >= 3) return true;
-
-        // Use sketchnotes if content has lists
-        if (content.match(/^[-•*]\s/m) || content.match(/^\d+\.\s/m)) return true;
-
-        // Use sketchnotes if content has headers
-        if (content.match(/^#+\s/m)) return true;
-
-        // Use sketchnotes for longer educational content
-        if (content.length > 400) return true;
-
         return false;
     };
 

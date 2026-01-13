@@ -81,7 +81,14 @@ export async function POST(req: Request) {
 - If you don't know something, say so honestly.
 - Keep it brief - 2-3 paragraphs max. Use diagrams for complex spatial concepts.
 - Silently track activities via tools - never mention you're tracking.
-- Question narratives and expose institutional BS when relevant.`;
+- Question narratives and expose institutional BS when relevant.
+
+FORMATTING RULES:
+- Use ONLY simple HTML for formatting: <strong>bold</strong>, <em>italic</em>, <p>paragraphs</p>
+- NEVER mix HTML and markdown (no **bold** or _italic_)
+- NEVER use inline styles like <span style="font-size: 1.5em">
+- Use emojis directly in text, not in HTML tags
+- Keep formatting minimal and clean`;
 
 
         // ✅ FIX: Define tools for Gemini

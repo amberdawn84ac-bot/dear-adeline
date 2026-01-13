@@ -14,7 +14,6 @@ import {
     Sparkles,
     Pencil
 } from 'lucide-react';
-import AdelineSketchnote from './AdelineSketchnote';
 
 interface DailyJournalProps {
     onSave: (entryData: any) => void;
@@ -168,18 +167,6 @@ export default function DailyJournal({ onSave, initialData, date }: DailyJournal
                 />
                 <p className="text-xs text-gray-500 mt-2">This is your space to think, doodle with words, and capture your day.</p>
             </div>
-
-            {/* Sketchnote from Conversation */}
-            {initialData?.sketchnote_content && (
-                <div className="bg-white rounded-3xl p-8 shadow-lg">
-                    <div className="flex items-center gap-3 mb-4">
-                        <Sparkles className="w-5 h-5 text-purple-500" />
-                        <h3 className="text-lg font-bold text-gray-900">Adeline's Sketchnote</h3>
-                        <span className="text-xs text-gray-500">(from your conversation today)</span>
-                    </div>
-                    <AdelineSketchnote content={initialData.sketchnote_content} />
-                </div>
-            )}
 
             {/* Save Button */}
             <div className="flex justify-end">

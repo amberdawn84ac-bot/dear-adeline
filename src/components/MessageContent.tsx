@@ -6,11 +6,6 @@ import { formatTrack } from '@/types/learning';
 import { GameRenderer } from './GameRenderer';
 import MermaidDiagram from './MermaidDiagram';
 import StorybookPage from './StorybookPage';
-import AdelineSketchnote from './AdelineSketchnote';
-import dynamic from 'next/dynamic';
-
-// AdelineSketch disabled - we're using AdelineSketchnote instead
-// const AdelineSketch = dynamic(() => import('./AdelineSketch'), { ssr: false });
 
 interface MessageContentProps {
     content: string;
@@ -41,25 +36,6 @@ function MessageContentComponent({ content }: MessageContentProps) {
     }
 
     const parsedContent = React.useMemo(() => {
-        const sketchnoteMatch = content.match(/<SKETCHNOTE>([\s\S]*?)<\/SKETCHNOTE>/);
-        if (sketchnoteMatch) {
-            const noteContent = sketchnoteMatch[1];
-            const beforeNote = content.substring(0, sketchnoteMatch.index);
-            
-            return (
-                <>
-                    {beforeNote && <div className="mb-4" dangerouslySetInnerHTML={{ __html: beforeNote }} />}
-                    
-                    <div className="my-6">
-                        <AdelineSketchnote content={noteContent} />
-                    </div>
-                </>
-            );
-        }
-        
-        // SKETCH tags disabled - using AdelineSketchnote instead
-        // const sketchMatch = content.match(/<SKETCH>([\s\S]*?)<\/SKETCH>/);
-        
         // Parse <DIAGRAM> tags for Mermaid diagrams
         const diagramMatch = content.match(/<DIAGRAM>([\s\S]*?)<\/DIAGRAM>/);
         if (diagramMatch) {
