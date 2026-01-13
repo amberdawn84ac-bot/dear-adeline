@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Bookmark, BookmarkCheck, ExternalLink, Sparkles, TrendingUp } from 'lucide-react';
+import { Search, Bookmark, BookmarkCheck, ExternalLink, Sparkles, TrendingUp, MapPin, Globe, Users, Calendar } from 'lucide-react';
 
 interface Opportunity {
     id: string;
@@ -17,18 +17,45 @@ interface Opportunity {
     disciplines: string[];
     tags: string[];
     featured: boolean;
+    scope: 'local' | 'national' | 'international';
+    age_group: string;
+    category: string;
 }
+
+const CATEGORIES = [
+    { id: 'all', name: 'All Opportunities', icon: Sparkles },
+    { id: 'art', name: 'Art & Design', icon: Sparkles },
+    { id: 'writing', name: 'Writing & Literature', icon: Sparkles },
+    { id: 'science', name: 'Science & Math', icon: Sparkles },
+    { id: 'history', name: 'History & Social Studies', icon: Sparkles },
+    { id: 'entrepreneurship', name: 'Business & Entrepreneurship', icon: Sparkles },
+    { id: 'technology', name: 'Technology & Engineering', icon: Sparkles },
+    { id: 'service', name: 'Service & Leadership', icon: Sparkles },
+    { id: 'scholarships', name: 'Scholarships & Awards', icon: Sparkles },
+];
+
+const AGE_GROUPS = [
+    { id: 'all', label: 'All Ages' },
+    { id: 'elementary', label: 'Elementary (K-5)' },
+    { id: 'middle', label: 'Middle School (6-8)' },
+    { id: 'high', label: 'High School (9-12)' },
+    { id: 'college', label: 'College & Beyond' },
+];
 
 export default function OpportunitiesPage() {
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
     const [savedIds, setSavedIds] = useState<string[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [selectedScope, setSelectedScope] = useState<'all' | 'local' | 'national'>('all');
+    const [selectedAgeGroup, setSelectedAgeGroup] = useState('all');
+    const [searchingCategory, setSearchingCategory] = useState<string | null>(null);
 
-    // Load saved opportunities on mount and initial opportunities
+    // Load saved opportunities and initial data on mount
     useEffect(() => {
         loadSavedOpportunities();
-        handleSearch(); // Load all opportunities initially
+        loadOpportunities();
     }, []);
 
     const loadSavedOpportunities = async () => {
@@ -41,19 +68,45 @@ export default function OpportunitiesPage() {
         }
     };
 
-    const handleSearch = async (e?: React.FormEvent) => {
-        e?.preventDefault();
+    const loadOpportunities = async () => {
         setLoading(true);
         try {
-            // Modify to GET request
             const res = await fetch('/api/opportunities');
             const data = await res.json();
-            setOpportunities(data.data || []); // Adjust to the new API response structure
-            // Remove setAiSummary as the new API does not provide it
+            setOpportunities(data.data || []);
+        } catch (error) {
+            console.error('Failed to load opportunities:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSearchCategory = async (category: string) => {
+        setSearchingCategory(category);
+        try {
+            const res = await fetch('/api/opportunities/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    category,
+                    ageGroup: selectedAgeGroup,
+                    scope: selectedScope
+                }),
+            });
+            const data = await res.json();
+
+            if (data.opportunities && data.opportunities.length > 0) {
+                // Add new opportunities to the list
+                setOpportunities(prev => {
+                    const existing = new Set(prev.map(o => o.source_url));
+                    const newOpps = data.opportunities.filter((o: Opportunity) => !existing.has(o.source_url));
+                    return [...prev, ...newOpps];
+                });
+            }
         } catch (error) {
             console.error('Search failed:', error);
         } finally {
-            setLoading(false);
+            setSearchingCategory(null);
         }
     };
 
@@ -72,151 +125,205 @@ export default function OpportunitiesPage() {
         }
     };
 
-    const getTrackColor = (track: string) => {
-        const colors: Record<string, string> = {
-            creation_science: 'bg-purple-100 text-purple-700',
-            economics: 'bg-green-100 text-green-700',
-            english: 'bg-blue-100 text-blue-700',
-            history: 'bg-amber-100 text-amber-700',
-            justice: 'bg-rose-100 text-rose-700',
-            food_systems: 'bg-lime-100 text-lime-700',
-            health: 'bg-pink-100 text-pink-700',
-            discipleship: 'bg-indigo-100 text-indigo-700',
-            government: 'bg-slate-100 text-slate-700'
-        };
-        return colors[track] || 'bg-gray-100 text-gray-700';
-    };
+    // Filter opportunities based on selections
+    const filteredOpportunities = opportunities.filter(opp => {
+        if (selectedCategory !== 'all' && opp.category !== selectedCategory) return false;
+        if (selectedScope !== 'all' && opp.scope !== selectedScope) return false;
+        if (selectedAgeGroup !== 'all' && !opp.age_group?.includes(selectedAgeGroup)) return false;
+        if (query && !opp.title.toLowerCase().includes(query.toLowerCase()) &&
+            !opp.description.toLowerCase().includes(query.toLowerCase())) return false;
+        return true;
+    });
 
-    const formatTrackName = (track: string) => {
-        return track.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    // Get counts by category
+    const getCategoryCount = (categoryId: string) => {
+        if (categoryId === 'all') return opportunities.length;
+        return opportunities.filter(o => o.category === categoryId).length;
     };
 
     return (
-        <div className="min-h-screen bg-[var(--cream)]">
-            <div className="max-w-6xl mx-auto p-8">
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+            <div className="max-w-7xl mx-auto p-8">
                 {/* Header */}
-                <div className="mb-12">
-                    <h1 className="text-4xl font-bold text-[var(--charcoal)] mb-4">
-                        Projects & Opportunities
+                <div className="mb-8">
+                    <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                        Opportunities & Real-World Projects
                     </h1>
-                    <p className="text-xl text-[var(--charcoal-light)] max-w-2xl">
-                        Discover real-world opportunities to earn credits, build your portfolio, and prepare for your future.
+                    <p className="text-xl text-gray-600 max-w-3xl">
+                        Discover contests, scholarships, grants, and real-world opportunities across all subjects.
+                        Earn credits, build your portfolio, and prepare for your future.
                     </p>
                 </div>
 
-                {/* Search */}
-                <div className="card p-8 mb-8">
-                    <div className="flex justify-between items-start mb-6">
-                        <div>
-                            <h2 className="text-2xl font-bold text-[var(--charcoal)] mb-2">
-                                What are you looking for?
-                            </h2>
-                            <p className="text-[var(--charcoal-light)]">
-                                Search for grants, contests, scholarships, and more
-                            </p>
-                        </div>
-                        <div className="bg-[var(--rose-light)] text-[var(--rose)] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-[var(--rose)]">
-                            AI Powered
-                        </div>
-                    </div>
-
-                    <form onSubmit={handleSearch} className="relative group mb-4">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--charcoal-light)]" />
+                {/* Search Bar */}
+                <div className="bg-white rounded-2xl p-6 shadow-md mb-6">
+                    <div className="relative group mb-4">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
                             type="text"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search for art grants, writing contests, science fairs..."
-                            className="input pl-12 pr-32 text-lg"
+                            placeholder="Search opportunities..."
+                            className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none text-lg"
                         />
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="absolute right-3 top-3 btn-primary px-6 py-2 disabled:opacity-50"
-                        >
-                            {loading ? (
-                                <span className="flex items-center gap-2">
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    Searching...
-                                </span>
-                            ) : (
-                                <span className="flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4" />
-                                    Search
-                                </span>
-                            )}
-                        </button>
-                    </form>
-
-                    <div className="flex gap-2">
-                        {['Art Grants', 'Writing Contests', 'Science Fairs', 'Entrepreneurship'].map(tag => (
-                            <button
-                                key={tag}
-                                onClick={() => { setQuery(tag); setTimeout(() => handleSearch(), 10); }}
-                                className="text-xs font-medium px-3 py-1.5 bg-[var(--cream)] text-[var(--charcoal-light)] rounded-full hover:bg-[var(--cream-dark)] transition-colors"
-                            >
-                                {tag}
-                            </button>
-                        ))}
                     </div>
                 </div>
 
-                {/* AI Summary */}
-
-
-                {/* Opportunities Grid */}
-                {opportunities.length > 0 && (
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold flex items-center gap-2">
-                                <TrendingUp className="w-5 h-5 text-[var(--sage)]" />
-                                {opportunities.length} Opportunities Found
-                            </h3>
+                {/* Filters */}
+                <div className="grid md:grid-cols-3 gap-4 mb-6">
+                    {/* Scope Filter */}
+                    <div className="bg-white rounded-xl p-4 shadow-sm">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <MapPin className="inline w-4 h-4 mr-1" />
+                            Scope
+                        </label>
+                        <div className="flex gap-2">
+                            {['all', 'local', 'national'].map(scope => (
+                                <button
+                                    key={scope}
+                                    onClick={() => setSelectedScope(scope as any)}
+                                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                        selectedScope === scope
+                                            ? 'bg-purple-600 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    {scope === 'all' ? 'All' : scope.charAt(0).toUpperCase() + scope.slice(1)}
+                                </button>
+                            ))}
                         </div>
+                    </div>
 
-                        {opportunities.map((opp) => (
-                            <div key={opp.id} className="card p-6 hover:shadow-lg transition-shadow">
+                    {/* Age Group Filter */}
+                    <div className="bg-white rounded-xl p-4 shadow-sm">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <Users className="inline w-4 h-4 mr-1" />
+                            Age Group
+                        </label>
+                        <select
+                            value={selectedAgeGroup}
+                            onChange={(e) => setSelectedAgeGroup(e.target.value)}
+                            className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none"
+                        >
+                            {AGE_GROUPS.map(group => (
+                                <option key={group.id} value={group.id}>{group.label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Results Count */}
+                    <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-4 shadow-sm text-white">
+                        <div className="text-sm opacity-90 mb-1">Found</div>
+                        <div className="text-3xl font-bold">{filteredOpportunities.length}</div>
+                        <div className="text-sm opacity-90">opportunities</div>
+                    </div>
+                </div>
+
+                {/* Category Tabs */}
+                <div className="bg-white rounded-2xl p-4 shadow-md mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-gray-900">Browse by Category</h3>
+                        <span className="text-sm text-gray-500">Click category to auto-search</span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                        {CATEGORIES.map(category => {
+                            const count = getCategoryCount(category.id);
+                            const isSearching = searchingCategory === category.id;
+
+                            return (
+                                <button
+                                    key={category.id}
+                                    onClick={() => {
+                                        setSelectedCategory(category.id);
+                                        if (category.id !== 'all' && count === 0) {
+                                            handleSearchCategory(category.id);
+                                        }
+                                    }}
+                                    disabled={isSearching}
+                                    className={`relative p-4 rounded-xl border-2 transition-all ${
+                                        selectedCategory === category.id
+                                            ? 'border-purple-600 bg-purple-50'
+                                            : 'border-gray-200 hover:border-purple-300'
+                                    } ${isSearching ? 'opacity-50' : ''}`}
+                                >
+                                    <div className="text-sm font-medium text-gray-900 mb-1">{category.name}</div>
+                                    <div className="text-xs text-gray-600">
+                                        {isSearching ? (
+                                            <span className="flex items-center gap-1">
+                                                <div className="w-3 h-3 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                                                Searching...
+                                            </span>
+                                        ) : count === 0 ? (
+                                            <span className="text-purple-600">Click to search</span>
+                                        ) : (
+                                            <span>{count} available</span>
+                                        )}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Opportunities List */}
+                {loading ? (
+                    <div className="flex items-center justify-center py-20">
+                        <div className="text-center">
+                            <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <p className="text-gray-600">Loading opportunities...</p>
+                        </div>
+                    </div>
+                ) : filteredOpportunities.length > 0 ? (
+                    <div className="space-y-4">
+                        {filteredOpportunities.map((opp) => (
+                            <div key={opp.id} className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
                                 <div className="flex justify-between items-start gap-6">
                                     <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-3">
+                                        <div className="flex items-center gap-2 mb-3 flex-wrap">
                                             {opp.featured && (
-                                                <span className="bg-[var(--rose)] text-white text-xs font-bold px-2 py-1 rounded uppercase">
+                                                <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full">
                                                     Featured
                                                 </span>
                                             )}
-                                            <span className="bg-[var(--cream)] text-[var(--charcoal-light)] text-xs font-medium px-2 py-1 rounded">
+                                            <span className="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1 rounded-full">
                                                 {opp.type}
                                             </span>
+                                            {opp.scope && (
+                                                <span className={`text-xs font-medium px-3 py-1 rounded-full ${
+                                                    opp.scope === 'local' ? 'bg-blue-100 text-blue-700' :
+                                                    opp.scope === 'national' ? 'bg-green-100 text-green-700' :
+                                                    'bg-purple-100 text-purple-700'
+                                                }`}>
+                                                    {opp.scope === 'local' ? '📍 Local' : opp.scope === 'national' ? '🇺🇸 National' : '🌍 International'}
+                                                </span>
+                                            )}
                                         </div>
 
-                                        <h4 className="text-xl font-bold text-[var(--charcoal)] mb-2">
+                                        <h4 className="text-xl font-bold text-gray-900 mb-2">
                                             {opp.title}
                                         </h4>
 
-                                        <p className="text-[var(--charcoal-light)] mb-4 line-clamp-2">
+                                        <p className="text-gray-600 mb-4 line-clamp-2">
                                             {opp.description}
                                         </p>
 
-                                        <div className="flex flex-wrap gap-2 mb-4">
-                                            {Object.entries(opp.track_credits).map(([track, hours]) => (
-                                                <span
-                                                    key={track}
-                                                    className={`text-xs font-semibold px-3 py-1 rounded-full ${getTrackColor(track)}`}
-                                                >
-                                                    {formatTrackName(track)}: {hours}h
-                                                </span>
-                                            ))}
-                                        </div>
-
-                                        <div className="flex items-center gap-4 text-sm text-[var(--charcoal-light)]">
+                                        <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
                                             {opp.organization && (
-                                                <span>📍 {opp.organization}</span>
+                                                <span className="flex items-center gap-1">
+                                                    <Globe className="w-4 h-4" />
+                                                    {opp.organization}
+                                                </span>
                                             )}
                                             {opp.deadline && (
-                                                <span>📅 Due: {new Date(opp.deadline).toLocaleDateString()}</span>
+                                                <span className="flex items-center gap-1">
+                                                    <Calendar className="w-4 h-4" />
+                                                    Due: {new Date(opp.deadline).toLocaleDateString()}
+                                                </span>
                                             )}
                                             {opp.amount && (
-                                                <span>💰 {opp.amount}</span>
+                                                <span className="font-semibold text-green-600">
+                                                    💰 {opp.amount}
+                                                </span>
                                             )}
                                         </div>
                                     </div>
@@ -225,10 +332,11 @@ export default function OpportunitiesPage() {
                                         <button
                                             onClick={() => handleSave(opp.id)}
                                             disabled={savedIds.includes(opp.id)}
-                                            className={`p-3 rounded-lg transition-colors ${savedIds.includes(opp.id)
+                                            className={`p-3 rounded-lg transition-colors ${
+                                                savedIds.includes(opp.id)
                                                     ? 'bg-green-100 text-green-600'
-                                                    : 'bg-[var(--cream)] text-[var(--charcoal-light)] hover:bg-[var(--cream-dark)]'
-                                                }`}
+                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
                                             title={savedIds.includes(opp.id) ? 'Saved' : 'Save'}
                                         >
                                             {savedIds.includes(opp.id) ? (
@@ -242,8 +350,8 @@ export default function OpportunitiesPage() {
                                                 href={opp.source_url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="p-3 bg-[var(--cream)] text-[var(--charcoal-light)] hover:bg-[var(--cream-dark)] rounded-lg transition-colors"
-                                                title="View Source"
+                                                className="p-3 bg-purple-100 text-purple-600 hover:bg-purple-200 rounded-lg transition-colors"
+                                                title="View Details"
                                             >
                                                 <ExternalLink className="w-5 h-5" />
                                             </a>
@@ -253,17 +361,27 @@ export default function OpportunitiesPage() {
                             </div>
                         ))}
                     </div>
-                )}
-
-                {/* Empty State */}
-                {!loading && opportunities.length === 0 && (
-                    <div className="card p-20 text-center">
-                        <div className="w-16 h-16 bg-[var(--cream)] rounded-full flex items-center justify-center text-[var(--charcoal-light)] mx-auto mb-4">
+                ) : (
+                    <div className="bg-white rounded-xl p-20 text-center shadow-md">
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mx-auto mb-4">
                             <Search className="w-8 h-8" />
                         </div>
-                        <p className="text-[var(--charcoal-light)] font-medium">
-                            Search for opportunities to get started!
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                            No opportunities found
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                            Try selecting a category above to search for opportunities!
                         </p>
+                        {selectedCategory !== 'all' && (
+                            <button
+                                onClick={() => handleSearchCategory(selectedCategory)}
+                                disabled={searchingCategory === selectedCategory}
+                                className="btn-primary"
+                            >
+                                <Sparkles className="w-5 h-5 inline mr-2" />
+                                Search {CATEGORIES.find(c => c.id === selectedCategory)?.name}
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
