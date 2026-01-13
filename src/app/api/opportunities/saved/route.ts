@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
         const { data, error } = await supabase
             .from('saved_opportunities')
-            .insert({ user_id: user.id, opportunity_id: opportunityId })
+            .insert({ student_id: user.id, opportunity_id: opportunityId })
             .select()
             .single();
 
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
                 *,
                 opportunity:opportunities(*)
             `)
-            .eq('user_id', user.id);
+            .eq('student_id', user.id);
 
         if (error) {
             console.error('Error fetching saved opportunities:', error);

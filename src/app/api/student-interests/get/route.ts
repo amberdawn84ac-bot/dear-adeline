@@ -13,7 +13,7 @@ export async function GET(request: Request) {
         const { data: interestsData, error } = await supabase
             .from('student_interests')
             .select('interest') // Select only the 'interest' column
-            .eq('user_id', user.id);
+            .eq('student_id', user.id);
 
         if (error) {
             console.error('Error fetching student interests:', error);

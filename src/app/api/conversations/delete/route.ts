@@ -21,7 +21,7 @@ export async function POST(req: Request) {
             .from('conversations')
             .delete()
             .eq('id', conversationId)
-            .eq('user_id', userId);
+            .eq('student_id', userId);
 
         if (error) throw error;
 

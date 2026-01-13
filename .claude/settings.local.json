@@ -23,7 +23,9 @@
       "Bash(test:*)",
       "Bash(git rm:*)",
       "Bash(pnpm install:*)",
-      "Bash(node run-migrations.mjs:*)"
+      "Bash(node run-migrations.mjs:*)",
+      "Bash(grep:*)",
+      "Bash(done)"
     ]
   }
 }

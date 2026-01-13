@@ -20,7 +20,7 @@ export async function POST(request: Request) {
         const { error: deleteError } = await supabase
             .from('student_interests')
             .delete()
-            .eq('user_id', user.id);
+            .eq('student_id', user.id);
 
         if (deleteError) {
             console.error('Error deleting student interests:', deleteError);
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         // Then, insert the new interests
         if (interests.length > 0) {
             const interestsToInsert = interests.map(interest => ({
-                user_id: user.id,
+                student_id: user.id,
                 interest,
             }));
 

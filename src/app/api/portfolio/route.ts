@@ -25,7 +25,7 @@ export async function GET(req: Request) {
     const { data, error } = await supabase
       .from('portfolio_items')
       .select('*')
-      .eq('user_id', userId)
+      .eq('student_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     }
 
     const portfolioItem = {
-      user_id: userId,
+      student_id: userId,
       title,
       description: description || null,
       type: type || 'project',
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     // Award skills if provided
     if (skills && skills.length > 0) {
       const skillRecords = skills.map((skillName: string) => ({
-        user_id: userId,
+        student_id: userId,
         skill_name: skillName,
         portfolio_item_id: data.id,
         earned_at: new Date().toISOString(),
