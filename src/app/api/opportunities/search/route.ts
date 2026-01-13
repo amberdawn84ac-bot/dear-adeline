@@ -1,66 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-
-const CATEGORY_SEARCH_QUERIES: Record<string, string[]> = {
-    art: [
-        'art contests for students',
-        'youth art grants',
-        'student art competitions',
-        'creative arts scholarships',
-        'visual arts opportunities for teens'
-    ],
-    writing: [
-        'writing contests for students',
-        'youth poetry competitions',
-        'creative writing scholarships',
-        'essay contests for high school',
-        'student journalism opportunities'
-    ],
-    science: [
-        'science fairs for students',
-        'STEM competitions for youth',
-        'math olympiad for students',
-        'science research grants for teens',
-        'robotics competitions for students'
-    ],
-    history: [
-        'history essay contests',
-        'social studies competitions for students',
-        'historical research grants for youth',
-        'debate tournaments for students',
-        'model united nations conferences'
-    ],
-    entrepreneurship: [
-        'business plan competitions for students',
-        'entrepreneurship programs for youth',
-        'startup grants for students',
-        'young entrepreneur competitions',
-        'business scholarships for high school'
-    ],
-    technology: [
-        'coding competitions for students',
-        'hackathons for youth',
-        'app development contests',
-        'cybersecurity competitions for students',
-        'technology scholarships for teens'
-    ],
-    service: [
-        'community service awards for students',
-        'volunteer opportunities for youth',
-        'leadership programs for students',
-        'service scholarships for teens',
-        'youth civic engagement programs'
-    ],
-    scholarships: [
-        'academic scholarships for students',
-        'merit scholarships for high school',
-        'college scholarships for homeschoolers',
-        'national scholarship programs',
-        'local scholarships for students'
-    ]
+const CATEGORY_SEARCH_QUERIES: Record<string, string> = {
+    art: 'art contests competitions grants scholarships students youth 2025 2026',
+    writing: 'writing poetry essay journalism contests competitions scholarships students 2025 2026',
+    science: 'science STEM math robotics fair olympiad competitions grants students 2025 2026',
+    history: 'history social studies debate essay contests competitions students 2025 2026',
+    entrepreneurship: 'business entrepreneurship startup plan competitions grants students youth 2025 2026',
+    technology: 'coding hackathon programming app development cybersecurity competitions students 2025 2026',
+    service: 'community service leadership volunteer awards programs students youth 2025 2026',
+    scholarships: 'scholarships grants financial aid merit academic students homeschool 2025 2026'
 };
 
 export async function POST(req: Request) {
@@ -78,95 +27,93 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Category required' }, { status: 400 });
         }
 
-        // Get search queries for this category
-        const searchQueries = CATEGORY_SEARCH_QUERIES[category] || [];
-
-        // Build AI prompt to generate opportunities
-        const ageGroupText = ageGroup === 'elementary' ? 'elementary school (K-5)' :
-                           ageGroup === 'middle' ? 'middle school (6-8)' :
-                           ageGroup === 'high' ? 'high school (9-12)' :
-                           ageGroup === 'college' ? 'college students' : 'students of all ages';
-
-        const scopeText = scope === 'local' ? 'local and state-level' :
-                        scope === 'national' ? 'national' : 'all levels (local, national, and international)';
-
-        const prompt = `Generate a list of 5-10 real, current opportunities for ${ageGroupText} in the category: ${category}.
-
-Focus on ${scopeText} opportunities including:
-${searchQueries.map(q => `- ${q}`).join('\n')}
-
-For each opportunity, provide:
-1. title: Official name of the opportunity
-2. description: Brief description (2-3 sentences)
-3. type: (contest, scholarship, grant, program, fair, competition, award)
-4. organization: Organization hosting it
-5. deadline: Approximate deadline or "Rolling" (use YYYY-MM-DD format)
-6. amount: Prize/scholarship amount if applicable, or "N/A"
-7. source_url: A plausible URL (real if you know it, or organization website)
-8. scope: local, national, or international
-9. age_group: elementary, middle, high, or college
-
-Return ONLY valid JSON array, no markdown:
-[
-  {
-    "title": "...",
-    "description": "...",
-    "type": "...",
-    "organization": "...",
-    "deadline": "...",
-    "amount": "...",
-    "source_url": "...",
-    "scope": "...",
-    "age_group": "..."
-  }
-]
-
-Focus on well-known, legitimate opportunities. Include major national competitions and local opportunities.`;
-
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-        const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
-
-        // Parse JSON from response
-        let opportunities = [];
-        try {
-            // Extract JSON array from response
-            const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-            if (jsonMatch) {
-                opportunities = JSON.parse(jsonMatch[0]);
-            }
-        } catch (parseError) {
-            console.error('Failed to parse AI response:', parseError);
-            return NextResponse.json({ error: 'Failed to parse opportunities' }, { status: 500 });
+        // Check for Tavily API key
+        const apiKey = process.env.TAVILY_API_KEY;
+        if (!apiKey) {
+            return NextResponse.json({ error: 'Tavily API key not configured' }, { status: 500 });
         }
+
+        // Get search query for this category
+        const baseQuery = CATEGORY_SEARCH_QUERIES[category] || 'student opportunities 2025 2026';
+
+        // Add age group filter to search
+        const ageGroupText = ageGroup === 'elementary' ? 'elementary school K-5' :
+                           ageGroup === 'middle' ? 'middle school grades 6-8' :
+                           ageGroup === 'high' ? 'high school grades 9-12' :
+                           ageGroup === 'college' ? 'college university' : '';
+
+        // Add scope filter to search
+        const scopeText = scope === 'local' ? 'local state' :
+                        scope === 'national' ? 'national USA' : '';
+
+        const searchQuery = `${baseQuery} ${ageGroupText} ${scopeText}`.trim();
+
+        console.log('🔍 Searching for opportunities:', searchQuery);
+
+        // Search the web using Tavily API
+        const tavilyResponse = await fetch('https://api.tavily.com/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                api_key: apiKey,
+                query: searchQuery,
+                search_depth: 'advanced',
+                max_results: 10,
+            }),
+        });
+
+        if (!tavilyResponse.ok) {
+            throw new Error('Tavily search failed');
+        }
+
+        const searchData = await tavilyResponse.json();
+        const opportunities = searchData.results || [];
 
         // Save opportunities to database
         const savedOpportunities = [];
-        for (const opp of opportunities) {
+        for (const result of opportunities) {
+            // Tavily returns: title, url, content, score
             const { data: existing } = await supabase
                 .from('opportunities')
                 .select('id')
-                .eq('title', opp.title)
+                .eq('source_url', result.url)
                 .single();
 
             if (!existing) {
+                // Extract organization from URL domain
+                let organization = 'N/A';
+                try {
+                    const hostname = new URL(result.url).hostname.replace('www.', '');
+                    organization = hostname.split('.')[0];
+                } catch (e) {
+                    // Invalid URL, use N/A
+                }
+
+                // Determine type from title/content keywords
+                const text = `${result.title} ${result.content}`.toLowerCase();
+                const type = text.includes('scholarship') ? 'scholarship' :
+                           text.includes('contest') || text.includes('competition') ? 'contest' :
+                           text.includes('grant') ? 'grant' :
+                           text.includes('award') ? 'award' :
+                           text.includes('program') ? 'program' : 'opportunity';
+
                 const { data: saved, error } = await supabase
                     .from('opportunities')
                     .insert({
-                        title: opp.title,
-                        description: opp.description,
-                        type: opp.type || 'opportunity',
-                        organization: opp.organization || 'N/A',
+                        title: result.title,
+                        description: result.content,
+                        type: type,
+                        organization: organization,
                         location: scope === 'local' ? 'Local/State' : scope === 'national' ? 'National' : 'International',
-                        deadline: opp.deadline || null,
-                        amount: opp.amount || 'N/A',
-                        source_url: opp.source_url || '',
+                        deadline: null, // Not available from search results
+                        amount: 'See website',
+                        source_url: result.url,
                         track_credits: {},
                         disciplines: [category],
                         tags: [category, ageGroup],
                         featured: false,
-                        scope: opp.scope || scope || 'national',
-                        age_group: opp.age_group || ageGroup || 'all',
+                        scope: scope || 'national',
+                        age_group: ageGroup || 'all',
                         category: category,
                     })
                     .select()
@@ -174,13 +121,18 @@ Focus on well-known, legitimate opportunities. Include major national competitio
 
                 if (!error && saved) {
                     savedOpportunities.push(saved);
+                } else if (error) {
+                    console.error('Error saving opportunity:', error);
                 }
             }
         }
 
+        console.log(`✅ Found and saved ${savedOpportunities.length} opportunities for ${category}`);
+
         return NextResponse.json({
             opportunities: savedOpportunities,
-            count: savedOpportunities.length
+            count: savedOpportunities.length,
+            searched: opportunities.length
         });
 
     } catch (error: any) {
