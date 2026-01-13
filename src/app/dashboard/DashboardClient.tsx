@@ -234,6 +234,13 @@ export default function DashboardClient({
     const [showCelebration, setShowCelebration] = useState<string[] | null>(null);
     const [showVoiceSession, setShowVoiceSession] = useState(false);
     const [showCameraInput, setShowCameraInput] = useState(false);
+    const [showActivityLog, setShowActivityLog] = useState(false);
+    const [activityForm, setActivityForm] = useState({
+        caption: '',
+        translation: '',
+        skills: '',
+        grade: '',
+    });
 
     // Sketchnotes disabled - always use MessageContent for proper rendering
     const shouldUseSketchnote = (content: string): boolean => {
@@ -265,6 +272,43 @@ export default function DashboardClient({
             const preferredVoice = voices.find(v => v.lang.startsWith('en-US')) || voices[0];
             if (preferredVoice) utterance.voice = preferredVoice;
             window.speechSynthesis.speak(utterance);
+        }
+    };
+
+    const handleLogActivity = async () => {
+        if (!activityForm.caption || !activityForm.translation) {
+            alert('Please fill in at least the activity and academic translation fields.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    student_id: user.id,
+                    caption: activityForm.caption,
+                    translation: activityForm.translation,
+                    skills: activityForm.skills || null,
+                    grade: activityForm.grade || null,
+                }),
+            });
+
+            if (response.ok) {
+                alert('Activity logged successfully! Check your Portfolio to see it.');
+                setShowActivityLog(false);
+                setActivityForm({
+                    caption: '',
+                    translation: '',
+                    skills: '',
+                    grade: '',
+                });
+            } else {
+                alert('Failed to log activity. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error logging activity:', error);
+            alert('Failed to log activity. Please try again.');
         }
     };
 
@@ -686,6 +730,14 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                     />
                                     <button
                                         type="button"
+                                        onClick={() => setShowActivityLog(true)}
+                                        className="bg-[var(--ochre)] text-white p-2.5 rounded-xl hover:brightness-110 transition-all shadow-sm"
+                                        title="Log an activity for academic credit"
+                                    >
+                                        <Trophy className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        type="button"
                                         onClick={() => setShowCameraInput(true)}
                                         className="bg-gray-200 text-gray-600 p-2.5 rounded-xl hover:bg-gray-300 transition-all shadow-sm"
                                     >
@@ -966,6 +1018,99 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                         handleSendMessage(input, imageData);
                     }}
                 />
+            )}
+
+            {/* Activity Log Modal */}
+            {showActivityLog && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-8">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <Trophy className="w-6 h-6 text-[var(--ochre)]" />
+                                <h2 className="text-2xl font-bold text-[var(--forest)]">Log an Activity</h2>
+                            </div>
+                            <button
+                                onClick={() => setShowActivityLog(false)}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <p className="text-sm text-gray-600 mb-6">
+                            Did you do something today that counts toward your education? Log it here to track your progress!
+                        </p>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    What did you do? <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    value={activityForm.caption}
+                                    onChange={(e) => setActivityForm({ ...activityForm, caption: e.target.value })}
+                                    placeholder="e.g., Baked sourdough bread from scratch"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--sage)] focus:outline-none"
+                                    rows={3}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Academic Translation <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={activityForm.translation}
+                                    onChange={(e) => setActivityForm({ ...activityForm, translation: e.target.value })}
+                                    placeholder="e.g., Chemistry: Fermentation, Reaction Kinetics"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--sage)] focus:outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Skills Demonstrated (optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={activityForm.skills}
+                                    onChange={(e) => setActivityForm({ ...activityForm, skills: e.target.value })}
+                                    placeholder="e.g., Experimentation, Problem Solving"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--sage)] focus:outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Grade Level (optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={activityForm.grade}
+                                    onChange={(e) => setActivityForm({ ...activityForm, grade: e.target.value })}
+                                    placeholder="e.g., High School Chemistry"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--sage)] focus:outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 mt-6">
+                            <button
+                                onClick={handleLogActivity}
+                                className="flex-1 bg-[var(--ochre)] text-white py-3 rounded-xl font-bold hover:brightness-110 transition-all"
+                            >
+                                Log Activity
+                            </button>
+                            <button
+                                onClick={() => setShowActivityLog(false)}
+                                className="px-6 bg-gray-200 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-300 transition-all"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

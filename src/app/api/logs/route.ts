@@ -33,3 +33,39 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
+
+export async function POST(req: Request) {
+    try {
+        const { student_id, caption, translation, skills, grade } = await req.json();
+
+        if (!student_id || !caption || !translation) {
+            return NextResponse.json({
+                error: 'student_id, caption, and translation are required'
+            }, { status: 400 });
+        }
+
+        const { data, error } = await supabase
+            .from('activity_logs')
+            .insert({
+                student_id,
+                caption,
+                translation,
+                skills,
+                grade,
+                created_at: new Date().toISOString(),
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Database Error:', error);
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        return NextResponse.json({ log: data });
+
+    } catch (error: any) {
+        console.error('API Error:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+}
