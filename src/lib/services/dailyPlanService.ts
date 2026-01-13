@@ -12,6 +12,7 @@ interface StudentProgress {
 }
 
 interface DailyPlan {
+    id?: string;
     subject: string;
     topic: string;
     description: string;

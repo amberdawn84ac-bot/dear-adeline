@@ -58,7 +58,7 @@ interface ActivityLog {
 }
 
 interface PortfolioClientProps {
-    profile: { display_name: string | null } | null;
+    profile: { id: string; display_name: string | null } | null;
     portfolioItems: PortfolioItem[];
     allSkills: Skill[];
     activityLogs: ActivityLog[];
