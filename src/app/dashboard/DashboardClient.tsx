@@ -505,6 +505,10 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                             <GraduationCap className="w-4 h-4" />
                             <span className="text-sm">Graduation Tracker</span>
                         </Link>
+                        <Link href="/impact" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/impact' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
+                            <Globe className="w-4 h-4" />
+                            <span className="text-sm">World Impact</span>
+                        </Link>
 
                         <div className="mt-6">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-2">Spiritual Growth</p>

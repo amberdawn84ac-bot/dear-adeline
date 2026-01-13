@@ -11,7 +11,9 @@ const STARTER_PROJECTS = [
         materials: ["Notebook", "Pencil", "Magnifying glass"],
         credit_value: 0.5,
         difficulty: "beginner",
-        grade_levels: ["K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
+        grade_levels: ["K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+        approved: true,
+        approval_status: 'approved'
     },
     {
         title: "Heritage Seed Saving",
@@ -21,7 +23,9 @@ const STARTER_PROJECTS = [
         materials: ["Heirloom produce", "Paper towels", "Small envelopes", "Colored pencils"],
         credit_value: 0.75,
         difficulty: "beginner",
-        grade_levels: ["K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
+        grade_levels: ["K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+        approved: true,
+        approval_status: 'approved'
     },
     {
         title: "The Living Archive",
@@ -31,7 +35,9 @@ const STARTER_PROJECTS = [
         materials: ["Voice recorder (phone)", "Large paper", "Photos (optional)"],
         credit_value: 1.25,
         difficulty: "beginner",
-        grade_levels: ["K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
+        grade_levels: ["K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+        approved: true,
+        approval_status: 'approved'
     }
 ];
 
@@ -60,6 +66,12 @@ export async function POST(request: Request) {
                 console.error('Error seeding library:', seedError);
                 // Don't fail the whole request if library seeding fails
             }
+        } else {
+            // If projects exist but aren't approved, approve the starter projects
+            await supabase
+                .from('library_projects')
+                .update({ approved: true, approval_status: 'approved' })
+                .in('title', STARTER_PROJECTS.map(p => p.title));
         }
 
         return NextResponse.json({ success: true, count: STARTER_PROJECTS.length });
