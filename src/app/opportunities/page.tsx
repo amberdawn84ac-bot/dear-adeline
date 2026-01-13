@@ -58,6 +58,14 @@ export default function OpportunitiesPage() {
         loadOpportunities();
     }, []);
 
+    // Auto-search first category if database is empty
+    useEffect(() => {
+        if (!loading && opportunities.length === 0 && !searchingCategory) {
+            console.log('No opportunities found, auto-searching scholarships...');
+            handleSearchCategory('scholarships');
+        }
+    }, [loading, opportunities.length]);
+
     const loadSavedOpportunities = async () => {
         try {
             const res = await fetch('/api/opportunities/saved');

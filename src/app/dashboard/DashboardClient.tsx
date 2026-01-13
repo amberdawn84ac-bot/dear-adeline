@@ -35,7 +35,6 @@ import {
     Globe,
     Calculator,
     Shield,
-    Cloud,
     ArrowRight,
     BarChart3,
     Camera,
@@ -482,6 +481,10 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                             <Home className="w-4 h-4" />
                             <span className="text-sm">Dashboard</span>
                         </Link>
+                        <Link href="/journal" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/journal' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
+                            <BookOpen className="w-4 h-4" />
+                            <span className="text-sm">Journal</span>
+                        </Link>
                         <Link href="/portfolio" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/portfolio' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
                             <FolderOpen className="w-4 h-4" />
                             <span className="text-sm">Portfolio</span>
@@ -490,9 +493,9 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                             <Library className="w-4 h-4" />
                             <span className="text-sm">Project Library</span>
                         </Link>
-                        <Link href="/intelligence" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/intelligence' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
-                            <Cloud className="w-4 h-4" />
-                            <span className="text-sm">Local Intelligence</span>
+                        <Link href="/opportunities" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/opportunities' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
+                            <Trophy className="w-4 h-4" />
+                            <span className="text-sm">Opportunities</span>
                         </Link>
                         <Link href="/careers" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/careers' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
                             <Rocket className="w-4 h-4" />
@@ -502,32 +505,12 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                             <GraduationCap className="w-4 h-4" />
                             <span className="text-sm">Graduation Tracker</span>
                         </Link>
-                        <Link href="/opportunities" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/opportunities' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
-                            <Trophy className="w-4 h-4" />
-                            <span className="text-sm">Opportunities</span>
-                        </Link>
 
                         <div className="mt-6">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-2">Spiritual Growth</p>
-                            <Link href="/journal" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/journal' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
-                                <BookOpen className="w-4 h-4" />
-                                <span className="text-sm">Journal</span>
-                            </Link>
                             <Link href="/wisdom" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/wisdom' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
                                 <Heart className="w-4 h-4" />
                                 <span className="text-sm">Wisdom in Action</span>
-                            </Link>
-                        </div>
-
-                        <div className="mt-6">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-2">Learning Tools</p>
-                            <Link href="/gamelab" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/gamelab' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
-                                <Gamepad2 className="w-4 h-4" />
-                                <span className="text-sm">Game Lab</span>
-                            </Link>
-                            <Link href="/diagnostic" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/diagnostic' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
-                                <Target className="w-4 h-4" />
-                                <span className="text-sm">Diagnostic Center</span>
                             </Link>
                         </div>
 
