@@ -502,6 +502,10 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                             <GraduationCap className="w-4 h-4" />
                             <span className="text-sm">Graduation Tracker</span>
                         </Link>
+                        <Link href="/opportunities" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/opportunities' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
+                            <Trophy className="w-4 h-4" />
+                            <span className="text-sm">Opportunities</span>
+                        </Link>
 
                         <div className="mt-6">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-2">Spiritual Growth</p>
@@ -752,6 +756,76 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
 
                         {/* Right Sidebar */}
                         <div className="col-span-12 lg:col-span-4 space-y-6">
+                            {/* 1. Goal Progress - Most Important */}
+                            <div className="card !p-5">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2">
+                                        <GraduationCap className="w-5 h-5" />
+                                        Goal Progress
+                                    </h3>
+                                    <span className="text-2xl font-black text-[var(--ochre)]">{overallProgress.toFixed(0)}%</span>
+                                </div>
+                                <div className="w-full bg-slate-100 rounded-full h-3 mb-6 overflow-hidden">
+                                    <div className="bg-gradient-to-r from-[var(--sage)] to-[var(--sage-dark)] h-full transition-all duration-1000 ease-out" style={{ width: `${overallProgress}%` }} />
+                                </div>
+                                <div className="space-y-4">
+                                    {allRequirements.slice(0, 3).map((req) => {
+                                        const prog = graduationProgress.find(p => p.requirement.id === req.id);
+                                        const earned = prog?.credits_earned || 0;
+                                        const percentage = Math.min((earned / req.required_credits) * 100, 100);
+                                        return (
+                                            <div key={req.id}>
+                                                <div className="flex justify-between text-xs mb-1.5 font-medium text-slate-600">
+                                                    <span>{req.name}</span>
+                                                    <span>{earned} / {req.required_credits}</span>
+                                                </div>
+                                                <div className="w-full bg-slate-50 rounded-full h-1.5 overflow-hidden">
+                                                    <div className="bg-[var(--sage)] h-full rounded-full" style={{ width: `${percentage}%` }} />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* 2. Learning Goals Widget */}
+                            {profile?.grade_level && profile?.state_standards && (
+                                <GoalsWidget
+                                    studentId={currentViewingUserId}
+                                    gradeLevel={profile.grade_level}
+                                    state={profile.state_standards}
+                                />
+                            )}
+
+                            {/* 3. Badges Earned */}
+                            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
+                                <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2 mb-4">
+                                    <Trophy className="w-5 h-5 text-[var(--ochre)]" />
+                                    Badges Earned
+                                </h3>
+                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                                    {earnedBadges.map(badge => {
+                                        const config = trackConfig[badge.requirement.name];
+                                        if (!config) return null;
+                                        const Icon = config.icon;
+                                        return (
+                                            <div key={badge.id} className={`flex flex-col items-center gap-1 p-2 rounded-xl border ${config.badgeColor} transition-transform hover:scale-110 cursor-help group relative`} title={`${badge.requirement.name} Specialist`}>
+                                                <Icon className="w-6 h-6" />
+                                                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                                    {badge.requirement.name} Master
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {earnedBadges.length === 0 && (
+                                        <div className="col-span-4 py-4 text-center">
+                                            <p className="text-xs text-slate-400 italic">Work on projects to earn your first badge!</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* 4. Adeline's Insights */}
                             <div className="card !p-5">
                                 <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2 mb-4">
                                     <Lightbulb className="w-5 h-5 text-[var(--sage)]" />
@@ -762,10 +836,10 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                         {learningGaps.map((gap, i) => (
                                             <div key={i} className="text-sm">
                                                 <p className="font-medium text-[var(--forest)]">{gap.skill_area}</p>
-                                                
+
                                                 {/* By adding 'as any', we tell TypeScript to ignore the missing property error for the build */}
                                                 <p className="text-xs text-slate-600">{(gap as any).description}</p>
-                                                
+
                                                 {gap.suggested_activities && gap.suggested_activities.length > 0 && (
                                                     <ul className="list-disc list-inside text-xs text-slate-500 mt-1">
                                                         {gap.suggested_activities.map((activity, j) => (
@@ -780,17 +854,43 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                     <p className="text-xs text-slate-400 italic">No current learning gaps or suggestions from Adeline.</p>
                                 )}
                             </div>
-                            
-                            {/* Learning Goals Widget */}
-                            {profile?.grade_level && profile?.state_standards && (
-                                <GoalsWidget
-                                    studentId={currentViewingUserId}
-                                    gradeLevel={profile.grade_level}
-                                    state={profile.state_standards}
-                                />
+
+                            {/* 5. Recent Projects */}
+                            {portfolioItems.length > 0 && (
+                                <div className="card !p-5">
+                                    <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
+                                        <FolderOpen className="w-5 h-5 text-indigo-500" />
+                                        Recent Projects
+                                    </h3>
+                                    <div className="space-y-2">
+                                        {portfolioItems.slice(0, 3).map(item => (
+                                            <Link key={item.id} href="/portfolio" className="block p-3 rounded-xl border border-slate-50 hover:bg-slate-50 transition-all">
+                                                <p className="text-sm font-medium text-slate-700 truncate">{item.title}</p>
+                                                <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-tighter">{item.type}</p>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
                             )}
 
-                            {/* Daily Bread Card */}
+                            {/* 6. Skills Earned */}
+                            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
+                                <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2 mb-4">
+                                    <Sparkles className="w-5 h-5 text-[var(--ochre)]" />
+                                    Skills Earned
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {studentSkills.map(s => (
+                                        <span key={s.id} className="bg-amber-50 text-amber-700 text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-md border border-amber-100 flex items-center gap-1">
+                                            <CheckCircle2 className="w-2.5 h-2.5" />
+                                            {s.skill.name}
+                                        </span>
+                                    ))}
+                                    {studentSkills.length === 0 && <p className="text-xs text-slate-400 italic">No skills yet!</p>}
+                                </div>
+                            </div>
+
+                            {/* 7. Daily Bread - Spiritual Growth */}
                             <div className="card !p-0 overflow-hidden border-2 border-[var(--ochre)]/30 group">
                                 <div className="bg-[var(--ochre)]/10 p-5 border-b border-[var(--ochre)]/20">
                                     <div className="flex items-center justify-between mb-1">
@@ -824,97 +924,6 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                     </button>
                                 </div>
                             </div>
-
-                            <div className="card !p-5">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2">
-                                        <GraduationCap className="w-5 h-5" />
-                                        Goal Progress
-                                    </h3>
-                                    <span className="text-2xl font-black text-[var(--ochre)]">{overallProgress.toFixed(0)}%</span>
-                                </div>
-                                <div className="w-full bg-slate-100 rounded-full h-3 mb-6 overflow-hidden">
-                                    <div className="bg-gradient-to-r from-[var(--sage)] to-[var(--sage-dark)] h-full transition-all duration-1000 ease-out" style={{ width: `${overallProgress}%` }} />
-                                </div>
-                                <div className="space-y-4">
-                                    {allRequirements.slice(0, 3).map((req) => {
-                                        const prog = graduationProgress.find(p => p.requirement.id === req.id);
-                                        const earned = prog?.credits_earned || 0;
-                                        const percentage = Math.min((earned / req.required_credits) * 100, 100);
-                                        return (
-                                            <div key={req.id}>
-                                                <div className="flex justify-between text-xs mb-1.5 font-medium text-slate-600">
-                                                    <span>{req.name}</span>
-                                                    <span>{earned} / {req.required_credits}</span>
-                                                </div>
-                                                <div className="w-full bg-slate-50 rounded-full h-1.5 overflow-hidden">
-                                                    <div className="bg-[var(--sage)] h-full rounded-full" style={{ width: `${percentage}%` }} />
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
-                                <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2 mb-4">
-                                    <Trophy className="w-5 h-5 text-[var(--ochre)]" />
-                                    Badges Earned
-                                </h3>
-                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                                    {earnedBadges.map(badge => {
-                                        const config = trackConfig[badge.requirement.name];
-                                        if (!config) return null;
-                                        const Icon = config.icon;
-                                        return (
-                                            <div key={badge.id} className={`flex flex-col items-center gap-1 p-2 rounded-xl border ${config.badgeColor} transition-transform hover:scale-110 cursor-help group relative`} title={`${badge.requirement.name} Specialist`}>
-                                                <Icon className="w-6 h-6" />
-                                                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                                    {badge.requirement.name} Master
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                    {earnedBadges.length === 0 && (
-                                        <div className="col-span-4 py-4 text-center">
-                                            <p className="text-xs text-slate-400 italic">Work on projects to earn your first badge!</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
-                                <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2 mb-4">
-                                    <Sparkles className="w-5 h-5 text-[var(--ochre)]" />
-                                    Skills Earned
-                                </h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {studentSkills.map(s => (
-                                        <span key={s.id} className="bg-amber-50 text-amber-700 text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-md border border-amber-100 flex items-center gap-1">
-                                            <CheckCircle2 className="w-2.5 h-2.5" />
-                                            {s.skill.name}
-                                        </span>
-                                    ))}
-                                    {studentSkills.length === 0 && <p className="text-xs text-slate-400 italic">No skills yet!</p>}
-                                </div>
-                            </div>
-
-                            {portfolioItems.length > 0 && (
-                                <div className="card !p-5">
-                                    <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
-                                        <FolderOpen className="w-5 h-5 text-indigo-500" />
-                                        Recent Projects
-                                    </h3>
-                                    <div className="space-y-2">
-                                        {portfolioItems.slice(0, 3).map(item => (
-                                            <Link key={item.id} href="/portfolio" className="block p-3 rounded-xl border border-slate-50 hover:bg-slate-50 transition-all">
-                                                <p className="text-sm font-medium text-slate-700 truncate">{item.title}</p>
-                                                <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-tighter">{item.type}</p>
-                                            </Link>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
