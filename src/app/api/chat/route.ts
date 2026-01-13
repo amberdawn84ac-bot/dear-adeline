@@ -10,6 +10,7 @@ import { autoFormatSketchnote } from '@/lib/sketchnoteUtils';
 import { LibraryService } from '@/lib/services/libraryService';
 import { ModelRouter } from '@/lib/services/modelRouter';
 import { AdaptiveDifficultyService } from '@/lib/services/adaptiveDifficultyService';
+import { DailyPlanService } from '@/lib/services/dailyPlanService';
 
 const apiKey = process.env.GOOGLE_API_KEY;
 const supabase = createClient(
@@ -43,6 +44,42 @@ export async function POST(req: Request) {
         const history = formattedHistory.slice(0, -1);
 
         console.log('💬 User prompt:', userPrompt);
+
+        // Check for daily plan - if conversation is new and user hasn't asked a specific question
+        // Present the daily plan proactively
+        const isNewConversation = messages.length <= 2;
+        const isVaguePrompt = userPrompt.length < 20 || /^(hi|hey|hello|sup|what'?s up)/i.test(userPrompt);
+
+        if (isNewConversation && isVaguePrompt) {
+            const dailyPlan = await DailyPlanService.getTodaysPlan(userId, supabase);
+
+            if (dailyPlan) {
+                console.log('📅 Presenting daily lesson plan:', dailyPlan.subject);
+                const planMessage = DailyPlanService.formatPlanForChat(dailyPlan);
+
+                // Mark plan as started
+                if (dailyPlan.id) {
+                    await DailyPlanService.startPlan(dailyPlan.id, supabase);
+                }
+
+                // Persist conversation with plan message
+                const { activeConversationId } = await persistConversation(
+                    conversationId,
+                    userPrompt,
+                    planMessage,
+                    messages,
+                    userId,
+                    supabase
+                );
+
+                return NextResponse.json({
+                    content: planMessage,
+                    conversationId: activeConversationId,
+                    title: `Today's Plan: ${dailyPlan.subject}`,
+                    dailyPlan: dailyPlan, // Include plan data for frontend
+                });
+            }
+        }
 
         // Detect which AI model to use based on conversation content
         const route = ModelRouter.detectMode(userPrompt);
