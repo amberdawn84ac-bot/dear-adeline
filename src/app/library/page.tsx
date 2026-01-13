@@ -11,10 +11,11 @@ export default async function LibraryPage() {
         redirect('/login');
     }
 
-    // Get all library projects
+    // Get all library projects (only approved ones for students)
     let { data: projects } = await supabase
         .from('library_projects')
         .select('*')
+        .eq('approved', true)
         .order('created_at', { ascending: false });
 
     // Get student's project progress

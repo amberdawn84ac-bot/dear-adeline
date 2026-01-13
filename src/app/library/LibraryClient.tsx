@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import MediaUpload from '@/components/MediaUpload';
 
 interface Project {
     id: string;
@@ -153,6 +154,8 @@ export default function LibraryClient({
     const [personalizing, setPersonalizing] = useState(false);
     const [seeding, setSeeding] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [evidenceUrls, setEvidenceUrls] = useState<string[]>([]);
+    const [reflection, setReflection] = useState('');
 
     const getProjectStatus = (projectId: string) => {
         return studentProjects.find(sp => sp.project_id === projectId)?.status || 'not_started';
@@ -230,8 +233,13 @@ export default function LibraryClient({
         await supabase.from('student_projects').update({
             status: 'completed',
             completed_at: new Date().toISOString(),
+            evidence_urls: evidenceUrls.length > 0 ? evidenceUrls : null,
+            reflection: reflection.trim() || null,
         }).eq('project_id', projectId);
 
+        // Reset form state
+        setEvidenceUrls([]);
+        setReflection('');
         router.refresh();
     };
 
@@ -531,6 +539,43 @@ export default function LibraryClient({
                                     </>
                                 )}
 
+                                {/* Submission Form - shown when in progress */}
+                                {getProjectStatus(selectedProject.id) === 'in_progress' && (
+                                    <div className="mb-6 space-y-4">
+                                        <div>
+                                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                                                Submit Your Work
+                                            </h3>
+
+                                            {/* Reflection Textarea */}
+                                            <div className="mb-4">
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Reflection (Optional)
+                                                </label>
+                                                <textarea
+                                                    value={reflection}
+                                                    onChange={(e) => setReflection(e.target.value)}
+                                                    placeholder="What did you learn? What was challenging? What are you proud of?"
+                                                    rows={4}
+                                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none resize-none"
+                                                />
+                                            </div>
+
+                                            {/* Media Upload */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Upload Photos or Videos (Optional)
+                                                </label>
+                                                <MediaUpload
+                                                    onUploadComplete={(urls) => setEvidenceUrls(urls)}
+                                                    maxFiles={5}
+                                                    existingUrls={evidenceUrls}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="flex gap-4">
                                     {getProjectStatus(selectedProject.id) === 'not_started' && (
                                         <button
@@ -553,7 +598,7 @@ export default function LibraryClient({
                                             className="btn-primary flex-1"
                                         >
                                             <CheckCircle2 className="w-5 h-5" />
-                                            Mark as Complete
+                                            Submit & Complete
                                         </button>
                                     )}
                                     {getProjectStatus(selectedProject.id) === 'completed' && (

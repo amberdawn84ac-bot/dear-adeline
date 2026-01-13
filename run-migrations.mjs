@@ -46,6 +46,7 @@ async function main() {
   await runMigration('supabase/migrations/20260112_daily_lesson_plans.sql');
   await runMigration('supabase/migrations/20260112_add_portfolio_public.sql');
   await runMigration('supabase/migrations/20260112_enhance_opportunities.sql');
+  await runMigration('supabase/migrations/20260112_project_approval_system.sql');
 
   console.log('\n✅ All migrations completed!');
   console.log('\n📋 Next steps:');
