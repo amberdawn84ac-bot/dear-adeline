@@ -15,10 +15,24 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { profile, skills, topics, portfolio } = await req.json();
+    const { profile, skills, topics, portfolio, assessment } = await req.json();
+
+    // Build enhanced assessment context if quiz was completed
+    let assessmentContext = '';
+    if (assessment?.is_complete) {
+        assessmentContext = `
+### CAREER DISCOVERY ASSESSMENT RESULTS:
+**Interest Areas**: ${assessment.interest_areas?.join(', ') || 'Not specified'}
+**Core Values** (Ranked): ${assessment.core_values?.join(', ') || 'Not specified'}
+**Work Style Preferences**: ${JSON.stringify(assessment.work_style || {}, null, 2)}
+**Dream Workday Vision**: "${assessment.dream_day || 'Not provided'}"
+**Desired World Impact**: "${assessment.dream_impact || 'Not provided'}"
+**Legacy Goal**: "${assessment.dream_legacy || 'Not provided'}"
+`;
+    }
 
     const prompt = `
-You are the Career Restoration Architect for Dear Adeline Academy. Your mission is to synthesize a student's entire body of work, curiosity, and character into a singular, multifaceted "Restorative Blueprint."
+You are the Career Restoration Architect for Dear Adeline Academy. Your mission is to synthesize a student's entire body of work, curiosity, character, AND personal vision into a singular, multifaceted "Restorative Blueprint."
 
 CRITICAL PRINCIPLES:
 1. INDIVIDUALIZED: Do NOT provide a list of options. Do NOT provide "1 of 4" choices. This child is unique.
@@ -27,14 +41,17 @@ CRITICAL PRINCIPLES:
 4. BEYOND LABELS: Avoid generic titles. Create a sophisticated, mission-aligned identity.
 5. RESTORED MEDICINE: If the student leans toward healing, steer AWAY from standard Allopathic/Medical School paths (petroleum-based drugs, profit-driven systems). Instead, anchor them in Holistic, Natural, Herbal, and Preventative Restoration—the way God designed the body to heal.
 6. IMPACT CAMPAIGNS: Integrate the student's vocation with our non-profit initiatives (Clemency, Bail Bonds, Diversion, Reentry, Women/Power Tools, Worker Cooperatives, Community Art, Addiction Replacement, Real Food). Their venture should ideally "Fuel" or "Lead" one of these missions.
+7. HONOR THEIR VISION: If they completed the career assessment, weave their dream scenarios, values, and work style preferences deeply into the blueprint. Make it THEIR vision realized.
 
 ### STUDENT DATA DOSSIER:
 - **DisplayName**: ${profile?.display_name || 'Student'}
 - **Academic Context**: Grade ${profile?.grade_level || 'Unknown'} | ${profile?.state_standards} standards
 - **Mastery Demonstrated**: ${skills?.join(', ') || 'Early discovery phase'}
 - **Intellectual Curiosity**: ${topics?.slice(0, 15).join(', ')}
-- **Concrete Evidence (Portfolio)**: 
+- **Concrete Evidence (Portfolio)**:
 ${portfolio?.map((p: any) => `- [${p.type}] ${p.title}: ${p.description}`).join('\n')}
+
+${assessmentContext}
 
 ### THE BLUEPRINT OUTPUT (JSON):
 Return a single JSON object with these fields:

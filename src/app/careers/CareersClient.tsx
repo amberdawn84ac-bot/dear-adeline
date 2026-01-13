@@ -23,6 +23,7 @@ import {
     Anchor
 } from 'lucide-react';
 import Link from 'next/link';
+import CareerQuiz from '@/components/CareerQuiz';
 
 const ICON_MAP: Record<string, any> = {
     Rocket, Briefcase, Target, Lightbulb, Trophy, Gamepad2, Code, Leaf, Scale, Hammer, Users, Globe, Compass, Sparkles, Shield, Anchor
@@ -33,14 +34,25 @@ interface CareersClientProps {
     skills: any[];
     topics: string[];
     portfolio: any[];
+    assessment: any;
 }
 
-export default function CareersClient({ profile, skills, topics, portfolio }: CareersClientProps) {
+export default function CareersClient({ profile, skills, topics, portfolio, assessment }: CareersClientProps) {
     const [loading, setLoading] = useState(true);
     const [blueprint, setBlueprint] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
+    const [showQuiz, setShowQuiz] = useState(false);
+    const [currentAssessment, setCurrentAssessment] = useState(assessment);
 
     useEffect(() => {
+        // If assessment is not complete, show quiz instead of loading blueprint
+        if (!currentAssessment?.is_complete) {
+            setShowQuiz(true);
+            setLoading(false);
+            return;
+        }
+
+        // Assessment is complete, fetch blueprint
         const fetchCareers = async () => {
             try {
                 const res = await fetch('/api/careers', {
@@ -50,7 +62,8 @@ export default function CareersClient({ profile, skills, topics, portfolio }: Ca
                         profile,
                         skills: skills.map(s => s.skill?.name).filter(Boolean),
                         topics,
-                        portfolio: portfolio.map(p => ({ title: p.title || 'Untitled', description: p.description || '', type: p.type || 'project' }))
+                        portfolio: portfolio.map(p => ({ title: p.title || 'Untitled', description: p.description || '', type: p.type || 'project' })),
+                        assessment: currentAssessment
                     }),
                 });
 
@@ -68,7 +81,58 @@ export default function CareersClient({ profile, skills, topics, portfolio }: Ca
         };
 
         fetchCareers();
-    }, [profile, skills, topics, portfolio]);
+    }, [profile, skills, topics, portfolio, currentAssessment]);
+
+    const handleQuizComplete = async (quizData: any) => {
+        setLoading(true);
+        try {
+            // Save assessment to database
+            const res = await fetch('/api/career-assessment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(quizData),
+            });
+
+            if (!res.ok) throw new Error('Failed to save assessment');
+
+            const { assessment: savedAssessment } = await res.json();
+            setCurrentAssessment(savedAssessment);
+            setShowQuiz(false);
+            // The useEffect will trigger blueprint fetch since currentAssessment changed
+        } catch (err: any) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
+
+    if (showQuiz && !loading) {
+        return (
+            <div className="min-h-screen bg-[var(--cream)]">
+                <header className="bg-white border-b border-[var(--cream-dark)] sticky top-0 z-50 p-6 lg:px-12 backdrop-blur-md bg-white/80">
+                    <div className="max-w-7xl mx-auto flex items-center justify-between">
+                        <div>
+                            <h1 className="text-2xl lg:text-3xl font-bold serif text-[var(--forest)]">Career Discovery</h1>
+                            <p className="text-[var(--ochre)] font-black uppercase text-[10px] tracking-[0.3em] mt-1">Know Yourself • Discover Your Calling</p>
+                        </div>
+                    </div>
+                </header>
+
+                <main className="max-w-7xl mx-auto p-6 lg:p-12">
+                    <div className="mb-8 text-center">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                            Before we craft your Restorative Blueprint...
+                        </h2>
+                        <p className="text-lg text-gray-600">
+                            Let's discover more about YOU through these interactive activities.
+                            This will help us create a career vision that truly fits who you are.
+                        </p>
+                    </div>
+
+                    <CareerQuiz onComplete={handleQuizComplete} initialData={currentAssessment} />
+                </main>
+            </div>
+        );
+    }
 
     if (loading) {
         return (
@@ -79,7 +143,7 @@ export default function CareersClient({ profile, skills, topics, portfolio }: Ca
                 </div>
                 <div className="text-center">
                     <p className="text-[var(--forest)] font-black uppercase tracking-[0.4em] text-[10px] mb-2">Architecting Restorative Vision</p>
-                    <p className="text-[var(--ochre)] text-xs animate-pulse">Consulting the archives of your work...</p>
+                    <p className="text-[var(--ochre)] text-xs animate-pulse">Weaving your vision into a blueprint...</p>
                 </div>
             </div>
         );

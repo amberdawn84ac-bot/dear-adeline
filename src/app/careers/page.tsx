@@ -35,12 +35,19 @@ export default async function CareersPage() {
         .eq('student_id', user.id)
         .order('created_at', { ascending: false });
 
+    const { data: careerAssessment } = await supabase
+        .from('career_assessments')
+        .select('*')
+        .eq('student_id', user.id)
+        .maybeSingle();
+
     return (
         <CareersClient
             profile={profile}
             skills={studentSkills || []}
             topics={conversations?.map(c => c.title || c.topic).filter(Boolean) || []}
             portfolio={portfolioItems || []}
+            assessment={careerAssessment}
         />
     );
 }
