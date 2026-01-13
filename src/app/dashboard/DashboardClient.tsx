@@ -558,8 +558,8 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                     <div className="w-6" />
                 </header>
 
-                <div className="flex-1 p-4 lg:p-6 overflow-hidden">
-                    <div className="grid grid-cols-12 gap-6 h-full">
+                <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+                    <div className="grid grid-cols-12 gap-6">
                         {/* Onboarding Flow */}
                         {showOnboarding && (
                             <OnboardingModal
@@ -581,7 +581,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                         </div>
 
                         {/* Chat Area */}
-                        <div className="col-span-12 lg:col-span-8 flex flex-col h-[500px] md:h-[600px] lg:h-[calc(100vh-120px)] bg-white rounded-2xl shadow-sm border border-[var(--cream-dark)] overflow-hidden">
+                        <div className="col-span-12 lg:col-span-8 flex flex-col min-h-[600px] bg-white rounded-2xl shadow-sm border border-[var(--cream-dark)] overflow-hidden">
                             <div className="p-4 border-b border-[var(--cream-dark)]">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -603,7 +603,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                 </div>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
+                            <div className="flex-1 p-4 space-y-4">
                                 {messages.map((m, i) => {
                                     const content = m.content || '';
                                     // Parse potential scripture tag
@@ -722,7 +722,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                         </div>
 
                         {/* Right Sidebar */}
-                        <div className="col-span-12 lg:col-span-4 space-y-6 overflow-y-auto max-h-[calc(100vh-120px)]">
+                        <div className="col-span-12 lg:col-span-4 space-y-6">
                             <div className="card !p-5">
                                 <h3 className="font-bold text-[var(--forest)] serif flex items-center gap-2 mb-4">
                                     <Lightbulb className="w-5 h-5 text-[var(--sage)]" />
