@@ -30,11 +30,20 @@ export default async function PortfolioPage() {
         .from('skills')
         .select('id, name, category');
 
+    // Get activity logs (what Adeline has been tracking)
+    const { data: activityLogs } = await supabase
+        .from('activity_logs')
+        .select('*')
+        .eq('student_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50); // Get last 50 activities
+
     return (
         <PortfolioClient
             profile={profile}
             portfolioItems={portfolioItems || []}
             allSkills={allSkills || []}
+            activityLogs={activityLogs || []}
         />
     );
 }

@@ -45,10 +45,20 @@ interface Skill {
     category: string;
 }
 
+interface ActivityLog {
+    id: string;
+    caption: string;
+    translation: string;
+    skills: string | null;
+    grade: string | null;
+    created_at: string;
+}
+
 interface PortfolioClientProps {
     profile: { display_name: string | null } | null;
     portfolioItems: PortfolioItem[];
     allSkills: Skill[];
+    activityLogs: ActivityLog[];
 }
 
 const typeConfig = {
@@ -63,6 +73,7 @@ export default function PortfolioClient({
     profile,
     portfolioItems,
     allSkills,
+    activityLogs,
 }: PortfolioClientProps) {
     const router = useRouter();
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -287,6 +298,46 @@ export default function PortfolioClient({
                                 <Plus className="w-5 h-5" />
                                 Add Your First Item
                             </button>
+                        </div>
+                    )}
+
+                    {/* Activity Log Section */}
+                    {activityLogs.length > 0 && (
+                        <div className="mt-12">
+                            <h2 className="text-2xl font-normal serif text-[var(--forest)] mb-4">
+                                Learning Activities
+                            </h2>
+                            <p className="text-[var(--charcoal-light)] mb-6">
+                                Here's what Adeline has been tracking from your conversations
+                            </p>
+                            <div className="space-y-3">
+                                {activityLogs.slice(0, 20).map((log) => (
+                                    <div
+                                        key={log.id}
+                                        className="card bg-gradient-to-r from-[var(--sage-light)]/30 to-[var(--cream)] border border-[var(--sage)]/20"
+                                    >
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex-1">
+                                                <p className="font-medium text-[var(--charcoal)]">
+                                                    {log.caption}
+                                                </p>
+                                                <p className="text-sm text-[var(--sage-dark)] mt-1">
+                                                    <strong>Academic Credit:</strong> {log.translation}
+                                                </p>
+                                                {log.skills && (
+                                                    <p className="text-xs text-[var(--charcoal-light)] mt-2">
+                                                        <strong>Skills:</strong> {log.skills}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="text-xs text-[var(--charcoal-light)] flex items-center gap-1 whitespace-nowrap">
+                                                <Calendar className="w-3 h-3" />
+                                                {new Date(log.created_at).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
