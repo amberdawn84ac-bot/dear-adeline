@@ -21,7 +21,9 @@ import {
     Zap,
     Heart,
     ChevronRight,
-    Search
+    Search,
+    ExternalLink,
+    Loader2
 } from 'lucide-react';
 import { CAMPAIGNS, Campaign } from '@/lib/constants/campaigns';
 
@@ -29,16 +31,51 @@ const ICON_MAP: Record<string, any> = {
     Scale, Shield, Hammer, Home, Award, Wrench, Users, Palette, Sparkles, GraduationCap, BookOpen, Leaf
 };
 
+interface ScrapedCampaign extends Campaign {
+    source_url?: string;
+    organization?: string;
+    scraped?: boolean;
+}
+
 export default function ImpactClient() {
     const [search, setSearch] = useState('');
     const [filter, setFilter] = useState<'All' | 'Justice' | 'Community' | 'Growth' | 'Provision'>('All');
+    const [scrapedCampaigns, setScrapedCampaigns] = useState<ScrapedCampaign[]>([]);
+    const [searchingCategory, setSearchingCategory] = useState<string | null>(null);
 
-    const filteredCampaigns = CAMPAIGNS.filter(c => {
+    const allCampaigns = [...CAMPAIGNS, ...scrapedCampaigns];
+
+    const filteredCampaigns = allCampaigns.filter(c => {
         const matchesSearch = c.title.toLowerCase().includes(search.toLowerCase()) ||
             c.objective.toLowerCase().includes(search.toLowerCase());
         const matchesFilter = filter === 'All' || c.category === filter;
         return matchesSearch && matchesFilter;
     });
+
+    const handleSearchCategory = async (category: string) => {
+        setSearchingCategory(category);
+        try {
+            const res = await fetch('/api/campaigns/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category }),
+            });
+            const data = await res.json();
+
+            if (data.campaigns && data.campaigns.length > 0) {
+                // Add new campaigns to the list
+                setScrapedCampaigns(prev => {
+                    const existing = new Set(prev.map(c => c.source_url));
+                    const newCampaigns = data.campaigns.filter((c: ScrapedCampaign) => !existing.has(c.source_url));
+                    return [...prev, ...newCampaigns];
+                });
+            }
+        } catch (error) {
+            console.error('Search failed:', error);
+        } finally {
+            setSearchingCategory(null);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-white">
@@ -104,19 +141,42 @@ export default function ImpactClient() {
                 </div>
 
                 {/* Filter Tabs */}
-                <div className="flex items-center gap-4 mb-12 overflow-x-auto pb-4 no-scrollbar">
-                    {['All', 'Justice', 'Community', 'Growth', 'Provision'].map((f) => (
+                <div className="mb-12">
+                    <div className="flex items-center gap-4 overflow-x-auto pb-4 no-scrollbar mb-6">
+                        {['All', 'Justice', 'Community', 'Growth', 'Provision'].map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setFilter(f as any)}
+                                className={`px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${filter === f
+                                    ? 'bg-[var(--forest)] text-white shadow-xl scale-105'
+                                    : 'bg-white text-slate-400 hover:text-[var(--forest)] border border-slate-100 shadow-sm'
+                                    }`}
+                            >
+                                {f}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Search More Button */}
+                    {filter !== 'All' && (
                         <button
-                            key={f}
-                            onClick={() => setFilter(f as any)}
-                            className={`px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${filter === f
-                                ? 'bg-[var(--forest)] text-white shadow-xl scale-105'
-                                : 'bg-white text-slate-400 hover:text-[var(--forest)] border border-slate-100 shadow-sm'
-                                }`}
+                            onClick={() => handleSearchCategory(filter)}
+                            disabled={searchingCategory === filter}
+                            className="w-full py-4 bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 hover:border-purple-300 rounded-2xl text-purple-700 font-bold transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
                         >
-                            {f}
+                            {searchingCategory === filter ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    Searching the web for {filter} campaigns...
+                                </>
+                            ) : (
+                                <>
+                                    <Search className="w-5 h-5" />
+                                    Search Web for More {filter} Campaigns
+                                </>
+                            )}
                         </button>
-                    ))}
+                    )}
                 </div>
 
                 {/* Campaign Grid */}
@@ -136,7 +196,12 @@ export default function ImpactClient() {
                                     </div>
 
                                     <div className="mb-6">
-                                        <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[var(--ochre)] mb-2 block">{campaign.category}</span>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[var(--ochre)]">{campaign.category}</span>
+                                            {(campaign as ScrapedCampaign).scraped && (
+                                                <span className="text-[8px] font-bold uppercase tracking-wider px-2 py-1 bg-blue-100 text-blue-600 rounded-full">Live Web</span>
+                                            )}
+                                        </div>
                                         <h3 className="text-xl font-bold serif text-[var(--forest)] group-hover:text-[var(--burgundy)] transition-colors">{campaign.title}</h3>
                                     </div>
 
@@ -171,10 +236,22 @@ export default function ImpactClient() {
                                                 +12
                                             </div>
                                         </div>
-                                        <button className="flex items-center gap-2 px-6 py-3 bg-[var(--forest)]/5 text-[var(--forest)] group-hover:bg-[var(--forest)] group-hover:text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all">
-                                            Step Into Campaign
-                                            <ChevronRight className="w-3 h-3" />
-                                        </button>
+                                        {(campaign as ScrapedCampaign).source_url ? (
+                                            <a
+                                                href={(campaign as ScrapedCampaign).source_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 px-6 py-3 bg-[var(--forest)]/5 text-[var(--forest)] group-hover:bg-[var(--forest)] group-hover:text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all"
+                                            >
+                                                Visit Website
+                                                <ExternalLink className="w-3 h-3" />
+                                            </a>
+                                        ) : (
+                                            <button className="flex items-center gap-2 px-6 py-3 bg-[var(--forest)]/5 text-[var(--forest)] group-hover:bg-[var(--forest)] group-hover:text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all">
+                                                Step Into Campaign
+                                                <ChevronRight className="w-3 h-3" />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
