@@ -89,15 +89,11 @@ export async function POST(request: Request) {
 
     let selectedModel;
     switch (route.model) {
-        case 'gemini-pro':
-            selectedModel = GOOGLE_PRO_MODEL;
-            break;
-        case 'gemini-flash':
-            selectedModel = GOOGLE_FLASH_MODEL;
-            break;
         case 'gemini': // Default gemini case
             selectedModel = GOOGLE_FLASH_MODEL; // Default to the cheaper model for cost savings
             break;
+        case 'grok':
+        case 'gpt4':
         default:
             console.warn(`⚠️ ${route.model} not yet implemented in Adeline endpoint, falling back to Gemini`);
             selectedModel = GOOGLE_FLASH_MODEL; // Fallback for unimplemented models

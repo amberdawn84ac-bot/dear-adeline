@@ -36,7 +36,8 @@
     "react-dom": "19.2.1",
     "react-markdown": "^10.1.0",
     "roughjs": "^4.6.6",
-    "supabase": "^2.72.4"
+    "supabase": "^2.72.4",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
