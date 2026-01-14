@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { ActivityTranslationService } from '@/lib/services/activityTranslationService';
 import { MasteryService } from '@/lib/services/masteryService';
+import { LearningGapService } from '@/lib/services/learningGapService';
 
 export async function POST(request: Request) {
     try {
@@ -31,8 +32,15 @@ export async function POST(request: Request) {
 
         // 3. Process Skills for Mastery
         const masteryResults = await MasteryService.processSkills(
-            targetStudentId, 
-            aiAnalysis.skills, 
+            targetStudentId,
+            aiAnalysis.skills,
+            supabase
+        );
+
+        // 3.5. Resolve Learning Gaps
+        const resolvedGaps = await LearningGapService.resolveGaps(
+            targetStudentId,
+            aiAnalysis.skills,
             supabase
         );
 
@@ -55,11 +63,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: dbError.message }, { status: 500 });
         }
 
-        return NextResponse.json({ 
-            success: true, 
+        return NextResponse.json({
+            success: true,
             log,
             analysis: aiAnalysis,
-            mastery: masteryResults
+            mastery: masteryResults,
+            resolvedGaps
         });
 
     } catch (error: unknown) {

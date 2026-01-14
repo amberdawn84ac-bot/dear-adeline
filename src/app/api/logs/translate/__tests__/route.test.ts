@@ -3,6 +3,7 @@ import { POST } from '../route';
 import { createClient } from '@/lib/supabase/server';
 import { ActivityTranslationService } from '@/lib/services/activityTranslationService';
 import { MasteryService } from '@/lib/services/masteryService';
+import { LearningGapService } from '@/lib/services/learningGapService';
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(),
@@ -10,19 +11,34 @@ jest.mock('@/lib/supabase/server', () => ({
 
 jest.mock('@/lib/services/activityTranslationService');
 jest.mock('@/lib/services/masteryService');
+jest.mock('@/lib/services/learningGapService');
 
 describe('/api/logs/translate POST', () => {
   const mockSupabase = {
     auth: {
       getUser: jest.fn(),
     },
-    from: jest.fn(() => ({
-      insert: jest.fn(() => ({
-        select: jest.fn(() => ({
-          single: jest.fn(),
+    from: jest.fn((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              single: jest.fn().mockResolvedValue({
+                data: { grade_level: '10th' },
+                error: null,
+              }),
+            })),
+          })),
+        };
+      }
+      return {
+        insert: jest.fn(() => ({
+          select: jest.fn(() => ({
+            single: jest.fn(),
+          })),
         })),
-      })),
-    })),
+      };
+    }),
   };
 
   beforeEach(() => {
@@ -47,6 +63,10 @@ describe('/api/logs/translate POST', () => {
       { skill: 'Heating', status: 'Depth of Study', creditEarned: 0 }
     ]);
 
+    (LearningGapService.resolveGaps as jest.Mock).mockResolvedValue([
+      'Mixing'
+    ]);
+
     mockSupabase.from().insert().select().single.mockResolvedValue({
       data: { id: 'log-1', caption: 'Cooked stuff' },
       error: null,
@@ -64,5 +84,6 @@ describe('/api/logs/translate POST', () => {
     expect(body.analysis.translation).toBe('Chemistry 101');
     expect(body.mastery).toHaveLength(2);
     expect(body.mastery[0].status).toBe('Mastered');
+    expect(body.resolvedGaps).toEqual(['Mixing']);
   });
 });
