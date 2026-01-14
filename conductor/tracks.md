@@ -21,3 +21,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## [ ] Track: Interactive Sketchnotes
 *Link: [./conductor/tracks/interactive_sketchnotes_20260110/](./conductor/tracks/interactive_sketchnotes_20260110/)*
+
+---
+
+## [~] Track: Transform the 'Log Activity' feature into an AI-powered system where Adeline automatically translates student activities into academic credits and manages learning gaps.
+*Link: [./conductor/tracks/ai_activity_logging_20260113/](./conductor/tracks/ai_activity_logging_20260113/)*

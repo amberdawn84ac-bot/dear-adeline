@@ -1,20 +1,24 @@
 # Plan: AI-Powered Activity Logging and Translation
 
 ## Phase 1: Core AI Translation & Auto-Logging
-*Implement the basic Adeline translation engine and the auto-save logging flow.*
+*Implement the basic Adeline translation engine, credit calculation logic, and the auto-save logging flow.*
 
-- [ ] Task 1: Create AI Translation Service
-    - [ ] Sub-task: Define Zod schema for Adeline's JSON response (Subject, Skills, Grade).
-    - [ ] Sub-task: Implement AI prompt logic in a new utility or service.
+- [x] Task 1: Create AI Translation Service
+    - [x] Sub-task: Define Zod schema for Adeline's JSON response (Subject, Skills, Grade).
+    - [x] Sub-task: Implement AI prompt logic in a new utility or service.
     - [ ] Sub-task: Write unit tests for AI translation parsing and fallback handling.
-- [ ] Task 2: Implement `/api/logs/translate` Endpoint
-    - [ ] Sub-task: Write failing integration tests for the endpoint (authenticated, valid input, AI error).
-    - [ ] Sub-task: Implement POST handler to call translation service and save to `activity_logs`.
-    - [ ] Sub-task: Ensure grade context is pulled from the user's profile.
-- [ ] Task 3: Refactor Dashboard UI for Simplified Logging
-    - [ ] Sub-task: Create failing tests for the new simplified Activity Modal.
-    - [ ] Sub-task: Replace complex form with a single text area.
-    - [ ] Sub-task: Implement auto-save logic and success notification.
+- [x] Task 2: Implement Mastery & Credit Logic
+    - [x] Sub-task: Create a service method to calculate credits based on skills (1 credit = mastery of year's skills).
+    - [x] Sub-task: Implement logic to check if a skill is new (Credit) or repeated (Depth of Study).
+    - [x] Sub-task: Write tests for credit calculation and "Depth of Study" detection.
+- [x] Task 3: Implement `/api/logs/translate` Endpoint
+    - [x] Sub-task: Write failing integration tests for the endpoint.
+    - [x] Sub-task: Implement POST handler to call translation service, apply credit logic, and save to `activity_logs`.
+    - [x] Sub-task: Ensure grade context is pulled from the user's profile.
+- [x] Task 4: Refactor Dashboard UI for Simplified Logging
+    - [x] Sub-task: Create failing tests for the new simplified Activity Modal.
+    - [x] Sub-task: Replace complex form with a single text area.
+    - [x] Sub-task: Implement auto-save logic and success notification.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Core AI Translation & Auto-Logging' (Protocol in workflow.md)
 
 ## Phase 2: Gap Filling & Proactive Suggestions
@@ -34,8 +38,9 @@
 
 - [ ] Task 1: Update Parent Report Generation
     - [ ] Sub-task: Modify report generation service to include a section for "Learning Gaps & Progress."
+    - [ ] Sub-task: Ensure "Depth of Study" activities are highlighted in the report.
     - [ ] Sub-task: Write unit tests for report content accuracy.
 - [ ] Task 2: UI Polishing & Depth of Study Feedback
-    - [ ] Sub-task: Ensure the success notification clearly distinguishes between "New Mastery" and "Depth of Study."
+    - [ ] Sub-task: Update the success notification to clearly distinguish between "New Mastery" (Credit) and "Depth of Study".
     - [ ] Sub-task: Final mobile responsiveness check for the simplified logging flow.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Mastery Reporting & Parent Feedback' (Protocol in workflow.md)

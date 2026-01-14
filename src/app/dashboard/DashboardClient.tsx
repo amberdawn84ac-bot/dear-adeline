@@ -233,13 +233,8 @@ export default function DashboardClient({
     const [showCelebration, setShowCelebration] = useState<string[] | null>(null);
     const [showVoiceSession, setShowVoiceSession] = useState(false);
     const [showCameraInput, setShowCameraInput] = useState(false);
-    const [showActivityLog, setShowActivityLog] = useState(false);
-    const [activityForm, setActivityForm] = useState({
-        caption: '',
-        translation: '',
-        skills: '',
-        grade: '',
-    });
+    const [showSimpleActivityModal, setShowSimpleActivityModal] = useState(false);
+    const [simpleActivityInput, setSimpleActivityInput] = useState('');
 
     // Sketchnotes disabled - always use MessageContent for proper rendering
     const shouldUseSketchnote = (content: string): boolean => {
@@ -274,40 +269,39 @@ export default function DashboardClient({
         }
     };
 
-    const handleLogActivity = async () => {
-        if (!activityForm.caption || !activityForm.translation) {
-            alert('Please fill in at least the activity and academic translation fields.');
+    const handleTranslateAndLogActivity = async () => {
+        if (!simpleActivityInput.trim()) {
+            alert('Please describe your activity.');
             return;
         }
 
+        setLoading(true);
+        setShowSimpleActivityModal(false);
+
         try {
-            const response = await fetch('/api/logs', {
+            const response = await fetch('/api/logs/translate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     student_id: user.id,
-                    caption: activityForm.caption,
-                    translation: activityForm.translation,
-                    skills: activityForm.skills || null,
-                    grade: activityForm.grade || null,
+                    caption: simpleActivityInput.trim(),
                 }),
             });
 
             if (response.ok) {
-                alert('Activity logged successfully! Check your Portfolio to see it.');
-                setShowActivityLog(false);
-                setActivityForm({
-                    caption: '',
-                    translation: '',
-                    skills: '',
-                    grade: '',
-                });
+                const data = await response.json();
+                alert(`Activity Logged!\n\nAdeline translated this to: "${data.analysis.translation}"\nSkills: ${data.analysis.skills}`);
+                setSimpleActivityInput('');
+                // Ideally refresh data here, for now we rely on user navigation or manual refresh
+                router.refresh();
             } else {
                 alert('Failed to log activity. Please try again.');
             }
         } catch (error) {
             console.error('Error logging activity:', error);
-            alert('Failed to log activity. Please try again.');
+            alert('An unexpected error occurred.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -721,7 +715,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                     />
                                     <button
                                         type="button"
-                                        onClick={() => setShowActivityLog(true)}
+                                        onClick={() => setShowSimpleActivityModal(true)}
                                         className="bg-[var(--ochre)] text-white p-2.5 rounded-xl hover:brightness-110 transition-all shadow-sm"
                                         title="Log an activity for academic credit"
                                     >
@@ -1017,7 +1011,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
             )}
 
             {/* Activity Log Modal */}
-            {showActivityLog && (
+            {showSimpleActivityModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-3xl max-w-lg w-full p-8">
                         <div className="flex items-center justify-between mb-6">
@@ -1026,7 +1020,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                 <h2 className="text-2xl font-bold text-[var(--forest)]">Log an Activity</h2>
                             </div>
                             <button
-                                onClick={() => setShowActivityLog(false)}
+                                onClick={() => setShowSimpleActivityModal(false)}
                                 className="text-gray-400 hover:text-gray-600"
                             >
                                 <X className="w-6 h-6" />
@@ -1034,7 +1028,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                         </div>
 
                         <p className="text-sm text-gray-600 mb-6">
-                            Did you do something today that counts toward your education? Log it here to track your progress!
+                            Tell Adeline what you did today, and she'll translate it into academic progress!
                         </p>
 
                         <div className="space-y-4">
@@ -1043,64 +1037,31 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                     What did you do? <span className="text-red-500">*</span>
                                 </label>
                                 <textarea
-                                    value={activityForm.caption}
-                                    onChange={(e) => setActivityForm({ ...activityForm, caption: e.target.value })}
-                                    placeholder="e.g., Baked sourdough bread from scratch"
+                                    value={simpleActivityInput}
+                                    onChange={(e) => setSimpleActivityInput(e.target.value)}
+                                    placeholder="e.g., Baked sourdough bread from scratch, built a treehouse, read a book about space."
                                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--sage)] focus:outline-none"
-                                    rows={3}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Academic Translation <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    value={activityForm.translation}
-                                    onChange={(e) => setActivityForm({ ...activityForm, translation: e.target.value })}
-                                    placeholder="e.g., Chemistry: Fermentation, Reaction Kinetics"
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--sage)] focus:outline-none"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Skills Demonstrated (optional)
-                                </label>
-                                <input
-                                    type="text"
-                                    value={activityForm.skills}
-                                    onChange={(e) => setActivityForm({ ...activityForm, skills: e.target.value })}
-                                    placeholder="e.g., Experimentation, Problem Solving"
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--sage)] focus:outline-none"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Grade Level (optional)
-                                </label>
-                                <input
-                                    type="text"
-                                    value={activityForm.grade}
-                                    onChange={(e) => setActivityForm({ ...activityForm, grade: e.target.value })}
-                                    placeholder="e.g., High School Chemistry"
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[var(--sage)] focus:outline-none"
+                                    rows={5}
                                 />
                             </div>
                         </div>
 
                         <div className="flex gap-4 mt-6">
                             <button
-                                onClick={handleLogActivity}
+                                onClick={handleTranslateAndLogActivity}
                                 className="flex-1 bg-[var(--ochre)] text-white py-3 rounded-xl font-bold hover:brightness-110 transition-all"
+                                disabled={loading}
                             >
-                                Log Activity
+                                {loading ? (
+                                    <Loader2 className="animate-spin h-5 w-5 mx-auto" />
+                                ) : (
+                                    'Translate & Log Activity'
+                                )}
                             </button>
                             <button
-                                onClick={() => setShowActivityLog(false)}
+                                onClick={() => setShowSimpleActivityModal(false)}
                                 className="px-6 bg-gray-200 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-300 transition-all"
+                                disabled={loading}
                             >
                                 Cancel
                             </button>

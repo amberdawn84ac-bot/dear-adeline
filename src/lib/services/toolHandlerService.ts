@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { EmbeddingService } from '@/lib/embeddingService';
+import { MasteryService } from './masteryService';
 
 export const handleToolCalls = async (
     functionCalls: any[],
@@ -263,6 +264,18 @@ export const handleToolCalls = async (
             console.log(`[Adeline Activity Log]: "${args.caption}" → ${args.translation}`);
 
             try {
+                // Process Skills for Mastery
+                let masteryResults = [];
+                if (args.skills) {
+                    const skillList = typeof args.skills === 'string' 
+                        ? args.skills.split(',').map((s: string) => s.trim()) 
+                        : Array.isArray(args.skills) ? args.skills : [];
+                    
+                    if (skillList.length > 0) {
+                        masteryResults = await MasteryService.processSkills(userId, skillList, supabase);
+                    }
+                }
+
                 // Insert into activity_logs table
                 const { error } = await supabase
                     .from('activity_logs')
@@ -283,7 +296,7 @@ export const handleToolCalls = async (
                             name: 'log_activity', 
                             content: { 
                                 status: 'activity logged successfully',
-                                message: `Logged: ${args.caption} as ${args.translation}`
+                                message: `Logged: ${args.caption} as ${args.translation}. ${masteryResults.length} skills processed.`
                             } 
                         }
                     }
