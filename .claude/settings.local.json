@@ -30,7 +30,8 @@
       "Bash(node scripts/run-migrations.js:*)",
       "Bash(npx supabase:*)",
       "Bash(tar:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
