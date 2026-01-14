@@ -2,6 +2,14 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 
+interface ScenarioOption {
+  id: number;
+  text: string;
+  wisdom_level: string;
+  consequence: string;
+  scripture_connection: string;
+}
+
 export async function POST(request: Request) {
     try {
         const supabase = await createClient();
@@ -29,7 +37,7 @@ export async function POST(request: Request) {
         }
 
         // Get the chosen option details
-        const options = scenario.options as any[];
+        const options: ScenarioOption[] = Array.isArray(scenario.options) ? scenario.options as ScenarioOption[] : [];
         const chosen = options.find(opt => opt.id === chosenOption);
 
         if (!chosen) {
@@ -98,10 +106,11 @@ Remember: Never be harsh or judgmental. Always encourage and guide with love.`;
             learningPoints: scenario.learning_points
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Wisdom respond error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: error.message || 'Failed to process wisdom response' },
+            { error: errorMessage || 'Failed to process wisdom response' },
             { status: 500 }
         );
     }

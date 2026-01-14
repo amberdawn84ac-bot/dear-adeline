@@ -35,10 +35,11 @@ export async function GET(request: Request) {
 
         return NextResponse.json({ entries: data || [], total: count || 0 });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Journal list error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: error.message || 'Failed to fetch journal entries' },
+            { error: errorMessage || 'Failed to fetch journal entries' },
             { status: 500 }
         );
     }

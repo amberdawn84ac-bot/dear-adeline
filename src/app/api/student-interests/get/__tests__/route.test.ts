@@ -48,6 +48,7 @@ describe('Student Interests API Route (Get)', () => {
         });
 
         const mockInterests = [{ interest: 'coding' }, { interest: 'robots' }];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mockSupabase.from.mockReturnValue({
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnValue({
@@ -56,6 +57,7 @@ describe('Student Interests API Route (Get)', () => {
             }),
         } as any);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const request = new (NextRequest as any)('http://localhost/api/student-interests/get');
         const response = await GET(request);
         const data = await response.json();
@@ -72,6 +74,7 @@ describe('Student Interests API Route (Get)', () => {
             error: null,
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const request = new (NextRequest as any)('http://localhost/api/student-interests/get');
         const response = await GET(request);
 
@@ -85,6 +88,7 @@ describe('Student Interests API Route (Get)', () => {
             data: { user: { id: 'test_user_id' } },
             error: null,
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mockSupabase.from.mockReturnValue({
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnValue({
@@ -93,6 +97,7 @@ describe('Student Interests API Route (Get)', () => {
             }),
         } as any);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const request = new (NextRequest as any)('http://localhost/api/student-interests/get');
         const response = await GET(request);
 

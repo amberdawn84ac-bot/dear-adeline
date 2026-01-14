@@ -2,6 +2,14 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
+interface GraduationRequirement {
+  name: string;
+  description: string;
+  category: string;
+  required_credits: number;
+  state_standards: string;
+}
+
 export async function POST(req: Request) {
     try {
         const supabase = await createClient();
@@ -31,7 +39,7 @@ export async function POST(req: Request) {
         // Insert requirements
         const { error } = await supabase
             .from('graduation_requirements')
-            .insert(requirements.map((r: any) => ({
+            .insert(requirements.map((r: GraduationRequirement) => ({
                 ...r,
                 state_standards: state.toLowerCase()
             })));
@@ -40,8 +48,9 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ success: true });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Save Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

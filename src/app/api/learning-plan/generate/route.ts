@@ -109,10 +109,11 @@ Make it aligned with ${state} standards but flexible for homeschool adaptation.`
             learningPlan
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Learning plan generation error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: error.message || 'Failed to generate learning plan' },
+            { error: errorMessage || 'Failed to generate learning plan' },
             { status: 500 }
         );
     }

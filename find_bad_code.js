@@ -1,4 +1,4 @@
-const fs = require('fs');
+import * as fs from 'fs';
 const path = 'C:\\home\\claude\\dear-adeline\\src\\app\\dashboard\\DashboardClient.tsx';
 
 try {

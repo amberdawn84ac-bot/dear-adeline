@@ -47,10 +47,11 @@ export async function POST() {
             message: 'Successfully seeded 3 truth examples',
             count: truths.length,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Seed truth error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: 'Internal server error', details: error.message },
+            { error: 'Internal server error', details: errorMessage },
             { status: 500 }
         );
     }

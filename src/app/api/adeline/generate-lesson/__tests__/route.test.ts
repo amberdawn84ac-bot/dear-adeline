@@ -44,6 +44,7 @@ describe('Generate Lesson API Route', () => {
             },
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const request = new (NextRequest as any)('http://localhost/api/adeline/generate-lesson', {
             method: 'POST',
             body: JSON.stringify({ interests: ['Robotics'], age: 10 }),
@@ -58,6 +59,7 @@ describe('Generate Lesson API Route', () => {
     });
 
     it('should return 400 if interests are missing', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const request = new (NextRequest as any)('http://localhost/api/adeline/generate-lesson', {
             method: 'POST',
             body: JSON.stringify({ age: 10 }),
@@ -74,6 +76,7 @@ describe('Generate Lesson API Route', () => {
             },
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const request = new (NextRequest as any)('http://localhost/api/adeline/generate-lesson', {
             method: 'POST',
             body: JSON.stringify({ interests: ['Robotics'], age: 10 }),
@@ -86,6 +89,7 @@ describe('Generate Lesson API Route', () => {
     it('should return 500 if the generateContent call fails', async () => {
         mockGenerateContent.mockRejectedValueOnce(new Error('API Error'));
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const request = new (NextRequest as any)('http://localhost/api/adeline/generate-lesson', {
             method: 'POST',
             body: JSON.stringify({ interests: ['Robotics'], age: 10 }),

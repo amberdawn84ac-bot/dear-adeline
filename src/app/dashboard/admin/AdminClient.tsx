@@ -837,8 +837,8 @@ export default function AdminClient({
                                         key={role}
                                         onClick={() => handleUpdateUserRole(showEditUser.id, role)}
                                         className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-colors ${showEditUser.role === role
-                                            ? 'border-[var(--sage)] bg-[var(--sage-light)]'
-                                            : 'border-[var(--cream-dark)] hover:border-[var(--sage-light)]'
+                                            ? "border-[var(--sage)] bg-[var(--sage-light)]"
+                                            : "border-[var(--cream-dark)] hover:border-[var(--sage-light)]"
                                             }`}
                                     >
                                         {roleIcon(role)}

@@ -31,12 +31,14 @@ export async function GET() {
                     status: 'SUCCESS',
                     response: response.content[0].type === 'text' ? response.content[0].text : 'OK'
                 });
-            } catch (error: any) {
+            } catch (error: unknown) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                const statusCode = (error instanceof Error && 'status' in error) ? (error as any).status : undefined;
                 results.push({
                     model,
                     status: 'FAILED',
-                    error: error.message,
-                    statusCode: error.status
+                    error: errorMessage,
+                    statusCode: statusCode
                 });
             }
         }
@@ -46,10 +48,12 @@ export async function GET() {
             apiKeyPrefix: process.env.ANTHROPIC_API_KEY?.substring(0, 20),
             results
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : undefined;
         return NextResponse.json({
-            error: error.message,
-            stack: error.stack
+            error: errorMessage,
+            stack: errorStack
         }, { status: 500 });
     }
 }

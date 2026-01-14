@@ -7,6 +7,28 @@ const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
+interface PortfolioItem {
+    type: string;
+    title: string;
+    description: string;
+}
+
+interface Profile {
+    display_name: string;
+    grade_level: string;
+    state_standards: string;
+}
+
+interface Assessment {
+    is_complete: boolean;
+    interest_areas: string[];
+    core_values: string[];
+    work_style: Record<string, unknown>;
+    dream_day: string;
+    dream_impact: string;
+    dream_legacy: string;
+}
+
 export async function POST(req: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -15,7 +37,13 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { profile, skills, topics, portfolio, assessment } = await req.json();
+    const { profile, skills, topics, portfolio, assessment }: {
+        profile: Profile;
+        skills: string[];
+        topics: string[];
+        portfolio: PortfolioItem[];
+        assessment: Assessment;
+    } = await req.json();
 
     // Build enhanced assessment context if quiz was completed
     let assessmentContext = '';
@@ -49,7 +77,7 @@ CRITICAL PRINCIPLES:
 - **Mastery Demonstrated**: ${skills?.join(', ') || 'Early discovery phase'}
 - **Intellectual Curiosity**: ${topics?.slice(0, 15).join(', ')}
 - **Concrete Evidence (Portfolio)**:
-${portfolio?.map((p: any) => `- [${p.type}] ${p.title}: ${p.description}`).join('\n')}
+${portfolio?.map((p: PortfolioItem) => `- [${p.type}] ${p.title}: ${p.description}`).join('\n')}
 
 ${assessmentContext}
 
@@ -82,7 +110,7 @@ Tone: "A life-mentor speaking a singular, powerful vision of the child's purpose
         const data = JSON.parse(cleanedJson);
 
         return NextResponse.json(data);
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Career analyzer error:', error);
         return NextResponse.json({ error: 'Failed to analyze career paths' }, { status: 500 });
     }

@@ -65,9 +65,11 @@ describe('Student Interests API Route (Save)', () => {
                     insert: insertMock,
                 }
             }
-            return {};
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return {} as any;
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const request = new (NextRequest as any)('http://localhost/api/student-interests/save', {
             method: 'POST',
             headers: {
@@ -94,6 +96,7 @@ describe('Student Interests API Route (Save)', () => {
             error: null,
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const request = new (NextRequest as any)('http://localhost/api/student-interests/save', {
             method: 'POST',
             body: JSON.stringify({ interests: ['coding'] }),
@@ -119,9 +122,11 @@ describe('Student Interests API Route (Save)', () => {
                     }),
                 }
             }
-            return {};
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return {} as any;
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const request = new (NextRequest as any)('http://localhost/api/student-interests/save', {
             method: 'POST',
             body: JSON.stringify({ interests: ['coding'] }),
@@ -149,9 +154,11 @@ describe('Student Interests API Route (Save)', () => {
                     insert: insertMock,
                 }
             }
-            return {};
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return {} as any;
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const request = new (NextRequest as any)('http://localhost/api/student-interests/save', {
             method: 'POST',
             body: JSON.stringify({ interests: ['coding'] }),

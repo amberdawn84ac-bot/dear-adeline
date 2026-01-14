@@ -17,7 +17,17 @@ const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!, 
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
-let genAI = apiKey ? new GoogleGenerativeAI(apiKey) : undefined;
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : undefined;
+
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'ai';
+  content: string;
+}
+
+interface FunctionCall {
+  name: string;
+  args: Record<string, unknown>;
+}
 
 export async function POST(req: Request) {
     console.log('🔵 /api/chat - Request received');
@@ -34,7 +44,7 @@ export async function POST(req: Request) {
         console.log('📦 Parsed request body:', { userId, conversationId, messageCount: messages?.length });
 
         // Gemini requires 'model' role, not 'assistant'
-        const formattedHistory = (messages || []).map((m: any) => ({
+        const formattedHistory = (messages || []).map((m: ChatMessage) => ({
             role: m.role === 'assistant' || m.role === 'ai' ? 'model' : 'user',
             parts: [{ text: m.content || "" }]
         }));
@@ -206,7 +216,7 @@ FORMATTING RULES:
         // Handle tool calls
         if (functionCalls && functionCalls.length > 0) {
             console.log('🔧 Processing tool calls:', functionCalls.length);
-            const toolParts = await handleToolCalls(functionCalls, userId, supabase);
+            const toolParts = await handleToolCalls(functionCalls as FunctionCall[], userId, supabase);
             finalResponseText = await continueChat(chat, toolParts);
         }
 
@@ -218,7 +228,7 @@ FORMATTING RULES:
 
         // Calculate accuracy from tool calls (if student made progress)
         const toolCallsArray = functionCalls || [];
-        const successfulTools = toolCallsArray.filter((call: any) =>
+        const successfulTools = toolCallsArray.filter((call: FunctionCall) =>
             call.name === 'update_student_progress' || call.name === 'log_activity'
         ).length;
         const accuracy = toolCallsArray.length > 0 ? successfulTools / toolCallsArray.length : 0.5;
@@ -287,14 +297,17 @@ FORMATTING RULES:
             title: newTitle 
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('❌❌❌ Chat API Error:', error);
-        console.error('Error stack:', error.stack);
-        console.error('Error message:', error.message);
+        if (error instanceof Error) {
+            console.error('Error stack:', error.stack);
+            console.error('Error message:', error.message);
+        }
         
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
         return NextResponse.json({ 
             error: 'Chat processing failed',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
         }, { status: 500 });
     }
 }

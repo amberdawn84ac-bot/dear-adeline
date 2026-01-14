@@ -12,6 +12,11 @@ const supabase = createClient(
 
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : undefined;
 
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'ai';
+  content: string;
+}
+
 /**
  * ROUTED CHAT API
  * 
@@ -33,7 +38,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'API Key Missing' }, { status: 500 });
         }
 
-        const { messages, userId, studentInfo, mode } = await req.json();
+        const { messages, mode } = await req.json();
         
         const lastMessage = messages[messages.length - 1];
         const userPrompt = lastMessage.content;
@@ -100,7 +105,7 @@ ${libraryContext}
 VOICE: Talk like you're explaining something to a curious teenager over coffee. Be natural, conversational, and real. Skip structures like "First... Second... Third..." or "We observe X, scientists model it as Y." Just explain things like a human.`;
 
         // Format history for Gemini
-        const formattedHistory = messages.slice(0, -1).map((m: any) => ({
+        const formattedHistory = messages.slice(0, -1).map((m: ChatMessage) => ({
             role: m.role === 'assistant' || m.role === 'ai' ? 'model' : 'user',
             parts: [{ text: m.content || "" }]
         }));
@@ -138,7 +143,7 @@ VOICE: Talk like you're explaining something to a curious teenager over coffee. 
             usedLibrary: libraryContext.length > 0
         });
 
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('❌ Routed chat error:', error);
         return NextResponse.json(
             { error: 'Chat failed', details: error instanceof Error ? error.message : 'Unknown error' },

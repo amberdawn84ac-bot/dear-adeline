@@ -8,6 +8,12 @@ const CATEGORY_SEARCH_QUERIES: Record<string, string> = {
     Provision: 'food bank community kitchen homeless shelter poverty relief volunteer youth'
 };
 
+interface TavilySearchResult {
+    url: string;
+    title: string;
+    content: string;
+}
+
 export async function POST(req: Request) {
     try {
         const supabase = await createClient();
@@ -54,13 +60,13 @@ export async function POST(req: Request) {
         const results = searchData.results || [];
 
         // Transform web results into campaign format
-        const campaigns = results.map((result: any, index: number) => {
+        const campaigns = results.map((result: TavilySearchResult, index: number) => {
             // Extract organization from URL domain
             let organization = 'N/A';
             try {
                 const hostname = new URL(result.url).hostname.replace('www.', '');
                 organization = hostname.split('.')[0];
-            } catch (e) {
+            } catch (_e) {
                 // Invalid URL
             }
 
@@ -87,11 +93,12 @@ export async function POST(req: Request) {
             count: campaigns.length
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Campaign search error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json({
             error: 'Search failed',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
         }, { status: 500 });
     }
 }

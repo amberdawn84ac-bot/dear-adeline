@@ -32,7 +32,7 @@ export async function POST(request: Request) {
         let lessonData;
         try {
             lessonData = JSON.parse(text);
-        } catch (e) {
+        } catch (_e) {
             console.error('Failed to parse AI response as JSON:', text);
             return NextResponse.json({ error: 'Failed to generate valid lesson format.' }, { status: 500 });
         }

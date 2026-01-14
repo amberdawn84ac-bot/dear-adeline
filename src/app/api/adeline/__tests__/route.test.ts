@@ -22,7 +22,7 @@ jest.mock('next/server', () => ({
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
 import { getGoogleAIAPIKey } from '@/lib/server/config';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { createClient } from '@/lib/supabase/server';
 
 jest.mock('@google/generative-ai', () => ({
   GoogleGenerativeAI: jest.fn(() => ({
@@ -45,8 +45,7 @@ describe('Adeline API Route (Google AI)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetGoogleAIAPIKey.mockReturnValue('test_google_api_key');
-    const { createClient } = require('@/lib/supabase/server');
-    createClient.mockReturnValue({
+    (createClient as jest.Mock).mockReturnValue({
         auth: {
             getUser: jest.fn().mockResolvedValue({
                 data: { user: { id: 'test-user-id' } },
@@ -64,12 +63,8 @@ describe('Adeline API Route (Google AI)', () => {
       },
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const request = new (NextRequest as any)('http://localhost/api/adeline', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ prompt: 'Tell me a story.' }),
     });
 
     const response = await POST(request);
@@ -82,6 +77,7 @@ describe('Adeline API Route (Google AI)', () => {
   });
 
   it('should return a 400 response if prompt is missing', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const request = new (NextRequest as any)('http://localhost/api/adeline', {
       method: 'POST',
       headers: {
@@ -101,6 +97,7 @@ describe('Adeline API Route (Google AI)', () => {
   it('should return a 500 response if Google AI API call fails', async () => {
     mockSendMessage.mockRejectedValueOnce(new Error('Google AI API error'));
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const request = new (NextRequest as any)('http://localhost/api/adeline', {
       method: 'POST',
       headers: {
@@ -122,6 +119,7 @@ describe('Adeline API Route (Google AI)', () => {
       throw new Error('Missing GOOGLE_AI_API_KEY environment variable');
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const request = new (NextRequest as any)('http://localhost/api/adeline', {
       method: 'POST',
       headers: {

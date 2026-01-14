@@ -28,9 +28,10 @@ export async function GET(req: Request) {
 
         return NextResponse.json({ logs: data });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('API Error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        return NextResponse.json({ error: 'Internal server error', details: errorMessage }, { status: 500 });
     }
 }
 
@@ -64,8 +65,9 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ log: data });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('API Error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        return NextResponse.json({ error: 'Internal server error', details: errorMessage }, { status: 500 });
     }
 }

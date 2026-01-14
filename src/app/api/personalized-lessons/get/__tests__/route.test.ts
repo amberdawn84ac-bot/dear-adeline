@@ -58,6 +58,7 @@ describe('Get Personalized Lessons API Route', () => {
             }),
         }));
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const request = new (NextRequest as any)('http://localhost/api/personalized-lessons/get', {
             method: 'GET',
         });
@@ -75,6 +76,7 @@ describe('Get Personalized Lessons API Route', () => {
             error: null,
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const request = new (NextRequest as any)('http://localhost/api/personalized-lessons/get', {
             method: 'GET',
         });

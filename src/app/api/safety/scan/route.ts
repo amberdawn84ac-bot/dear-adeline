@@ -92,9 +92,10 @@ If the message is safe, set "safe": true and "alert": null.`;
 
         return NextResponse.json(scanResult);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Safety scan error:', error);
         // Default to safe on error to avoid blocking legitimate conversations
-        return NextResponse.json({ safe: true, alert: null });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        return NextResponse.json({ safe: true, alert: null, details: errorMessage });
     }
 }

@@ -25,10 +25,11 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ plan: plan || null });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Learning plan fetch error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: error.message || 'Failed to fetch learning plan' },
+            { error: errorMessage || 'Failed to fetch learning plan' },
             { status: 500 }
         );
     }

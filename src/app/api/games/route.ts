@@ -51,10 +51,11 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ game: savedGame });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Game generation error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: error.message || 'Failed to generate game' },
+            { error: errorMessage || 'Failed to generate game' },
             { status: 500 }
         );
     }
@@ -95,10 +96,11 @@ export async function GET(request: Request) {
 
         return NextResponse.json({ games });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Game fetch error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: error.message || 'Failed to fetch games' },
+            { error: errorMessage || 'Failed to fetch games' },
             { status: 500 }
         );
     }

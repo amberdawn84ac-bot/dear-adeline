@@ -12,6 +12,14 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Custom ignores from .eslintignore
+    "mcp-server.js",
+    "**/dist/**",
+    "node_modules/**",
+    "coverage/**",
+    "postcss.config.mjs",
+    "jest.config.ts",
+    "next.config.ts"
   ]),
 ]);
 

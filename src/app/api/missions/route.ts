@@ -2,6 +2,16 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { generateStructuredLesson } from '@/services/lessonGenerator';
 
+interface MissionUpdates {
+    updated_at: string;
+    status?: string;
+    progress_percentage?: number;
+    action_plan?: string;
+    evidence_submissions?: string;
+    started_at?: string;
+    completed_at?: string;
+}
+
 export async function POST(request: Request) {
     try {
         const supabase = await createClient();
@@ -87,10 +97,11 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ mission: savedMission });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Mission generation error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: error.message || 'Failed to generate mission' },
+            { error: errorMessage || 'Failed to generate mission' },
             { status: 500 }
         );
     }
@@ -130,10 +141,11 @@ export async function GET(request: Request) {
 
         return NextResponse.json({ missions });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Mission fetch error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: error.message || 'Failed to fetch missions' },
+            { error: errorMessage || 'Failed to fetch missions' },
             { status: 500 }
         );
     }
@@ -158,7 +170,7 @@ export async function PATCH(request: Request) {
             );
         }
 
-        const updates: any = { updated_at: new Date().toISOString() };
+        const updates: MissionUpdates = { updated_at: new Date().toISOString() };
 
         if (status) updates.status = status;
         if (progress_percentage !== undefined) updates.progress_percentage = progress_percentage;
@@ -190,10 +202,11 @@ export async function PATCH(request: Request) {
 
         return NextResponse.json({ mission: updatedMission });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Mission update error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: error.message || 'Failed to update mission' },
+            { error: errorMessage || 'Failed to update mission' },
             { status: 500 }
         );
     }

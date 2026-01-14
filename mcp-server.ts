@@ -9,8 +9,6 @@ import {
 
 // Configuration - update these with your actual values
 const API_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Helper function to make API calls
 async function callAPI(endpoint: string, options: RequestInit = {}) {

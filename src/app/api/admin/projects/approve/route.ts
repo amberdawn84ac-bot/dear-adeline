@@ -1,6 +1,14 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
+interface UpdateData {
+    approved: boolean;
+    approval_status: 'approved' | 'rejected';
+    approved_by: string;
+    approved_at: string;
+    rejection_reason?: string;
+}
+
 export async function POST(req: Request) {
     try {
         const supabase = await createClient();
@@ -28,7 +36,7 @@ export async function POST(req: Request) {
         }
 
         // Update project approval status
-        const updateData: any = {
+        const updateData: UpdateData = {
             approved,
             approval_status: approved ? 'approved' : 'rejected',
             approved_by: adminId,
@@ -57,11 +65,12 @@ export async function POST(req: Request) {
             message: approved ? 'Project approved' : 'Project rejected'
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Project approval error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json({
             error: 'Approval failed',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
         }, { status: 500 });
     }
 }

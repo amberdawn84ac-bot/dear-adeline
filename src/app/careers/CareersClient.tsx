@@ -30,11 +30,11 @@ const ICON_MAP: Record<string, any> = {
 };
 
 interface CareersClientProps {
-    profile: any;
-    skills: any[];
+    profile: Profile;
+    skills: Skill[];
     topics: string[];
-    portfolio: any[];
-    assessment: any;
+    portfolio: PortfolioItem[];
+    assessment: Assessment;
 }
 
 export default function CareersClient({ profile, skills, topics, portfolio, assessment }: CareersClientProps) {

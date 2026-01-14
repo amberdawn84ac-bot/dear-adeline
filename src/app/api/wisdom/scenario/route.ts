@@ -78,10 +78,11 @@ export async function GET(request: Request) {
         const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
         return NextResponse.json({ scenario: randomScenario });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Wisdom scenario error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: error.message || 'Failed to fetch wisdom scenario' },
+            { error: errorMessage || 'Failed to fetch wisdom scenario' },
             { status: 500 }
         );
     }

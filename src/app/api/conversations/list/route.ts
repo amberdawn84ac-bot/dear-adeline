@@ -35,11 +35,12 @@ export async function GET(req: Request) {
             conversations: conversationsWithCount 
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('List conversations error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json({ 
             error: 'Failed to load conversations',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
         }, { status: 500 });
     }
 }

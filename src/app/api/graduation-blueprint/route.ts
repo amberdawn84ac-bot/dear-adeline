@@ -7,6 +7,17 @@ const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
+interface EarnedSkill {
+  skill?: {
+    name: string;
+  };
+}
+
+interface PortfolioItem {
+  title?: string;
+  description?: string;
+}
+
 export async function POST(req: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -15,7 +26,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { profile, requirements, progress, earnedSkills, portfolio, topics } = await req.json();
+    const { profile, earnedSkills, portfolio } = await req.json();
 
     const prompt = `
 You are the Graduation Architect for Dear Adeline Academy. Your mission is to reveal how a student's unique passions, character, and skills converge into a life of service and impact.
@@ -28,9 +39,9 @@ You are the Graduation Architect for Dear Adeline Academy. Your mission is to re
 
 ### STUDENT DOSSIER:
 - **DisplayName**: ${profile?.display_name || 'Student'}
-- **Current Mastery**: ${(earnedSkills || []).map((s: any) => s.skill?.name || 'Skill').join(', ') || 'Beginning journey'}
+- **Current Mastery**: ${(earnedSkills || []).map((s: EarnedSkill) => s.skill?.name || 'Skill').join(', ') || 'Beginning journey'}
 - **Portfolio Projects (Concrete Evidence)**: 
-${(portfolio || []).map((p: any) => `- ${p.title || 'Untitled'}: ${p.description || 'No description'}`).join('\n') || 'No projects in portfolio yet'}
+${(portfolio || []).map((p: PortfolioItem) => `- ${p.title || 'Untitled'}: ${p.description || 'No description'}`).join('\n') || 'No projects in portfolio yet'}
 
 ### TASK:
 Construct a "Restorative Graduation Blueprint" that synthesizes their academic requirements into a high-level mission of service. Recommend at least ONE specific Impact Campaign that fits their "bent."
@@ -69,7 +80,7 @@ Tone: "Prophetic, encouraging, high-call, and rejection of the generic."
         const data = JSON.parse(jsonStr);
 
         return NextResponse.json(data);
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Graduation planner error:', error);
         return NextResponse.json({ error: 'Failed to generate graduation mission' }, { status: 500 });
     }

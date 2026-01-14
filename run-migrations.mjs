@@ -25,11 +25,11 @@ async function runMigration(filePath) {
       if (error && error.message !== 'relation "exec" does not exist') {
         console.error(`❌ Error:`, error.message);
       }
-    } catch (err) {
+    } catch (_err) {
       // Try direct query
       try {
         await supabase.from('_migrations').insert({ statement });
-      } catch (e) {
+      } catch (_e) {
         // Ignore - table might not exist
       }
     }

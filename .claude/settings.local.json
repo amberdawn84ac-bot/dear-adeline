@@ -25,7 +25,12 @@
       "Bash(pnpm install:*)",
       "Bash(node run-migrations.mjs:*)",
       "Bash(grep:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(find:*)",
+      "Bash(node scripts/run-migrations.js:*)",
+      "Bash(npx supabase:*)",
+      "Bash(tar:*)",
+      "Bash(git log:*)"
     ]
   }
 }

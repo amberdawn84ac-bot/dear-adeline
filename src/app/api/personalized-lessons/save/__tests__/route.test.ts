@@ -56,6 +56,7 @@ describe('Save Lesson API Route', () => {
             }),
         }));
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const request = new (NextRequest as any)('http://localhost/api/personalized-lessons/save', {
             method: 'POST',
             body: JSON.stringify({

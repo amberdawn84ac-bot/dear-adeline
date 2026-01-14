@@ -61,9 +61,10 @@ export async function POST(request: Request) {
             data: extendedProfile
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('About Me save error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }
 
@@ -91,8 +92,9 @@ export async function GET(request: Request) {
             data: extendedProfile || null
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('About Me fetch error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
     try {
         const supabase = await createClient();
 
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
         if (error) throw error;
 
         return NextResponse.json({ alerts: alerts || [] });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error fetching alerts:', error);
         return NextResponse.json(
             { error: 'Failed to fetch alerts' },
@@ -73,7 +73,7 @@ export async function PATCH(request: Request) {
         if (error) throw error;
 
         return NextResponse.json({ success: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error updating alert:', error);
         return NextResponse.json(
             { error: 'Failed to update alert' },

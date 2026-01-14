@@ -15,18 +15,17 @@ export async function POST(request: Request) {
 
         const prompt = `You are a game developer creating educational HTML games for students.
 
-Create a complete, self-contained HTML game based on this concept:
+Create a complete, self-contained HTML file with inline CSS and JavaScript based on this concept:
 "${concept}"
 
 REQUIREMENTS:
-1. Must be a COMPLETE HTML file with inline CSS and JavaScript
-2. Must be playable immediately (no external dependencies)
-3. Must have clear instructions for the student
-4. Must have a Biblical worldview (if applicable to the concept)
-5. Must be educational and engaging
-6. Use simple, clean design with good UX
-7. Include a score or progress indicator
-8. Make it fun and interactive!
+1. Must be playable immediately (no external dependencies)
+2. Must have clear instructions for the student
+3. Must have a Biblical worldview (if applicable to the concept)
+4. Must be educational and engaging
+5. Use simple, clean design with good UX
+6. Include a score or progress indicator
+7. Make it fun and interactive!
 
 IMPORTANT: Return ONLY the raw HTML code. No markdown, no explanations, no code blocks. Just pure HTML starting with <!DOCTYPE html>.`;
 
@@ -48,10 +47,11 @@ IMPORTANT: Return ONLY the raw HTML code. No markdown, no explanations, no code 
         }
 
         return NextResponse.json({ html: gameHtml });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Game generation error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: error.message || 'Failed to generate game' },
+            { error: errorMessage || 'Failed to generate game' },
             { status: 500 }
         );
     }

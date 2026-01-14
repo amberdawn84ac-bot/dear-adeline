@@ -36,10 +36,11 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ entry: data });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Journal create error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: error.message || 'Failed to create journal entry' },
+            { error: errorMessage || 'Failed to create journal entry' },
             { status: 500 }
         );
     }

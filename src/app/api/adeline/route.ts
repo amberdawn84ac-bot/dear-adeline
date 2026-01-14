@@ -12,6 +12,7 @@ import { ModelRouter } from '@/lib/services/modelRouter';
 const GOOGLE_FLASH_MODEL = 'gemini-2.5-flash';
 const GOOGLE_PRO_MODEL = 'gemini-1.5-pro'; // More capable model for complex tasks
 
+
 // Define the log_activity tool schema for Google Generative AI
 const tools = [
   {
@@ -53,6 +54,18 @@ const tools = [
   }
 ];
 
+interface HistoryMessage {
+  speaker: 'student' | 'model';
+  text: string;
+}
+
+interface LogActivityArgs {
+  caption: string;
+  translation: string;
+  skills: string[];
+  grade: string;
+}
+
 export async function POST(request: Request) {
   try {
     const googleApiKey = getGoogleAIAPIKey();
@@ -74,11 +87,24 @@ export async function POST(request: Request) {
     const route = ModelRouter.detectMode(prompt);
     console.log(`🎯 Adeline Model Router: ${route.model} (${route.reason})`);
 
-    const selectedModel = route.model === 'gemini' ? GOOGLE_FLASH_MODEL : route.model;
-    if (route.model !== 'gemini') {
-        console.warn(`⚠️ ${route.model} not yet implemented in Adeline endpoint, falling back to Gemini`);
+    let selectedModel;
+    switch (route.model) {
+        case 'gemini-pro':
+            selectedModel = GOOGLE_PRO_MODEL;
+            break;
+        case 'gemini-flash':
+            selectedModel = GOOGLE_FLASH_MODEL;
+            break;
+        case 'gemini': // Default gemini case
+            selectedModel = GOOGLE_FLASH_MODEL; // Default to the cheaper model for cost savings
+            break;
+        default:
+            console.warn(`⚠️ ${route.model} not yet implemented in Adeline endpoint, falling back to Gemini`);
+            selectedModel = GOOGLE_FLASH_MODEL; // Fallback for unimplemented models
+            break;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const model = genAI.getGenerativeModel({ model: selectedModel, tools: tools as any }); // Pass tools to the model
 
 
@@ -95,7 +121,7 @@ export async function POST(request: Request) {
                 role: "model",
                 parts: [{ text: "Understood." }], // Acknowledge system prompt
             },
-            ...(history || []).map((msg: any) => ({ // Add previous chat history
+            ...(history || []).map((msg: HistoryMessage) => ({ // Add previous chat history
                 role: msg.speaker === 'student' ? 'user' : 'model',
                 parts: [{ text: msg.text }]
             }))
@@ -113,7 +139,7 @@ export async function POST(request: Request) {
 
     if (functionCall && functionCall.name === "log_activity") {
       console.log("AI called log_activity:", functionCall.args);
-      const args = functionCall.args as any;
+      const args = functionCall.args as LogActivityArgs;
       const { caption, translation, skills, grade } = args;
 
       // Execute the tool: Save activity to Supabase
