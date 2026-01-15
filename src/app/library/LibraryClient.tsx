@@ -218,8 +218,12 @@ export default function LibraryClient({
 
     const handleStartProject = async (projectId: string) => {
         const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return;
 
         await supabase.from('student_projects').upsert({
+            student_id: user.id,
             project_id: projectId,
             status: 'in_progress',
             started_at: new Date().toISOString(),
@@ -232,13 +236,16 @@ export default function LibraryClient({
 
     const handleCompleteProject = async (projectId: string) => {
         const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return;
 
         await supabase.from('student_projects').update({
             status: 'completed',
             completed_at: new Date().toISOString(),
             evidence_urls: evidenceUrls.length > 0 ? evidenceUrls : null,
             reflection: reflection.trim() || null,
-        }).eq('project_id', projectId);
+        }).eq('project_id', projectId).eq('student_id', user.id);
 
         // Reset form state
         setEvidenceUrls([]);
