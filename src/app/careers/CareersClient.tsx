@@ -87,7 +87,7 @@ export default function CareersClient({ profile, skills, topics, portfolio, asse
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         profile,
-                        skills: skills.map(s => s.skill?.name).filter(Boolean),
+                        skills: skills.map(s => s.name).filter(Boolean),
                         topics,
                         portfolio: portfolio.map(p => ({ title: p.title || 'Untitled', description: p.description || '', type: p.type || 'project' })),
                         assessment: currentAssessment
