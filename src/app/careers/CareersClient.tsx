@@ -29,6 +29,33 @@ const ICON_MAP: Record<string, any> = {
     Rocket, Briefcase, Target, Lightbulb, Trophy, Gamepad2, Code, Leaf, Scale, Hammer, Users, Globe, Compass, Sparkles, Shield, Anchor
 };
 
+interface Profile {
+    display_name: string;
+    grade_level: string;
+    state_standards: string;
+}
+
+interface Skill {
+    name: string;
+    category: string;
+}
+
+interface PortfolioItem {
+    type: string;
+    title: string;
+    description: string;
+}
+
+interface Assessment {
+    is_complete: boolean;
+    interest_areas: string[];
+    core_values: string[];
+    work_style: Record<string, unknown>;
+    dream_day: string;
+    dream_impact: string;
+    dream_legacy: string;
+}
+
 interface CareersClientProps {
     profile: Profile;
     skills: Skill[];
