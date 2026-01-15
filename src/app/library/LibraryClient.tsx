@@ -329,6 +329,19 @@ export default function LibraryClient({
                         </div>
                     </div>
 
+                    {/* View All Button */}
+                    {selectedCategory !== 'all' && (
+                        <div className="mb-4">
+                            <button
+                                onClick={() => setSelectedCategory('all')}
+                                className="btn-secondary text-sm"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                View All Projects
+                            </button>
+                        </div>
+                    )}
+
                     {/* Category Cards */}
                     <div className="grid md:grid-cols-3 gap-4 mb-8">
                         {(Object.entries(categoryConfig) as [string, any][]).map(([key, config]) => {
