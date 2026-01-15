@@ -207,7 +207,9 @@ export class ActivityToStandardsMapper {
     const grouped = new Map<string, { standard: StateStandard; activities: string[] }>();
 
     for (const record of data) {
-      const standard = record.state_standards as StateStandard;
+      const standard = Array.isArray(record.state_standards)
+        ? record.state_standards[0]
+        : record.state_standards;
       if (!standard) continue;
 
       if (!grouped.has(standard.id)) {
