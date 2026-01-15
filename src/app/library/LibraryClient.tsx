@@ -203,8 +203,11 @@ export default function LibraryClient({
     };
 
     const filteredProjects = projects.filter(project => {
-        // Strict grade filtering: Only show projects that include the student's grade
-        if (gradeLevel && project.grade_levels && !project.grade_levels.includes(gradeLevel)) return false;
+        // Grade filtering: Only filter if student has a grade level set AND project has grade levels
+        // Show all projects if either is missing
+        if (gradeLevel && project.grade_levels && project.grade_levels.length > 0) {
+            if (!project.grade_levels.includes(gradeLevel)) return false;
+        }
 
         if (selectedCategory !== 'all' && project.category !== selectedCategory) return false;
         if (difficultyFilter !== 'all' && project.difficulty !== difficultyFilter) return false;
