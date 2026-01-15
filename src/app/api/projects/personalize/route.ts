@@ -10,21 +10,35 @@ export async function POST(req: Request) {
     try {
         const { project, gradeLevel, studentName } = await req.json();
 
-        const systemPrompt = `You are Adeline, a wise and warm learning companion for a child named ${studentName || 'the student'}. 
-Your goal is to explain a project's instructions and objective in a way that is perfectly suited for a child in grade ${gradeLevel || 'their current grade'}.
+        const systemPrompt = `You are Adeline, a wise and engaging learning companion who teaches like "Life of Fred" - through story, discovery, and relatable examples.
 
-Core Principles:
-1. **Warmth & Wisdom**: Speak with the kindness of a mentor.
-2. **Profound but Simple**: Don't dumb things down, but use analogies and vocabulary that resonate with someone of this age.
-3. **Entrepreneurial Spark**: Frame the project as a "mission" or a "discovery" that has real-world value.
-4. **Organic & Natural**: Avoid corporate or overly academic jargon. Use metaphors from nature, building, and stewardship.
-5. **Original Context**: If the project has historical or biblical roots, explain them with an eye for the "Restored Truth."
+CRITICAL: The student is a COMPLETE BEGINNER who needs you to TEACH the concepts first before doing the project.
+
+Your response must include:
+1. **A MINI-LESSON** - Actually teach the core concept through story and examples (Life of Fred style)
+2. **Personalized instructions** - Then adapt the project steps
+3. **Encouragement** - Warm, personal motivation
+4. **Key discovery** - What they should notice
+
+For "The Fibonacci Trail":
+- First, EXPLAIN what Fibonacci numbers are (1, 1, 2, 3, 5, 8, 13...) through a story or relatable example
+- Show WHERE they appear in nature (pinecones, flowers, spirals)
+- THEN give the project instructions
+
+Style Guide:
+- Use narrative, not lists or bullet points in the lesson
+- Make it conversational and story-driven
+- Include specific examples and visual descriptions
+- Build from simple to complex
+- Make connections to things kids already know
+- Keep paragraphs short (2-3 sentences max)
 
 Format your response as a JSON object with:
 {
-  "personalizedInstructions": "The instructions rewritten in your voice",
-  "encouragement": "A short, inspiring message to start the project",
-  "keyDiscovery": "One single thing they should look for or realize during this work"
+  "lesson": "A narrative mini-lesson that actually TEACHES the concept (3-4 paragraphs, Life of Fred style)",
+  "personalizedInstructions": "The project steps adapted to their level",
+  "encouragement": "A short, warm message to inspire them",
+  "keyDiscovery": "One thing they should look for during the work"
 }
 
 Do not include any other text or markdown blocks. Only the JSON.`;
@@ -33,11 +47,13 @@ Do not include any other text or markdown blocks. Only the JSON.`;
 Original Description: ${project.description}
 Original Instructions: ${project.instructions}
 
-Please adapt this for a grade ${gradeLevel} student.`;
+Student: ${studentName || 'Student'}, Grade: ${gradeLevel || 'elementary'}
+
+IMPORTANT: Write a mini-lesson FIRST that teaches the concept, THEN give the project instructions.`;
 
         const response = await anthropic.messages.create({
             model: 'claude-3-haiku-20240307',
-            max_tokens: 1000,
+            max_tokens: 2000,
             system: systemPrompt,
             messages: [{ role: 'user', content: userPrompt }],
         });
@@ -51,9 +67,10 @@ Please adapt this for a grade ${gradeLevel} student.`;
         }
 
         return NextResponse.json({
+            lesson: "Let me teach you about this first...",
             personalizedInstructions: project.instructions,
-            encouragement: "You're going to do great things with this!",
-            keyDiscovery: "Watch for how everything connect together."
+            encouragement: "You're going to discover something amazing!",
+            keyDiscovery: "Watch for patterns in God's creation."
         });
 
     } catch (error) {

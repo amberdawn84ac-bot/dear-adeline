@@ -147,6 +147,7 @@ export default function LibraryClient({
     const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [personalizedContent, setPersonalizedContent] = useState<{
+        lesson?: string;
         personalizedInstructions: string;
         encouragement: string;
         keyDiscovery: string;
@@ -535,27 +536,46 @@ export default function LibraryClient({
                                 {personalizing ? (
                                     <div className="mb-6 py-12 flex flex-col items-center justify-center gap-4 bg-[var(--cream)] rounded-2xl animate-pulse">
                                         <Sparkles className="w-8 h-8 text-[var(--sage)] animate-spin-slow" />
-                                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--charcoal-light)]">Adeline is personalizing your instructions...</p>
+                                        <p className="text-sm font-black uppercase tracking-[0.3em] text-[var(--charcoal-light)]">Adeline is preparing your lesson...</p>
                                     </div>
                                 ) : (
                                     <>
-                                        {personalizedContent && (
-                                            <div className="mb-8 p-6 bg-[var(--ochre)]/10 border-l-4 border-[var(--ochre)] rounded-r-2xl italic font-serif text-[var(--burgundy)] animate-in fade-in slide-in-from-left-4">
-                                                <div className="flex items-center gap-2 mb-2 not-italic">
-                                                    <Sparkles className="w-4 h-4 text-[var(--ochre)]" />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest">Adeline's Note</span>
+                                        {personalizedContent?.lesson && (
+                                            <div className="mb-8 p-8 bg-gradient-to-br from-[var(--sage-light)] to-[var(--cream)] rounded-3xl shadow-lg border-2 border-[var(--sage)]/20">
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className="w-12 h-12 rounded-full bg-[var(--sage)] flex items-center justify-center">
+                                                        <Sparkles className="w-6 h-6 text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-xl font-bold text-[var(--forest)]">Let me teach you first!</h3>
+                                                        <p className="text-sm text-[var(--charcoal-light)]">A mini-lesson from Adeline</p>
+                                                    </div>
                                                 </div>
-                                                "{personalizedContent.encouragement}"
-                                                <div className="mt-4 pt-4 border-t border-[var(--ochre)]/20 not-italic">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60 block mb-1">Your Mission Discovery:</span>
-                                                    <p className="text-sm font-bold text-[var(--forest)]">{personalizedContent.keyDiscovery}</p>
+                                                <div className="prose prose-lg max-w-none">
+                                                    <div className="text-base leading-relaxed whitespace-pre-wrap font-serif text-[var(--charcoal)]">
+                                                        {personalizedContent.lesson}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {personalizedContent && (
+                                            <div className="mb-8 p-6 bg-[var(--ochre)]/10 border-l-4 border-[var(--ochre)] rounded-r-2xl">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <Sparkles className="w-5 h-5 text-[var(--ochre)]" />
+                                                    <span className="text-sm font-black uppercase tracking-widest text-[var(--ochre)]">Your Mission</span>
+                                                </div>
+                                                <p className="text-lg italic font-serif text-[var(--burgundy)] mb-4">"{personalizedContent.encouragement}"</p>
+                                                <div className="mt-4 pt-4 border-t border-[var(--ochre)]/20">
+                                                    <span className="text-xs font-black uppercase tracking-widest opacity-60 block mb-2">What to discover:</span>
+                                                    <p className="text-base font-bold text-[var(--forest)]">{personalizedContent.keyDiscovery}</p>
                                                 </div>
                                             </div>
                                         )}
 
                                         <div className="mb-6">
-                                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Project Instructions</h3>
-                                            <div className="bg-[var(--cream)] p-6 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap font-medium text-[var(--forest)]">
+                                            <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-4">Your Project Steps</h3>
+                                            <div className="bg-[var(--cream)] p-8 rounded-2xl text-base leading-loose whitespace-pre-wrap font-medium text-[var(--forest)]">
                                                 {personalizedContent?.personalizedInstructions || selectedProject.instructions}
                                             </div>
                                         </div>
