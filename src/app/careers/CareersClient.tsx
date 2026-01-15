@@ -234,7 +234,7 @@ export default function CareersClient({ profile, skills, topics, portfolio, asse
                                     <div className="flex flex-wrap gap-2">
                                         {skills.map((s, i) => (
                                             <span key={i} className="px-3 py-1 bg-[var(--sage)]/5 text-[var(--sage-dark)] font-bold rounded-lg text-[10px] border border-[var(--sage)]/10">
-                                                {s.skill?.name || 'In Progress'}
+                                                {s.name || 'In Progress'}
                                             </span>
                                         ))}
                                         {skills.length === 0 && <p className="text-[10px] italic text-slate-400">Mastery is emerging through your inquiries...</p>}
