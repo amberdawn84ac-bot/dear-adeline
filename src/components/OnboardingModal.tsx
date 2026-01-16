@@ -9,9 +9,11 @@ import {
     User,
     ChevronRight,
     Loader2,
-    CheckCircle2
+    CheckCircle2,
+    Brain
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { PlacementAssessment } from './PlacementAssessment';
 
 interface OnboardingModalProps {
     userId: string;
@@ -21,6 +23,7 @@ interface OnboardingModalProps {
 export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
     const [step, setStep] = useState(1);
     const [saving, setSaving] = useState(false);
+    const [placementReport, setPlacementReport] = useState<any>(null);
     const [data, setData] = useState({
         display_name: '',
         grade_level: '',
@@ -36,18 +39,22 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
         return true;
     };
 
-    const handleNext = () => {
+    const handleNext = async () => {
         console.log('handleNext called, current step:', step);
         if (step < 4) {
             setStep(step + 1);
+        } else if (step === 4) {
+            // Save profile data first, then proceed to placement
+            await handleSaveProfile();
+            setStep(5);
         } else {
             console.log('Final step, calling handleSave');
             handleSave();
         }
     };
 
-    const handleSave = async () => {
-        console.log('handleSave called with data:', data);
+    const handleSaveProfile = async () => {
+        console.log('handleSaveProfile called with data:', data);
         setSaving(true);
         const supabase = createClient();
 
@@ -65,7 +72,7 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                 .from('profiles')
                 .upsert({
                     id: userId,
-                    email: user.email, // Add email from authenticated user
+                    email: user.email,
                     display_name: data.display_name,
                     grade_level: data.grade_level,
                     state_standards: data.state_standards,
@@ -92,13 +99,24 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                 // Don't block onboarding if seeding fails
             }
 
-            console.log('Onboarding complete, calling onComplete');
-            onComplete(data);
+            setSaving(false);
         } catch (err) {
             console.error('Unexpected error during save:', err);
             alert('An unexpected error occurred. Please try again.');
             setSaving(false);
         }
+    };
+
+    const handleSave = () => {
+        console.log('Onboarding complete, calling onComplete');
+        onComplete(data);
+    };
+
+    const handlePlacementComplete = (report: any) => {
+        console.log('Placement assessment complete:', report);
+        setPlacementReport(report);
+        // Complete onboarding
+        handleSave();
     };
 
     return (
@@ -121,7 +139,7 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
 
                     {/* Progress Dots */}
                     <div className="flex gap-2 mb-12">
-                        {[1, 2, 3, 4].map((s) => (
+                        {[1, 2, 3, 4, 5].map((s) => (
                             <div
                                 key={s}
                                 className={`h-1.5 rounded-full transition-all duration-500 ${step === s ? 'w-12 bg-[var(--purple)]' :
@@ -230,33 +248,52 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                                 </div>
                             </div>
                         )}
+
+                        {step === 5 && (
+                            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                                <label className="block text-sm font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                                    <Brain className="w-4 h-4" />
+                                    Finding Your Starting Point
+                                </label>
+                                <h3 className="text-xl font-bold serif text-[var(--purple)] mb-6">Let's figure out where you are</h3>
+                                <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                                    Have a short conversation with Adeline so she knows where to start teaching you. This isn't a test - it's okay to say "I don't know!"
+                                </p>
+                                <PlacementAssessment
+                                    userId={userId}
+                                    onComplete={handlePlacementComplete}
+                                />
+                            </div>
+                        )}
                     </div>
 
-                    <div className="flex items-center justify-between">
-                        {step > 1 ? (
+                    {step !== 5 && (
+                        <div className="flex items-center justify-between">
+                            {step > 1 ? (
+                                <button
+                                    onClick={() => setStep(step - 1)}
+                                    className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[var(--purple)] transition-colors"
+                                >
+                                    Previous
+                                </button>
+                            ) : <div />}
+
                             <button
-                                onClick={() => setStep(step - 1)}
-                                className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[var(--purple)] transition-colors"
+                                onClick={handleNext}
+                                disabled={!isStepValid() || saving}
+                                className="flex items-center gap-3 px-8 py-4 bg-[var(--purple)] text-white rounded-[2rem] font-bold text-sm shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all group"
                             >
-                                Previous
+                                {saving ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    <>
+                                        {step === 4 ? 'Continue to Assessment' : 'Next Step'}
+                                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </>
+                                )}
                             </button>
-                        ) : <div />}
-
-                        <button
-                            onClick={handleNext}
-                            disabled={!isStepValid() || saving}
-                            className="flex items-center gap-3 px-8 py-4 bg-[var(--purple)] text-white rounded-[2rem] font-bold text-sm shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all group"
-                        >
-                            {saving ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : (
-                                <>
-                                    {step === 4 ? 'Begin Your Journey' : 'Next Step'}
-                                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                </>
-                            )}
-                        </button>
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
