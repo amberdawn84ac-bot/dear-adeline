@@ -302,7 +302,7 @@ Questions asked so far: ${Object.keys(assessment.responses || {}).length}
 
 function getPlacementTools() {
   return [{
-    function_declarations: [
+    functionDeclarations: [
       {
         name: "generate_placement_report",
         description: "Generate final placement report after assessment conversation is complete. Call this when you've assessed enough skills across all subjects.",
