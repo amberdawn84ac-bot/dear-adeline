@@ -259,6 +259,65 @@ export const handleToolCalls = async (
                     }
                 });
             }
+        } else if (call.name === 'create_library_content') {
+            const args = call.args as any;
+            console.log(`[Adeline Library]: Creating "${args.title}" for the project library...`);
+
+            try {
+                // Parse comma-separated fields
+                const materials = args.materials ? args.materials.split(',').map((m: string) => m.trim()) : [];
+                const gradeLevels = args.grade_levels ? args.grade_levels.split(',').map((g: string) => g.trim()) : [];
+                const keyConcepts = args.key_concepts ? args.key_concepts.split(',').map((k: string) => k.trim()) : [];
+
+                // Insert into library_projects table
+                const { error } = await supabase
+                    .from('library_projects')
+                    .insert({
+                        title: args.title,
+                        description: args.lesson_content.substring(0, 200) + '...', // First 200 chars as description
+                        category: args.category,
+                        instructions: args.project_instructions,
+                        materials: materials,
+                        lesson_content: args.lesson_content,
+                        lesson_type: 'ai_generated',
+                        key_concepts: keyConcepts,
+                        grade_levels: gradeLevels,
+                        credit_value: 1, // Default 1 credit
+                        difficulty: 'beginner', // Default difficulty
+                        estimated_time: '30-60 minutes', // Default time
+                        approved: false, // Requires admin approval
+                        approval_status: 'pending'
+                    });
+
+                if (error) throw error;
+
+                toolParts.push({
+                    functionResponse: {
+                        name: 'create_library_content',
+                        response: {
+                            name: 'create_library_content',
+                            content: {
+                                status: 'library content created successfully',
+                                message: `"${args.title}" has been added to the project library and is pending approval!`
+                            }
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error("Library Content Creation Error:", e);
+                toolParts.push({
+                    functionResponse: {
+                        name: 'create_library_content',
+                        response: {
+                            name: 'create_library_content',
+                            content: {
+                                status: 'failed to create library content',
+                                error: String(e)
+                            }
+                        }
+                    }
+                });
+            }
         } else if (call.name === 'log_activity') {
             const args = call.args as any;
             console.log(`[Adeline Activity Log]: "${args.caption}" → ${args.translation}`);

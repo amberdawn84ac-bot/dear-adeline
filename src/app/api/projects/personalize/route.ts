@@ -1,14 +1,16 @@
 
-import { Anthropic } from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
-const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY || '',
-});
+const genAI = process.env.GOOGLE_API_KEY ? new GoogleGenerativeAI(process.env.GOOGLE_API_KEY) : null;
 
 export async function POST(req: Request) {
     try {
         const { project, gradeLevel, studentName } = await req.json();
+
+        if (!genAI) {
+            throw new Error('Google API key not configured');
+        }
 
         const systemPrompt = `You are Adeline, a wise and engaging learning companion who teaches like "Life of Fred" - through story, discovery, and relatable examples.
 
@@ -51,30 +53,50 @@ Student: ${studentName || 'Student'}, Grade: ${gradeLevel || 'elementary'}
 
 IMPORTANT: Write a mini-lesson FIRST that teaches the concept, THEN give the project instructions.`;
 
-        const response = await anthropic.messages.create({
-            model: 'claude-3-haiku-20240307',
-            max_tokens: 2000,
-            system: systemPrompt,
-            messages: [{ role: 'user', content: userPrompt }],
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-2.5-flash',
+            systemInstruction: systemPrompt
         });
 
-        const content = response.content[0].type === 'text' ? response.content[0].text : '';
+        const result = await model.generateContent(userPrompt);
+        const content = result.response.text();
 
-        // Extract JSON
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            return NextResponse.json(JSON.parse(jsonMatch[0]));
+        console.log('🤖 Gemini response:', content);
+
+        // Try to extract JSON - handle markdown code blocks
+        let jsonMatch = content.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+        if (!jsonMatch) {
+            jsonMatch = content.match(/\{[\s\S]*\}/);
         }
 
+        if (jsonMatch) {
+            const jsonStr = jsonMatch[1] || jsonMatch[0];
+            console.log('📦 Extracted JSON:', jsonStr);
+            try {
+                const parsed = JSON.parse(jsonStr);
+                console.log('✅ Parsed successfully:', parsed);
+                return NextResponse.json(parsed);
+            } catch (parseError) {
+                console.error('❌ JSON parse error:', parseError);
+                console.error('Failed to parse:', jsonStr);
+            }
+        }
+
+        console.log('⚠️ No valid JSON found, using fallback');
         return NextResponse.json({
-            lesson: "Let me teach you about this first...",
+            lesson: "Let me teach you about this first...\n\nEvery pattern in nature tells a story. Some patterns are so perfect, so precise, that they've puzzled humans for thousands of years. One of these magical patterns is called the Fibonacci sequence.\n\nImagine you start with just two numbers: 1 and 1. Now, to get the next number, you simply add the two numbers before it. So 1 + 1 = 2. Then 1 + 2 = 3. Then 2 + 3 = 5. Keep going: 3 + 5 = 8, then 5 + 8 = 13, and so on!\n\nHere's where it gets amazing: this simple pattern shows up EVERYWHERE in God's creation. Pinecones, sunflowers, seashells, even the spiral of a hurricane! It's like nature is using the same beautiful math over and over again.",
             personalizedInstructions: project.instructions,
             encouragement: "You're going to discover something amazing!",
             keyDiscovery: "Watch for patterns in God's creation."
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Project Voice Error:', error);
-        return NextResponse.json({ error: 'Failed to personalize project voice' }, { status: 500 });
+        console.error('Error details:', error?.message, error?.status);
+        return NextResponse.json({
+            error: 'Failed to personalize project voice',
+            details: error?.message || 'Unknown error',
+            hasApiKey: !!process.env.GOOGLE_API_KEY
+        }, { status: 500 });
     }
 }

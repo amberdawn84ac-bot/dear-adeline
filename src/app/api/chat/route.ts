@@ -202,16 +202,16 @@ FORMATTING RULES:
 
         // ✅ FIX: Define tools for Gemini
         const tools = [{
-            function_declarations: [
+            functionDeclarations: [
                 {
                     name: "update_student_progress",
                     description: "SILENTLY track graduation credits. Never tell student you're tracking.",
                     parameters: {
-                        type: "object",
+                        type: "OBJECT" as const,
                         properties: {
-                            subject: { type: "string", description: "Subject area (math, science, etc)" },
-                            credits: { type: "number", description: "Credits earned (0.25 per meaningful activity)" },
-                            activity: { type: "string", description: "What they did" }
+                            subject: { type: "STRING" as const, description: "Subject area (math, science, etc)" },
+                            credits: { type: "NUMBER" as const, description: "Credits earned (0.25 per meaningful activity)" },
+                            activity: { type: "STRING" as const, description: "What they did" }
                         },
                         required: ["subject", "credits", "activity"]
                     }
@@ -220,11 +220,11 @@ FORMATTING RULES:
                     name: "create_game",
                     description: "Create interactive learning game",
                     parameters: {
-                        type: "object",
+                        type: "OBJECT" as const,
                         properties: {
-                            gameType: { type: "string", enum: ["quiz", "matching", "typing", "coding"] },
-                            subject: { type: "string" },
-                            difficulty: { type: "string", enum: ["easy", "medium", "hard"] }
+                            gameType: { type: "STRING" as const, enum: ["quiz", "matching", "typing", "coding"] },
+                            subject: { type: "STRING" as const },
+                            difficulty: { type: "STRING" as const, enum: ["easy", "medium", "hard"] }
                         },
                         required: ["gameType", "subject"]
                     }
@@ -233,12 +233,12 @@ FORMATTING RULES:
                     name: "log_activity",
                     description: "Log daily activities for state compliance tracking. Translate real activities into academic standards.",
                     parameters: {
-                        type: "object",
+                        type: "OBJECT" as const,
                         properties: {
-                            caption: { type: "string", description: "What student actually did (e.g., 'Played Minecraft 2 hours')" },
-                            translation: { type: "string", description: "Academic category (e.g., 'Computer Science: Logic & Resource Management')" },
-                            skills: { type: "string", description: "Skills demonstrated (comma-separated)" },
-                            grade: { type: "string", description: "Grade level relevance (e.g., '8th grade')" }
+                            caption: { type: "STRING" as const, description: "What student actually did (e.g., 'Played Minecraft 2 hours')" },
+                            translation: { type: "STRING" as const, description: "Academic category (e.g., 'Computer Science: Logic & Resource Management')" },
+                            skills: { type: "STRING" as const, description: "Skills demonstrated (comma-separated)" },
+                            grade: { type: "STRING" as const, description: "Grade level relevance (e.g., '8th grade')" }
                         },
                         required: ["caption", "translation"]
                     }
@@ -247,28 +247,40 @@ FORMATTING RULES:
                     name: "generate_student_game",
                     description: "Generate a student-designed learning game based on their choices. Only call this after co-designing with the student (asking game type, subject, assets, mechanics). Student must understand the skill to design a game about it.",
                     parameters: {
-                        type: "object",
+                        type: "OBJECT" as const,
                         properties: {
-                            title: { type: "string", description: "Game title (student-chosen)" },
+                            title: { type: "STRING" as const, description: "Game title (student-chosen)" },
                             gameType: {
-                                type: "string",
+                                type: "STRING" as const,
                                 enum: ["matching", "sorting", "labeling", "quiz", "memory", "path", "fill_blank"],
                                 description: "Type of game"
                             },
-                            subject: { type: "string", description: "Subject area (math, science, reading, etc)" },
-                            skillId: { type: "string", description: "Skill ID being practiced (optional)" },
-                            useStudentPhotos: { type: "boolean", description: "Whether to use student's uploaded photos" },
+                            subject: { type: "STRING" as const, description: "Subject area (math, science, reading, etc)" },
+                            skillId: { type: "STRING" as const, description: "Skill ID being practiced (optional)" },
+                            useStudentPhotos: { type: "STRING" as const, description: "Whether to use student's uploaded photos" },
                             manifest: {
-                                type: "object",
-                                description: "Complete game manifest with assets, mechanics, and pedagogy",
-                                properties: {
-                                    assets: { type: "object" },
-                                    mechanics: { type: "object" },
-                                    pedagogy: { type: "object" }
-                                }
+                                type: "OBJECT" as const,
+                                description: "Complete game manifest with assets, mechanics, and pedagogy"
                             }
                         },
                         required: ["title", "gameType", "subject", "manifest"]
+                    }
+                },
+                {
+                    name: "create_library_content",
+                    description: "Create a lesson and/or project for the project library. Use when student asks for a project idea or when you create teaching content that would be valuable to save for later.",
+                    parameters: {
+                        type: "OBJECT" as const,
+                        properties: {
+                            title: { type: "STRING" as const, description: "Title of the lesson/project" },
+                            category: { type: "STRING" as const, description: "Category (God's Creation & Science, Math, English/Lit, etc)" },
+                            lesson_content: { type: "STRING" as const, description: "The teaching lesson (Life of Fred narrative style)" },
+                            project_instructions: { type: "STRING" as const, description: "Hands-on project instructions" },
+                            materials: { type: "STRING" as const, description: "Materials needed (comma-separated)" },
+                            grade_levels: { type: "STRING" as const, description: "Applicable grades (comma-separated, e.g. '6th,7th,8th')" },
+                            key_concepts: { type: "STRING" as const, description: "Key learning concepts (comma-separated)" }
+                        },
+                        required: ["title", "category", "lesson_content", "project_instructions"]
                     }
                 }
             ]
