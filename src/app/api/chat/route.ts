@@ -10,6 +10,7 @@ import { autoFormatSketchnote } from '@/lib/sketchnoteUtils';
 import { LibraryService } from '@/lib/services/libraryService';
 import { ModelRouter } from '@/lib/services/modelRouter';
 import { AdaptiveDifficultyService } from '@/lib/services/adaptiveDifficultyService';
+import { SkillGraphService } from '@/lib/services/skillGraphService';
 
 const apiKey = process.env.GOOGLE_API_KEY;
 const supabase = createClient(
@@ -60,6 +61,33 @@ export async function POST(req: Request) {
             systemInstruction += '\n\n' + LibraryService.formatForPrompt(libraryContext);
         }
 
+        // Check for skill prerequisites and inject gap warnings
+        const attemptedSkillId = await SkillGraphService.identifySkillFromMessage(userPrompt, supabase);
+        if (attemptedSkillId && userId) {
+            const gapCheck = await SkillGraphService.detectGap(userId, attemptedSkillId, supabase);
+
+            if (gapCheck.hasGap && gapCheck.missingSkills.length > 0) {
+                console.log(`⚠️ Gap detected! Missing prerequisites:`, gapCheck.missingSkills.map(s => s.name));
+
+                const skillNames = gapCheck.missingSkills.map(s => s.name).join(', ');
+                systemInstruction += `\n\n=== PREREQUISITE GAP DETECTED ===
+
+CRITICAL: The student is attempting a skill they're not ready for yet.
+
+Missing Prerequisites: ${skillNames}
+
+You MUST:
+1. PAUSE the current lesson immediately
+2. Say: "${gapCheck.message || 'Hold on, let\'s back up. Before we do this, we need to cover some foundational skills first.'}"
+3. Ask a quick diagnostic question to assess their level with the prerequisite
+4. If they don't have it, teach the prerequisite FIRST
+5. Only after they demonstrate understanding, return to the original topic
+
+DO NOT proceed with the advanced topic until prerequisites are covered.
+`;
+            }
+        }
+
         // Get adaptive difficulty level and inject instructions
         const subject = 'general'; // TODO: Infer subject from conversation context
         const gradeLevel = studentInfo?.gradeLevel || '8th grade'; // Default to 8th grade
@@ -72,6 +100,40 @@ export async function POST(req: Request) {
         console.log(`📊 Current difficulty level: ${currentDifficulty}`);
         const difficultyLevel = AdaptiveDifficultyService.getDifficultyLevel(currentDifficulty);
         systemInstruction += '\n' + AdaptiveDifficultyService.getDifficultyInstructions(difficultyLevel);
+
+        // Student Game Design Instructions
+        systemInstruction += `\n\n=== STUDENT GAME DESIGN ===
+
+When a student asks to create or make a game:
+
+1. CHECK UNDERSTANDING FIRST:
+   - Before building a game about a skill, verify student understands the skill
+   - Ask: "Before we build this game, can you [demonstrate understanding]?"
+   - If student doesn't know it yet, say: "Love the idea! Let's learn [skill] first, then your game will be awesome."
+
+2. CO-DESIGN CONVERSATION:
+   Ask the student to make design choices:
+   - "What kind of game? Matching? Sorting? Quiz? Labeling? Memory?"
+   - "What subject?" (math, science, reading, etc.)
+   - "Should I use YOUR photos (from projects) or draw diagrams?"
+   - "Timer or no timer?"
+   - "How many rounds/questions?"
+
+3. BUILD THE MANIFEST:
+   Once you have their choices, use generate_student_game tool with a complete manifest:
+   - assets: {backgroundImage?, elements: [{id, type, content, position?, correctAnswer?, distractor?}]}
+   - mechanics: {winCondition, lives?, timer, timerSeconds?}
+   - pedagogy: {skillId, difficulty}
+
+4. PRESENT & ITERATE:
+   - After generating, say: "Here's your game! Try it out."
+   - If they want changes: "What should we adjust?" and regenerate
+
+IMPORTANT:
+- Game creation IS learning (requires deep understanding to design)
+- Student must be able to explain the rules
+- Use their actual work (photos, projects) as game content when possible
+`;
 
         // Voice and style
         systemInstruction += `\n\nHOW TO RESPOND:
@@ -132,6 +194,34 @@ FORMATTING RULES:
                             grade: { type: "string", description: "Grade level relevance (e.g., '8th grade')" }
                         },
                         required: ["caption", "translation"]
+                    }
+                },
+                {
+                    name: "generate_student_game",
+                    description: "Generate a student-designed learning game based on their choices. Only call this after co-designing with the student (asking game type, subject, assets, mechanics). Student must understand the skill to design a game about it.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            title: { type: "string", description: "Game title (student-chosen)" },
+                            gameType: {
+                                type: "string",
+                                enum: ["matching", "sorting", "labeling", "quiz", "memory", "path", "fill_blank"],
+                                description: "Type of game"
+                            },
+                            subject: { type: "string", description: "Subject area (math, science, reading, etc)" },
+                            skillId: { type: "string", description: "Skill ID being practiced (optional)" },
+                            useStudentPhotos: { type: "boolean", description: "Whether to use student's uploaded photos" },
+                            manifest: {
+                                type: "object",
+                                description: "Complete game manifest with assets, mechanics, and pedagogy",
+                                properties: {
+                                    assets: { type: "object" },
+                                    mechanics: { type: "object" },
+                                    pedagogy: { type: "object" }
+                                }
+                            }
+                        },
+                        required: ["title", "gameType", "subject", "manifest"]
                     }
                 }
             ]

@@ -303,6 +303,69 @@ export const handleToolCalls = async (
                     }
                 });
             }
+        } else if (call.name === 'generate_student_game') {
+            const args = call.args as any;
+            console.log(`[Game Generation]: Creating "${args.title}" (${args.gameType})...`);
+
+            try {
+                // Save student game to database
+                const { data: gameData, error: gameError } = await supabase
+                    .from('student_games')
+                    .insert({
+                        student_id: userId,
+                        title: args.title,
+                        description: args.description || `A ${args.gameType} game about ${args.subject}`,
+                        game_type: args.gameType,
+                        subject: args.subject,
+                        skill_id: args.skillId || null,
+                        manifest: args.manifest,
+                        is_public: false // Students can make it public later
+                    })
+                    .select()
+                    .single();
+
+                if (gameError) throw new Error(`Error saving game: ${gameError.message}`);
+
+                // Add to portfolio
+                await supabase
+                    .from('portfolio_items')
+                    .insert({
+                        student_id: userId,
+                        title: `Game: ${args.title}`,
+                        description: `Student-designed ${args.gameType} game about ${args.subject}`,
+                        type: 'game',
+                        content: JSON.stringify({ gameId: gameData.id }),
+                        skills_demonstrated: args.skillId ? [args.skillId] : []
+                    });
+
+                toolParts.push({
+                    functionResponse: {
+                        name: 'generate_student_game',
+                        response: {
+                            name: 'generate_student_game',
+                            content: {
+                                status: 'game created successfully',
+                                gameId: gameData.id,
+                                message: `Game "${args.title}" has been created and saved to your portfolio!`
+                            }
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error("Game Generation Error:", e);
+                toolParts.push({
+                    functionResponse: {
+                        name: 'generate_student_game',
+                        response: {
+                            name: 'generate_student_game',
+                            content: {
+                                status: 'failed to create game',
+                                error: String(e)
+                            }
+                        }
+                    }
+                });
+            }
         } else {
             // Fallback for unknown tools
             console.warn(`⚠️ Unknown tool called: ${call.name}`);
