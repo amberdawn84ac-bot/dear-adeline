@@ -10,10 +10,11 @@ export async function GET(_request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Fetch all opportunities for now. Recommendation logic will be added later.
+        // Fetch opportunities, filtering out expired ones
         const { data: opportunities, error } = await supabase
             .from('opportunities')
             .select('*')
+            .or(`deadline.is.null,deadline.gte.${new Date().toISOString()}`)
             .order('created_at', { ascending: false });
 
         if (error) {
