@@ -55,6 +55,7 @@ import { GoalsWidget } from '@/components/GoalsWidget';
 import MessageContent from '@/components/MessageContent';
 import DailyManna from '@/components/DailyManna';
 import AdelineSketchnote from '@/components/AdelineSketchnote';
+import StandardsProgressWidget from '@/components/StandardsProgressWidget';
 
 // Moved from DashboardClient to prevent re-declaration on every render
 const dailyScriptures = [
@@ -154,6 +155,15 @@ interface DashboardClientProps {
         avatar_url: string | null;
         grade_level: string | null;
     }>;
+    standardsProgress: Array<{
+        mastery_level: 'introduced' | 'developing' | 'proficient' | 'mastered';
+        demonstrated_at: string;
+        standard: {
+            standard_code: string;
+            subject: string;
+            statement_text: string;
+        };
+    }>;
     selectedStudent: {
         id: string;
         display_name: string | null;
@@ -177,6 +187,7 @@ export default function DashboardClient({
     students, // New prop
     selectedStudent, // New prop
     currentViewingUserId, // New prop
+    standardsProgress, // New prop
 }: DashboardClientProps) {
     const router = useRouter();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -815,6 +826,20 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                     studentId={currentViewingUserId}
                                     gradeLevel={profile.grade_level}
                                     state={profile.state_standards}
+                                />
+                            )}
+
+                            {/* 4. Standards Progress Widget */}
+                            {profile?.grade_level && standardsProgress.length > 0 && (
+                                <StandardsProgressWidget
+                                    standards={standardsProgress.map(sp => ({
+                                        standard_code: sp.standard.standard_code,
+                                        subject: sp.standard.subject,
+                                        statement_text: sp.standard.statement_text,
+                                        mastery_level: sp.mastery_level,
+                                        demonstrated_at: sp.demonstrated_at
+                                    }))}
+                                    gradeLevel={profile.grade_level}
                                 />
                             )}
 
