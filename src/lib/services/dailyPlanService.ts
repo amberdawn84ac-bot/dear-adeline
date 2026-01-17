@@ -35,19 +35,22 @@ export class DailyPlanService {
         try {
             const today = new Date().toISOString().split('T')[0];
 
-            // Check if we already have a plan for today
+            // Check if we already have ANY plan for today (regardless of status)
             const { data: existingPlans } = await supabase
                 .from('daily_plans')
                 .select('*')
                 .eq('student_id', studentId)
                 .eq('plan_date', today)
-                .eq('status', 'pending');
+                .order('created_at', { ascending: false })
+                .limit(1);
 
             if (existingPlans && existingPlans.length > 0) {
+                console.log(`📅 Found existing plan for ${today}:`, existingPlans[0].topic);
                 return existingPlans[0];
             }
 
-            // No plan exists, generate one
+            // No plan exists for today, generate a new one
+            console.log(`📅 No plan found for ${today}, generating new plan...`);
             return await this.generateDailyPlan(studentId, supabase);
         } catch (error) {
             console.error('Error getting daily plan:', error);
