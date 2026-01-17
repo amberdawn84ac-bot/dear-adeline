@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -307,56 +307,56 @@ function getPlacementTools() {
         name: "generate_placement_report",
         description: "Generate final placement report after assessment conversation is complete. Call this when you've assessed enough skills across all subjects.",
         parameters: {
-          type: "object",
+          type: SchemaType.OBJECT,
           properties: {
             skillEvaluations: {
-              type: "array",
+              type: SchemaType.ARRAY,
               description: "Array of skill evaluations",
               items: {
-                type: "object",
+                type: SchemaType.OBJECT,
                 properties: {
-                  skillName: { type: "string", description: "Name of the skill assessed" },
-                  subject: { type: "string", description: "Subject area (math, reading, science, hebrew)" },
+                  skillName: { type: SchemaType.STRING, description: "Name of the skill assessed" },
+                  subject: { type: SchemaType.STRING, description: "Subject area (math, reading, science, hebrew)" },
                   level: {
-                    type: "string",
+                    type: SchemaType.STRING,
                     enum: ["not_introduced", "needs_instruction", "competent", "mastered"],
                     description: "Student's current level with this skill"
                   },
-                  evidence: { type: "string", description: "What the student said/did that led to this evaluation" }
+                  evidence: { type: SchemaType.STRING, description: "What the student said/did that led to this evaluation" }
                 }
               }
             },
             recommendedStartingLevel: {
-              type: "string",
+              type: SchemaType.STRING,
               description: "Overall recommendation for where to start (e.g., '7th grade math, 8th grade reading')"
             },
             criticalGaps: {
-              type: "array",
-              items: { type: "string" },
+              type: SchemaType.ARRAY,
+              items: { type: SchemaType.STRING },
               description: "Critical skill gaps that need to be addressed first"
             },
             strengths: {
-              type: "array",
-              items: { type: "string" },
+              type: SchemaType.ARRAY,
+              items: { type: SchemaType.STRING },
               description: "Areas where student is strong"
             },
             learningStyle: {
-              type: "string",
+              type: SchemaType.STRING,
               enum: ["visual", "auditory", "kinesthetic", "mixed"],
               description: "Detected learning style preference"
             },
             pace: {
-              type: "string",
+              type: SchemaType.STRING,
               enum: ["slow", "moderate", "fast"],
               description: "Recommended learning pace"
             },
             interestAreas: {
-              type: "array",
-              items: { type: "string" },
+              type: SchemaType.ARRAY,
+              items: { type: SchemaType.STRING },
               description: "Topics/areas the student expressed interest in"
             },
             needsBreaksWhenStuck: {
-              type: "boolean",
+              type: SchemaType.BOOLEAN,
               description: "Whether student prefers breaks when struggling"
             }
           },
