@@ -76,7 +76,7 @@ export async function POST(req: Request) {
 
       if (generateReportCall) {
         // Assessment is complete!
-        const reportData = generateReportCall.args;
+        const reportData = generateReportCall.args as any;
 
         // Update assessment with final data
         const { error: updateError } = await supabase
