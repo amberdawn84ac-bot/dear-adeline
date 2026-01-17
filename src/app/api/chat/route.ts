@@ -238,11 +238,11 @@ FORMATTING RULES:
                     name: "update_student_progress",
                     description: "SILENTLY track graduation credits. Never tell student you're tracking. 1 credit = 120 hours (full year). Use: 0.005 for 30-min activity, 0.01 for 1 hour, 0.02 for 2-3 hours.",
                     parameters: {
-                        type: SchemaType.OBJECT,
+                        type: SchemaType.OBJECT as const,
                         properties: {
-                            subject: { type: SchemaType.STRING, description: "Subject area (math, science, etc)" },
-                            credits: { type: SchemaType.NUMBER, description: "Credits earned (0.005 for 30 min, 0.01 for 1 hour, 0.02 for 2-3 hours)" },
-                            activity: { type: SchemaType.STRING, description: "What they did" }
+                            subject: { type: SchemaType.STRING as const, description: "Subject area (math, science, etc)" },
+                            credits: { type: SchemaType.NUMBER as const, description: "Credits earned (0.005 for 30 min, 0.01 for 1 hour, 0.02 for 2-3 hours)" },
+                            activity: { type: SchemaType.STRING as const, description: "What they did" }
                         },
                         required: ["subject", "credits", "activity"]
                     }
@@ -251,11 +251,11 @@ FORMATTING RULES:
                     name: "create_game",
                     description: "Create interactive learning game",
                     parameters: {
-                        type: SchemaType.OBJECT,
+                        type: SchemaType.OBJECT as const,
                         properties: {
-                            gameType: { type: SchemaType.STRING, enum: ["quiz", "matching", "typing", "coding"] },
+                            gameType: { type: SchemaType.STRING as const, enum: ["quiz", "matching", "typing", "coding"] },
                             subject: { type: SchemaType.STRING },
-                            difficulty: { type: SchemaType.STRING, enum: ["easy", "medium", "hard"] }
+                            difficulty: { type: SchemaType.STRING as const, enum: ["easy", "medium", "hard"] }
                         },
                         required: ["gameType", "subject"]
                     }
@@ -264,12 +264,12 @@ FORMATTING RULES:
                     name: "log_activity",
                     description: "Log daily activities for state compliance tracking. Translate real activities into academic standards.",
                     parameters: {
-                        type: SchemaType.OBJECT,
+                        type: SchemaType.OBJECT as const,
                         properties: {
-                            caption: { type: SchemaType.STRING, description: "What student actually did (e.g., 'Played Minecraft 2 hours')" },
-                            translation: { type: SchemaType.STRING, description: "Academic category (e.g., 'Computer Science: Logic & Resource Management')" },
-                            skills: { type: SchemaType.STRING, description: "Skills demonstrated (comma-separated)" },
-                            grade: { type: SchemaType.STRING, description: "Grade level relevance (e.g., '8th grade')" }
+                            caption: { type: SchemaType.STRING as const, description: "What student actually did (e.g., 'Played Minecraft 2 hours')" },
+                            translation: { type: SchemaType.STRING as const, description: "Academic category (e.g., 'Computer Science: Logic & Resource Management')" },
+                            skills: { type: SchemaType.STRING as const, description: "Skills demonstrated (comma-separated)" },
+                            grade: { type: SchemaType.STRING as const, description: "Grade level relevance (e.g., '8th grade')" }
                         },
                         required: ["caption", "translation"]
                     }
@@ -278,19 +278,19 @@ FORMATTING RULES:
                     name: "generate_student_game",
                     description: "Generate a student-designed learning game based on their choices. Only call this after co-designing with the student (asking game type, subject, assets, mechanics). Student must understand the skill to design a game about it.",
                     parameters: {
-                        type: SchemaType.OBJECT,
+                        type: SchemaType.OBJECT as const,
                         properties: {
-                            title: { type: SchemaType.STRING, description: "Game title (student-chosen)" },
+                            title: { type: SchemaType.STRING as const, description: "Game title (student-chosen)" },
                             gameType: {
-                                type: SchemaType.STRING,
+                                type: SchemaType.STRING as const,
                                 enum: ["matching", "sorting", "labeling", "quiz", "memory", "path", "fill_blank"],
                                 description: "Type of game"
                             },
-                            subject: { type: SchemaType.STRING, description: "Subject area (math, science, reading, etc)" },
-                            skillId: { type: SchemaType.STRING, description: "Skill ID being practiced (optional)" },
-                            useStudentPhotos: { type: SchemaType.STRING, description: "Whether to use student's uploaded photos" },
+                            subject: { type: SchemaType.STRING as const, description: "Subject area (math, science, reading, etc)" },
+                            skillId: { type: SchemaType.STRING as const, description: "Skill ID being practiced (optional)" },
+                            useStudentPhotos: { type: SchemaType.STRING as const, description: "Whether to use student's uploaded photos" },
                             manifest: {
-                                type: SchemaType.OBJECT,
+                                type: SchemaType.OBJECT as const,
                                 description: "Complete game manifest with assets, mechanics, and pedagogy"
                             }
                         },
@@ -301,15 +301,15 @@ FORMATTING RULES:
                     name: "create_library_content",
                     description: "Create a lesson and/or project for the project library. Use when student asks for a project idea or when you create teaching content that would be valuable to save for later.",
                     parameters: {
-                        type: SchemaType.OBJECT,
+                        type: SchemaType.OBJECT as const,
                         properties: {
-                            title: { type: SchemaType.STRING, description: "Title of the lesson/project" },
-                            category: { type: SchemaType.STRING, description: "Category (God's Creation & Science, Math, English/Lit, etc)" },
-                            lesson_content: { type: SchemaType.STRING, description: "The teaching lesson (Life of Fred narrative style)" },
-                            project_instructions: { type: SchemaType.STRING, description: "Hands-on project instructions" },
-                            materials: { type: SchemaType.STRING, description: "Materials needed (comma-separated)" },
-                            grade_levels: { type: SchemaType.STRING, description: "Applicable grades (comma-separated, e.g. '6th,7th,8th')" },
-                            key_concepts: { type: SchemaType.STRING, description: "Key learning concepts (comma-separated)" }
+                            title: { type: SchemaType.STRING as const, description: "Title of the lesson/project" },
+                            category: { type: SchemaType.STRING as const, description: "Category (God's Creation & Science, Math, English/Lit, etc)" },
+                            lesson_content: { type: SchemaType.STRING as const, description: "The teaching lesson (Life of Fred narrative style)" },
+                            project_instructions: { type: SchemaType.STRING as const, description: "Hands-on project instructions" },
+                            materials: { type: SchemaType.STRING as const, description: "Materials needed (comma-separated)" },
+                            grade_levels: { type: SchemaType.STRING as const, description: "Applicable grades (comma-separated, e.g. '6th,7th,8th')" },
+                            key_concepts: { type: SchemaType.STRING as const, description: "Key learning concepts (comma-separated)" }
                         },
                         required: ["title", "category", "lesson_content", "project_instructions"]
                     }
@@ -318,16 +318,16 @@ FORMATTING RULES:
                     name: "remember_this",
                     description: "Save important information about the student for future conversations. Use for interests, preferences, goals, fears, learning styles, family details, or anything personal they share.",
                     parameters: {
-                        type: SchemaType.OBJECT,
+                        type: SchemaType.OBJECT as const,
                         properties: {
-                            content: { type: SchemaType.STRING, description: "What to remember (e.g., 'Student loves rocks and geology')" },
-                            category: { type: SchemaType.STRING, description: "Category: interests, preferences, goals, family, learning_style, etc" }
+                            content: { type: SchemaType.STRING as const, description: "What to remember (e.g., 'Student loves rocks and geology')" },
+                            category: { type: SchemaType.STRING as const, description: "Category: interests, preferences, goals, family, learning_style, etc" }
                         },
                         required: ["content", "category"]
                     }
                 }
             ]
-        }];
+        }] as const;
 
         console.log('🚀 Starting chat with Gemini...');
 
