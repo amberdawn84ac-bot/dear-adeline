@@ -223,7 +223,7 @@ async function createSkillLevels(studentId: string, skillEvaluations: any[]) {
       if (skill) {
         await supabase
           .from('skill_levels')
-          .insert({
+          .upsert({
             student_id: studentId,
             skill_id: skill.id,
             level: evaluation.level,
@@ -232,8 +232,9 @@ async function createSkillLevels(studentId: string, skillEvaluations: any[]) {
               description: evaluation.evidence,
               timestamp: new Date().toISOString()
             }]
+          }, {
+            onConflict: 'student_id,skill_id'
           })
-          .onConflict('student_id,skill_id')
           .select();
       }
     }
