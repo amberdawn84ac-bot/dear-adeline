@@ -108,6 +108,37 @@ export async function POST(req: Request) {
             systemInstruction += '\n\n' + LibraryService.formatForPrompt(libraryContext);
         }
 
+        // Inject standards context - show Adeline which standards to target
+        if (studentInfo?.stateStandards && studentInfo?.gradeLevel) {
+            try {
+                const { StandardsService } = await import('@/lib/services/standardsService');
+                const gradeNum = studentInfo.gradeLevel.replace(/th|st|nd|rd/gi, '').trim();
+                const unmetStandards = await StandardsService.getUnmetStandards(
+                    userId,
+                    studentInfo.stateStandards,
+                    gradeNum,
+                    undefined, // All subjects
+                    supabase
+                );
+
+                if (unmetStandards.length > 0) {
+                    const topStandards = unmetStandards.slice(0, 8); // Top 8 priority standards
+                    systemInstruction += `\n\n=== OKLAHOMA STATE STANDARDS TO ADDRESS ===
+
+These are the student's highest-priority unmet standards. Look for opportunities to teach these concepts:
+
+${topStandards.map(std => `- ${std.standard_code} (${std.subject}): ${std.statement_text}`).join('\n')}
+
+When teaching, naturally mention which standard you're covering (e.g., "This is Oklahoma Math standard ${topStandards[0]?.standard_code}").
+Track progress by using the log_activity tool with relevant skills after the student demonstrates understanding.
+`;
+                    console.log(`📋 Injected ${topStandards.length} unmet standards into context`);
+                }
+            } catch (e) {
+                console.warn('Could not fetch standards for chat context:', e);
+            }
+        }
+
         // Check for skill prerequisites and inject gap warnings
         const attemptedSkillId = await SkillGraphService.identifySkillFromMessage(userPrompt, supabase);
         if (attemptedSkillId && userId) {
