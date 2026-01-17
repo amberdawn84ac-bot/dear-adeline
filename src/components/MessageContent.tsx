@@ -223,10 +223,11 @@ function MessageContentComponent({ content }: MessageContentProps) {
             }
         }
 
-        // No special tags, render normal content with prose styling
+        // No special tags, render normal content with prose styling and fun fonts
         return (
             <div
-                className="prose prose-sm max-w-none prose-headings:text-purple-900 prose-a:text-purple-600 prose-strong:text-gray-900"
+                className="prose prose-lg max-w-none prose-headings:text-purple-900 prose-a:text-purple-600 prose-strong:text-gray-900"
+                style={{ fontFamily: 'Comic Neue, cursive' }}
                 dangerouslySetInnerHTML={{ __html: content }}
             />
         );

@@ -609,7 +609,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                 </div>
                             </div>
 
-                            <div className="flex-1 p-4 space-y-4">
+                            <div className="flex-1 p-4 space-y-4 overflow-y-auto max-h-[70vh]">
                                 {messages.map((m, i) => {
                                     const content = m.content || '';
                                     // Parse potential scripture tag
@@ -697,8 +697,13 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                 {messages.length <= 1 && (
                                     <div className="grid grid-cols-2 gap-2 mb-4">
                                         {quickPrompts.map((p, i) => (
-                                            <button key={i} onClick={() => setInput(p.text)} className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-xl hover:border-[var(--sage)] transition-all text-xs text-slate-600 shadow-sm">
-                                                <p.icon className="w-3.5 h-3.5 text-[var(--sage)]" />
+                                            <button
+                                                key={i}
+                                                onClick={() => setInput(p.text)}
+                                                className="flex items-center gap-2 p-3 bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-200 rounded-2xl hover:border-purple-400 hover:shadow-md transition-all text-sm font-medium text-purple-900 shadow-sm"
+                                                style={{ fontFamily: 'Fredoka, cursive' }}
+                                            >
+                                                <p.icon className="w-4 h-4 text-purple-600" />
                                                 <span>{p.text}</span>
                                             </button>
                                         ))}
