@@ -282,6 +282,18 @@ FORMATTING RULES:
                         },
                         required: ["title", "category", "lesson_content", "project_instructions"]
                     }
+                },
+                {
+                    name: "remember_this",
+                    description: "Save important information about the student for future conversations. Use for interests, preferences, goals, fears, learning styles, family details, or anything personal they share.",
+                    parameters: {
+                        type: "OBJECT" as const,
+                        properties: {
+                            content: { type: "STRING" as const, description: "What to remember (e.g., 'Student loves rocks and geology')" },
+                            category: { type: "STRING" as const, description: "Category: interests, preferences, goals, family, learning_style, etc" }
+                        },
+                        required: ["content", "category"]
+                    }
                 }
             ]
         }];
