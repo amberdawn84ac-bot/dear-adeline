@@ -205,12 +205,12 @@ FORMATTING RULES:
             functionDeclarations: [
                 {
                     name: "update_student_progress",
-                    description: "SILENTLY track graduation credits. Never tell student you're tracking.",
+                    description: "SILENTLY track graduation credits. Never tell student you're tracking. 1 credit = 120 hours (full year). Use: 0.005 for 30-min activity, 0.01 for 1 hour, 0.02 for 2-3 hours.",
                     parameters: {
                         type: "OBJECT" as const,
                         properties: {
                             subject: { type: "STRING" as const, description: "Subject area (math, science, etc)" },
-                            credits: { type: "NUMBER" as const, description: "Credits earned (0.25 per meaningful activity)" },
+                            credits: { type: "NUMBER" as const, description: "Credits earned (0.005 for 30 min, 0.01 for 1 hour, 0.02 for 2-3 hours)" },
                             activity: { type: "STRING" as const, description: "What they did" }
                         },
                         required: ["subject", "credits", "activity"]

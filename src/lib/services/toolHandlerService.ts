@@ -282,7 +282,7 @@ export const handleToolCalls = async (
                         lesson_type: 'ai_generated',
                         key_concepts: keyConcepts,
                         grade_levels: gradeLevels,
-                        credit_value: 1, // Default 1 credit
+                        credit_value: 0.01, // Default 0.01 credit (about 1 hour of work)
                         difficulty: 'beginner', // Default difficulty
                         estimated_time: '30-60 minutes', // Default time
                         approved: false, // Requires admin approval

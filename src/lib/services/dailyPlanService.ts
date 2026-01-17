@@ -263,7 +263,7 @@ export class DailyPlanService {
             reason: `You need ${requirement.creditsNeeded.toFixed(2)} more ${subject} credits to graduate. Let's work on this together!`,
             priority: requirement.priority as 'low' | 'medium' | 'high' | 'critical',
             target_requirement_id: requirement.id,
-            estimated_credits: 0.25, // Default 15-minute activity = 0.25 credits
+            estimated_credits: 0.005, // Default 30-minute activity = 0.005 credits (about 0.6 hours)
         };
     }
 
