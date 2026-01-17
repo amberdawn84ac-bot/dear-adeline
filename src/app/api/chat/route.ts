@@ -327,7 +327,7 @@ FORMATTING RULES:
                     }
                 }
             ]
-        }] as const;
+        }];
 
         console.log('🚀 Starting chat with Gemini...');
 

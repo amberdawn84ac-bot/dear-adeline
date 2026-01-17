@@ -364,5 +364,5 @@ function getPlacementTools() {
         }
       }
     ]
-  }] as const;
+  }];
 }
