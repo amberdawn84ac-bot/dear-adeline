@@ -49,6 +49,12 @@ interface Project {
     grade_levels: string[];
     estimated_time: string;
     image_url: string | null;
+    lesson_content: string | null;
+    lesson_type: 'premade' | 'ai_generated' | 'none' | null;
+    lesson_video_url: string | null;
+    key_concepts: string[] | null;
+    discussion_questions: string[] | null;
+    requires_lesson_completion: boolean;
 }
 
 interface StudentProject {
@@ -165,28 +171,7 @@ export default function LibraryClient({
     const handleSelectProject = async (project: Project) => {
         setSelectedProject(project);
         setPersonalizedContent(null);
-        setPersonalizing(true);
-
-        try {
-            const res = await fetch('/api/projects/personalize', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    project,
-                    gradeLevel: gradeLevel || 'all',
-                    studentName: '', // Could be passed from profile
-                }),
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                setPersonalizedContent(data);
-            }
-        } catch (error) {
-            console.error('Error personalizing project:', error);
-        } finally {
-            setPersonalizing(false);
-        }
+        setPersonalizing(false); // No AI personalization needed
     };
 
     const handleSeedProjects = async () => {
@@ -414,59 +399,62 @@ export default function LibraryClient({
                             return (
                                 <div
                                     key={project.id}
-                                    className="card hover:shadow-lg transition-shadow cursor-pointer"
+                                    className="card hover:shadow-xl hover:scale-105 transition-all cursor-pointer border-4 border-transparent hover:border-purple-300"
                                     onClick={() => handleSelectProject(project)}
                                 >
                                     {/* Project Image or Placeholder */}
-                                    <div className={`h-40 rounded-t-xl -mx-8 -mt-8 mb-4 ${config.bgColor} flex items-center justify-center`}>
-                                        <config.icon className="w-16 h-16 text-white/50" />
+                                    <div className={`h-48 rounded-t-xl -mx-8 -mt-8 mb-4 ${config.bgColor} flex items-center justify-center relative overflow-hidden`}>
+                                        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/10"></div>
+                                        <config.icon className="w-20 h-20 text-white/70 drop-shadow-lg" />
                                     </div>
 
                                     {/* Status Badge */}
                                     {status !== 'not_started' && (
-                                        <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-medium ${status === 'completed'
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-yellow-100 text-yellow-700'
-                                            }`}>
+                                        <div className={`absolute top-4 right-4 px-4 py-2 rounded-full text-sm font-bold shadow-lg ${status === 'completed'
+                                            ? 'bg-green-400 text-white'
+                                            : 'bg-yellow-400 text-gray-800'
+                                            }`} style={{ fontFamily: 'Fredoka, cursive' }}>
                                             {status === 'completed' ? (
                                                 <span className="flex items-center gap-1">
-                                                    <CheckCircle2 className="w-3 h-3" /> Completed
+                                                    <CheckCircle2 className="w-4 h-4" /> Done!
                                                 </span>
                                             ) : (
                                                 <span className="flex items-center gap-1">
-                                                    <Play className="w-3 h-3" /> In Progress
+                                                    <Play className="w-4 h-4" /> Working...
                                                 </span>
                                             )}
                                         </div>
                                     )}
 
-                                    <h3 className="font-semibold text-lg mb-2">{project.title}</h3>
-                                    <p className="text-sm text-[var(--charcoal-light)] mb-4 line-clamp-2">
+                                    <h3 className="font-bold text-xl mb-3 text-purple-700" style={{ fontFamily: 'Fredoka, cursive' }}>
+                                        {project.title}
+                                    </h3>
+                                    <p className="text-base text-gray-700 mb-4 line-clamp-2" style={{ fontFamily: 'Comic Neue, cursive' }}>
                                         {project.description}
                                     </p>
 
                                     <div className="flex flex-wrap gap-2 mb-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs ${diffConfig.color}`}>
+                                        <span className={`px-3 py-1.5 rounded-full text-sm font-bold ${diffConfig.color}`} style={{ fontFamily: 'Fredoka, cursive' }}>
                                             {diffConfig.label}
                                         </span>
                                         {project.estimated_time && (
-                                            <span className="px-2 py-1 rounded-full text-xs bg-[var(--cream)] text-[var(--charcoal-light)] flex items-center gap-1">
-                                                <Clock className="w-3 h-3" />
+                                            <span className="px-3 py-1.5 rounded-full text-sm bg-blue-100 text-blue-700 font-bold flex items-center gap-1" style={{ fontFamily: 'Comic Neue, cursive' }}>
+                                                <Clock className="w-4 h-4" />
                                                 {project.estimated_time}
                                             </span>
                                         )}
-                                        <span className="px-2 py-1 rounded-full text-xs bg-[var(--sage-light)] text-[var(--sage-dark)] flex items-center gap-1">
-                                            <Star className="w-3 h-3" />
-                                            {project.credit_value} credits
+                                        <span className="px-3 py-1.5 rounded-full text-sm bg-gradient-to-r from-yellow-300 to-orange-300 text-orange-800 font-bold flex items-center gap-1 shadow-md" style={{ fontFamily: 'Caveat, cursive' }}>
+                                            <Star className="w-4 h-4 fill-current" />
+                                            {project.credit_value}
                                         </span>
                                     </div>
 
-                                    <div className="flex items-center justify-between pt-4 border-t border-[var(--cream-dark)]">
-                                        <span className="text-sm text-[var(--charcoal-light)]">
+                                    <div className="flex items-center justify-between pt-4 border-t-2 border-purple-200">
+                                        <span className="text-sm text-gray-600 font-bold" style={{ fontFamily: 'Patrick Hand, cursive' }}>
                                             Grades: {project.grade_levels.slice(0, 3).join(', ')}
                                             {project.grade_levels.length > 3 && '...'}
                                         </span>
-                                        <ChevronRight className="w-5 h-5 text-[var(--charcoal-light)]" />
+                                        <ChevronRight className="w-6 h-6 text-purple-500" />
                                     </div>
                                 </div>
                             );
@@ -504,83 +492,124 @@ export default function LibraryClient({
 
 
                             <div className="p-8">
-                                <div className="flex items-start justify-between mb-4">
+                                <div className="flex items-start justify-between mb-6">
                                     <div>
-                                        <span className={`inline-block px-3 py-1 rounded-full text-sm ${difficultyConfig[selectedProject.difficulty as keyof typeof difficultyConfig]?.color || difficultyConfig.beginner.color} mb-2`}>
+                                        <span className={`inline-block px-4 py-2 rounded-full text-lg font-bold ${difficultyConfig[selectedProject.difficulty as keyof typeof difficultyConfig]?.color || difficultyConfig.beginner.color} mb-3`} style={{ fontFamily: 'Fredoka, cursive' }}>
                                             {difficultyConfig[selectedProject.difficulty as keyof typeof difficultyConfig]?.label || 'Standard'}
                                         </span>
-                                        <h2 className="text-2xl font-bold">{selectedProject.title}</h2>
+                                        <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600" style={{ fontFamily: 'Fredoka, cursive' }}>
+                                            {selectedProject.title}
+                                        </h2>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-2xl font-bold gradient-text">{selectedProject.credit_value}</div>
-                                        <div className="text-sm text-[var(--charcoal-light)]">credits</div>
+                                        <div className="text-4xl font-bold gradient-text" style={{ fontFamily: 'Caveat, cursive' }}>{selectedProject.credit_value}</div>
+                                        <div className="text-lg text-[var(--charcoal-light)] font-bold" style={{ fontFamily: 'Comic Neue, cursive' }}>credits</div>
                                     </div>
                                 </div>
 
-                                <p className="text-[var(--charcoal-light)] mb-6">{selectedProject.description}</p>
+                                <p className="text-xl text-gray-700 mb-8 leading-relaxed" style={{ fontFamily: 'Patrick Hand, cursive' }}>
+                                    {selectedProject.description}
+                                </p>
 
                                 {selectedProject.materials && selectedProject.materials.length > 0 && (
-                                    <div className="mb-6">
-                                        <h3 className="font-semibold mb-3">Materials Needed</h3>
-                                        <ul className="space-y-2">
+                                    <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl border-3 border-blue-300">
+                                        <h3 className="text-2xl font-bold text-blue-700 mb-4" style={{ fontFamily: 'Fredoka, cursive' }}>
+                                            📦 Materials Needed
+                                        </h3>
+                                        <ul className="space-y-3">
                                             {selectedProject.materials.map((material, i) => (
-                                                <li key={i} className="flex items-center gap-2 text-sm">
-                                                    <CheckCircle2 className="w-4 h-4 text-[var(--sage)]" />
-                                                    {material}
+                                                <li key={i} className="flex items-center gap-3 text-lg" style={{ fontFamily: 'Comic Neue, cursive' }}>
+                                                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                                                    <span className="text-gray-800">{material}</span>
                                                 </li>
                                             ))}
                                         </ul>
                                     </div>
                                 )}
 
-                                {personalizing ? (
-                                    <div className="mb-6 py-12 flex flex-col items-center justify-center gap-4 bg-[var(--cream)] rounded-2xl animate-pulse">
-                                        <Sparkles className="w-8 h-8 text-[var(--sage)] animate-spin-slow" />
-                                        <p className="text-sm font-black uppercase tracking-[0.3em] text-[var(--charcoal-light)]">Adeline is preparing your lesson...</p>
-                                    </div>
-                                ) : (
-                                    <>
-                                        {personalizedContent?.lesson && (
-                                            <div className="mb-8 p-8 bg-gradient-to-br from-[var(--sage-light)] to-[var(--cream)] rounded-3xl shadow-lg border-2 border-[var(--sage)]/20">
-                                                <div className="flex items-center gap-3 mb-6">
-                                                    <div className="w-12 h-12 rounded-full bg-[var(--sage)] flex items-center justify-center">
-                                                        <Sparkles className="w-6 h-6 text-white" />
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="text-xl font-bold text-[var(--forest)]">Let me teach you first!</h3>
-                                                        <p className="text-sm text-[var(--charcoal-light)]">A mini-lesson from Adeline</p>
-                                                    </div>
-                                                </div>
-                                                <div className="prose prose-lg max-w-none">
-                                                    <div className="text-base leading-relaxed whitespace-pre-wrap font-serif text-[var(--charcoal)]">
-                                                        {personalizedContent.lesson}
-                                                    </div>
-                                                </div>
+                                {/* Lesson Section - Show if project has lesson content */}
+                                {selectedProject.lesson_content && (
+                                    <div className="mb-8 p-8 bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-50 rounded-3xl shadow-xl border-4 border-purple-300">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                                                <Sparkles className="w-8 h-8 text-white animate-pulse" />
                                             </div>
-                                        )}
-
-                                        {personalizedContent && (
-                                            <div className="mb-8 p-6 bg-[var(--ochre)]/10 border-l-4 border-[var(--ochre)] rounded-r-2xl">
-                                                <div className="flex items-center gap-2 mb-3">
-                                                    <Sparkles className="w-5 h-5 text-[var(--ochre)]" />
-                                                    <span className="text-sm font-black uppercase tracking-widest text-[var(--ochre)]">Your Mission</span>
-                                                </div>
-                                                <p className="text-lg italic font-serif text-[var(--burgundy)] mb-4">"{personalizedContent.encouragement}"</p>
-                                                <div className="mt-4 pt-4 border-t border-[var(--ochre)]/20">
-                                                    <span className="text-xs font-black uppercase tracking-widest opacity-60 block mb-2">What to discover:</span>
-                                                    <p className="text-base font-bold text-[var(--forest)]">{personalizedContent.keyDiscovery}</p>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <div className="mb-6">
-                                            <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-4">Your Project Steps</h3>
-                                            <div className="bg-[var(--cream)] p-8 rounded-2xl text-base leading-loose whitespace-pre-wrap font-medium text-[var(--forest)]">
-                                                {personalizedContent?.personalizedInstructions || selectedProject.instructions}
+                                            <div>
+                                                <h3 className="text-3xl font-bold text-purple-700" style={{ fontFamily: 'Fredoka, cursive' }}>
+                                                    📚 Let me teach you first! 📚
+                                                </h3>
+                                                <p className="text-base text-purple-600 italic" style={{ fontFamily: 'Comic Neue, cursive' }}>
+                                                    A lesson from Adeline
+                                                </p>
                                             </div>
                                         </div>
-                                    </>
+
+                                        {/* Video embed if available */}
+                                        {selectedProject.lesson_video_url && (
+                                            <div className="mb-6 rounded-2xl overflow-hidden shadow-lg">
+                                                <iframe
+                                                    width="100%"
+                                                    height="400"
+                                                    src={selectedProject.lesson_video_url}
+                                                    title="Lesson Video"
+                                                    frameBorder="0"
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                    allowFullScreen
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Lesson content */}
+                                        <div className="prose prose-xl max-w-none mb-6">
+                                            <div className="text-xl leading-relaxed whitespace-pre-wrap text-gray-800" style={{ fontFamily: 'Comic Neue, cursive' }}>
+                                                {selectedProject.lesson_content}
+                                            </div>
+                                        </div>
+
+                                        {/* Key concepts */}
+                                        {selectedProject.key_concepts && selectedProject.key_concepts.length > 0 && (
+                                            <div className="mb-6 p-6 bg-white/50 rounded-2xl">
+                                                <h4 className="text-lg font-bold text-purple-700 mb-3" style={{ fontFamily: 'Fredoka, cursive' }}>
+                                                    🔑 Key Concepts
+                                                </h4>
+                                                <ul className="space-y-2">
+                                                    {selectedProject.key_concepts.map((concept, i) => (
+                                                        <li key={i} className="flex items-start gap-2 text-gray-700">
+                                                            <span className="text-purple-500 font-bold">•</span>
+                                                            <span style={{ fontFamily: 'Comic Neue, cursive' }}>{concept}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+
+                                        {/* Discussion questions */}
+                                        {selectedProject.discussion_questions && selectedProject.discussion_questions.length > 0 && (
+                                            <div className="p-6 bg-orange-50 rounded-2xl border-2 border-orange-200">
+                                                <h4 className="text-lg font-bold text-orange-700 mb-3" style={{ fontFamily: 'Fredoka, cursive' }}>
+                                                    💭 Think About This
+                                                </h4>
+                                                <ul className="space-y-2">
+                                                    {selectedProject.discussion_questions.map((question, i) => (
+                                                        <li key={i} className="text-gray-700 italic" style={{ fontFamily: 'Patrick Hand, cursive' }}>
+                                                            {question}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
                                 )}
+
+                                {/* Project Instructions */}
+                                <div className="mb-8">
+                                    <h3 className="text-2xl font-black text-indigo-700 mb-4" style={{ fontFamily: 'Fredoka, cursive' }}>
+                                        🎯 YOUR PROJECT
+                                    </h3>
+                                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-8 rounded-3xl border-4 border-indigo-300 text-lg leading-loose whitespace-pre-wrap text-gray-800 shadow-lg" style={{ fontFamily: 'Comic Neue, cursive' }}>
+                                        {selectedProject.instructions}
+                                    </div>
+                                </div>
 
                                 {/* Submission Form - shown when in progress */}
                                 {getProjectStatus(selectedProject.id) === 'in_progress' && (

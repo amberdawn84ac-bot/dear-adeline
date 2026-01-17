@@ -92,6 +92,7 @@ export default async function DashboardPage() {
         { data: conversationHistory },
         { data: activeConversation },
         { data: learningGaps },
+        { data: standardsProgress },
     ] = await Promise.all([
         supabase
             .from('student_skills')
@@ -141,6 +142,15 @@ export default async function DashboardPage() {
             .select('*')
             .eq('student_id', currentUserId) // Use currentUserId
             .is('resolved_at', null),
+
+        supabase
+            .from('student_standards_progress')
+            .select(`
+                *,
+                standard:state_standards(*)
+            `)
+            .eq('student_id', currentUserId) // Use currentUserId
+            .order('demonstrated_at', { ascending: false }),
     ]);
 
 
@@ -159,6 +169,7 @@ export default async function DashboardPage() {
             students={students}
             selectedStudent={selectedStudent}
             currentViewingUserId={currentUserId} // Pass the ID of the user whose data is being viewed
+            standardsProgress={standardsProgress || []}
         />
     );
 }

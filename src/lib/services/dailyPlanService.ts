@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { StandardsService } from './standardsService';
 
 interface GraduationRequirement {
     id: string;
@@ -22,6 +23,7 @@ interface DailyPlan {
     priority: 'low' | 'medium' | 'high' | 'critical';
     target_requirement_id: string;
     estimated_credits: number;
+    target_standards?: Array<{code: string; text: string}>;
 }
 
 export class DailyPlanService {
@@ -35,19 +37,22 @@ export class DailyPlanService {
         try {
             const today = new Date().toISOString().split('T')[0];
 
-            // Check if we already have a plan for today
+            // Check if we already have ANY plan for today (regardless of status)
             const { data: existingPlans } = await supabase
                 .from('daily_plans')
                 .select('*')
                 .eq('student_id', studentId)
                 .eq('plan_date', today)
-                .eq('status', 'pending');
+                .order('created_at', { ascending: false })
+                .limit(1);
 
             if (existingPlans && existingPlans.length > 0) {
+                console.log(`📅 Found existing plan for ${today}:`, existingPlans[0].topic);
                 return existingPlans[0];
             }
 
-            // No plan exists, generate one
+            // No plan exists for today, generate a new one
+            console.log(`📅 No plan found for ${today}, generating new plan...`);
             return await this.generateDailyPlan(studentId, supabase);
         } catch (error) {
             console.error('Error getting daily plan:', error);
@@ -104,10 +109,39 @@ export class DailyPlanService {
             // Pick the highest priority subject
             const targetSubject = needsWork[0];
 
+            // Get unmet standards for this subject and grade
+            const subjectMapping: Record<string, string> = {
+                'Math': 'Mathematics',
+                "God's Creation & Science": 'Science',
+                'English/Lit': 'English Language Arts',
+                'History': 'History'
+            };
+            const standardsSubject = subjectMapping[targetSubject.category] || targetSubject.category;
+
+            let targetStandards: Array<{code: string; text: string}> = [];
+            try {
+                const unmetStandards = await StandardsService.getUnmetStandards(
+                    studentId,
+                    stateStandards,
+                    gradeLevel.replace(/th|st|nd|rd/, '').trim(), // "8th grade" -> "8"
+                    standardsSubject,
+                    supabase
+                );
+
+                // Pick 2-3 relevant standards
+                targetStandards = unmetStandards.slice(0, 3).map(s => ({
+                    code: s.standard_code,
+                    text: s.statement_text
+                }));
+            } catch (e) {
+                console.warn('Could not fetch standards for daily plan:', e);
+            }
+
             // Generate plan content based on the subject
             const plan = this.generatePlanContent(
                 targetSubject,
-                gradeLevel
+                gradeLevel,
+                targetStandards
             );
 
             // Save to database
@@ -184,7 +218,8 @@ export class DailyPlanService {
      */
     private static generatePlanContent(
         requirement: GraduationRequirement & { creditsNeeded: number; priority: string },
-        gradeLevel: string
+        gradeLevel: string,
+        targetStandards: Array<{code: string; text: string}> = []
     ): Omit<DailyPlan, 'plan_date' | 'student_id'> {
         const subject = requirement.category;
 
@@ -260,7 +295,8 @@ export class DailyPlanService {
             reason: `You need ${requirement.creditsNeeded.toFixed(2)} more ${subject} credits to graduate. Let's work on this together!`,
             priority: requirement.priority as 'low' | 'medium' | 'high' | 'critical',
             target_requirement_id: requirement.id,
-            estimated_credits: 0.25, // Default 15-minute activity = 0.25 credits
+            estimated_credits: 0.005, // Default 30-minute activity = 0.005 credits (about 0.6 hours)
+            target_standards: targetStandards.length > 0 ? targetStandards : undefined,
         };
     }
 
@@ -277,6 +313,16 @@ export class DailyPlanService {
 
         const emoji = priorityEmoji[plan.priority] || '📚';
 
+        let standardsSection = '';
+        if (plan.target_standards && plan.target_standards.length > 0) {
+            standardsSection = `
+<p><strong>📋 Oklahoma Standards:</strong></p>
+<ul>
+${plan.target_standards.map((std: any) => `<li><code>${std.code}</code>: ${std.text}</li>`).join('\n')}
+</ul>
+`;
+        }
+
         return `${emoji} <strong>Today's Learning Plan: ${plan.subject}</strong>
 
 <p><strong>${plan.topic}</strong></p>
@@ -291,7 +337,7 @@ ${plan.activities.map((a: any) => `<li>${a.title} (${a.duration} min)</li>`).joi
 <ul>
 ${plan.learning_objectives.map((obj: string) => `<li>${obj}</li>`).join('\n')}
 </ul>
-
+${standardsSection}
 <p><em>${plan.reason}</em></p>
 
 <p>Ready to get started, or would you like to learn about something else today?</p>`;

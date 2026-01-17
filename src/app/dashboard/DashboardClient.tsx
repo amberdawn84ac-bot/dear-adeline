@@ -55,6 +55,7 @@ import { GoalsWidget } from '@/components/GoalsWidget';
 import MessageContent from '@/components/MessageContent';
 import DailyManna from '@/components/DailyManna';
 import AdelineSketchnote from '@/components/AdelineSketchnote';
+import StandardsProgressWidget from '@/components/StandardsProgressWidget';
 
 // Moved from DashboardClient to prevent re-declaration on every render
 const dailyScriptures = [
@@ -154,6 +155,15 @@ interface DashboardClientProps {
         avatar_url: string | null;
         grade_level: string | null;
     }>;
+    standardsProgress: Array<{
+        mastery_level: 'introduced' | 'developing' | 'proficient' | 'mastered';
+        demonstrated_at: string;
+        standard: {
+            standard_code: string;
+            subject: string;
+            statement_text: string;
+        };
+    }>;
     selectedStudent: {
         id: string;
         display_name: string | null;
@@ -177,6 +187,7 @@ export default function DashboardClient({
     students, // New prop
     selectedStudent, // New prop
     currentViewingUserId, // New prop
+    standardsProgress, // New prop
 }: DashboardClientProps) {
     const router = useRouter();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -609,7 +620,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                 </div>
                             </div>
 
-                            <div className="flex-1 p-4 space-y-4">
+                            <div className="flex-1 p-4 space-y-4 overflow-y-auto max-h-[70vh]">
                                 {messages.map((m, i) => {
                                     const content = m.content || '';
                                     // Parse potential scripture tag
@@ -697,8 +708,13 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                 {messages.length <= 1 && (
                                     <div className="grid grid-cols-2 gap-2 mb-4">
                                         {quickPrompts.map((p, i) => (
-                                            <button key={i} onClick={() => setInput(p.text)} className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-xl hover:border-[var(--sage)] transition-all text-xs text-slate-600 shadow-sm">
-                                                <p.icon className="w-3.5 h-3.5 text-[var(--sage)]" />
+                                            <button
+                                                key={i}
+                                                onClick={() => setInput(p.text)}
+                                                className="flex items-center gap-2 p-3 bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-200 rounded-2xl hover:border-purple-400 hover:shadow-md transition-all text-sm font-medium text-purple-900 shadow-sm"
+                                                style={{ fontFamily: 'Fredoka, cursive' }}
+                                            >
+                                                <p.icon className="w-4 h-4 text-purple-600" />
                                                 <span>{p.text}</span>
                                             </button>
                                         ))}
@@ -810,6 +826,20 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                     studentId={currentViewingUserId}
                                     gradeLevel={profile.grade_level}
                                     state={profile.state_standards}
+                                />
+                            )}
+
+                            {/* 4. Standards Progress Widget */}
+                            {profile?.grade_level && standardsProgress.length > 0 && (
+                                <StandardsProgressWidget
+                                    standards={standardsProgress.map(sp => ({
+                                        standard_code: sp.standard.standard_code,
+                                        subject: sp.standard.subject,
+                                        statement_text: sp.standard.statement_text,
+                                        mastery_level: sp.mastery_level,
+                                        demonstrated_at: sp.demonstrated_at
+                                    }))}
+                                    gradeLevel={profile.grade_level}
                                 />
                             )}
 
