@@ -156,3 +156,108 @@ export async function getSubjectResponses(
 
   return responses.filter(r => r.question_id && subjectQuestionIds.has(r.question_id));
 }
+
+/**
+ * Score a student's answer for a question
+ */
+export function scoreAnswer(
+  question: AssessmentQuestion,
+  studentAnswer: string
+): { isCorrect: boolean; feedback: string } {
+  const normalizedAnswer = studentAnswer.trim().toLowerCase();
+
+  switch (question.question_type) {
+    case 'multiple_choice': {
+      if (!question.options) {
+        return { isCorrect: false, feedback: 'Invalid question configuration' };
+      }
+
+      // Check if answer matches any correct option
+      const correctOption = question.options.find(opt => opt.isCorrect);
+      const selectedOption = question.options.find(
+        opt => opt.text.toLowerCase() === normalizedAnswer
+      );
+
+      // "I don't know" is always incorrect but valid
+      if (normalizedAnswer === "i don't know" || normalizedAnswer === "i dont know") {
+        return { isCorrect: false, feedback: "That's okay! Let's try another one." };
+      }
+
+      const isCorrect = selectedOption?.isCorrect || false;
+      return {
+        isCorrect,
+        feedback: isCorrect ? 'Correct!' : `The answer is ${correctOption?.text || 'unknown'}.`
+      };
+    }
+
+    case 'fill_blank': {
+      if (!question.correct_answer) {
+        return { isCorrect: false, feedback: 'Invalid question configuration' };
+      }
+
+      // Fuzzy match: case-insensitive, trim whitespace
+      const correctNormalized = question.correct_answer.trim().toLowerCase();
+      const isCorrect = normalizedAnswer === correctNormalized;
+
+      return {
+        isCorrect,
+        feedback: isCorrect ? 'Correct!' : `The answer is ${question.correct_answer}.`
+      };
+    }
+
+    case 'true_false': {
+      if (!question.correct_answer) {
+        return { isCorrect: false, feedback: 'Invalid question configuration' };
+      }
+
+      const correctNormalized = question.correct_answer.trim().toLowerCase();
+      const isCorrect = normalizedAnswer === correctNormalized;
+
+      return {
+        isCorrect,
+        feedback: isCorrect ? 'Correct!' : `The answer is ${question.correct_answer}.`
+      };
+    }
+
+    case 'drag_sort': {
+      // For drag_sort, the studentAnswer should be a JSON string of ordered items
+      // This would need more complex handling in the frontend
+      return { isCorrect: false, feedback: 'Drag sort scoring not yet implemented' };
+    }
+
+    case 'activity': {
+      // Activity scoring depends on the activity type
+      return { isCorrect: false, feedback: 'Activity scoring handled by activity config' };
+    }
+
+    default:
+      return { isCorrect: false, feedback: 'Unknown question type' };
+  }
+}
+
+/**
+ * Calculate success rate for a set of responses
+ */
+export function calculateSuccessRate(responses: AssessmentResponse[]): number {
+  if (responses.length === 0) return 0;
+
+  const correctCount = responses.filter(r => r.is_correct).length;
+  return correctCount / responses.length;
+}
+
+/**
+ * Calculate success rate at a specific grade level
+ */
+export function calculateGradeSuccessRate(
+  responses: AssessmentResponse[],
+  gradeLevel: string
+): { rate: number; total: number; correct: number } {
+  const gradeResponses = responses.filter(r => r.grade_level_tested === gradeLevel);
+  const correct = gradeResponses.filter(r => r.is_correct).length;
+
+  return {
+    rate: gradeResponses.length > 0 ? correct / gradeResponses.length : 0,
+    total: gradeResponses.length,
+    correct
+  };
+}
