@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export async function POST(req: Request) {
@@ -14,7 +14,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 });
     }
 
-    // Check if student already has a completed assessment
+    // Get student profile for jurisdiction and grade
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('display_name, jurisdiction, declared_grade')
+      .eq('id', userId)
+      .single();
+
+    if (profileError && profileError.code !== 'PGRST116') {
+      console.error('Error fetching profile:', profileError);
+    }
+
+    const displayName = profile?.display_name || 'there';
+    const jurisdiction = profile?.jurisdiction || 'Oklahoma';
+    const declaredGrade = profile?.declared_grade || '5';
+
+    // Check for recent completed assessment (within 30 days)
     const { data: existingAssessment } = await supabase
       .from('placement_assessments')
       .select('id, status, completed_at')
@@ -24,39 +39,41 @@ export async function POST(req: Request) {
       .limit(1)
       .single();
 
-    // If they have a recent completed assessment (within 30 days), return it
     if (existingAssessment) {
       const completedDate = new Date(existingAssessment.completed_at);
       const daysSince = (Date.now() - completedDate.getTime()) / (1000 * 60 * 60 * 24);
 
       if (daysSince < 30) {
         return NextResponse.json({
-          message: 'Student has a recent placement assessment',
+          alreadyCompleted: true,
           assessmentId: existingAssessment.id,
-          alreadyCompleted: true
+          message: 'Recent assessment found'
         });
       }
     }
 
     // Check for in-progress assessment
-    const { data: inProgressAssessment } = await supabase
+    const { data: inProgressAssessment, error: inProgressError } = await supabase
       .from('placement_assessments')
-      .select('id, current_subject, responses')
+      .select('*')
       .eq('student_id', userId)
       .eq('status', 'in_progress')
       .order('started_at', { ascending: false })
       .limit(1)
       .single();
 
-    if (inProgressAssessment) {
-      // Resume existing assessment
+    if (inProgressError && inProgressError.code !== 'PGRST116') {
+      console.error('Error fetching in-progress assessment:', inProgressError);
+    }
+
+    if (inProgressAssessment && !inProgressError) {
       return NextResponse.json({
         assessmentId: inProgressAssessment.id,
         resumed: true,
-        firstQuestion: getNextQuestionForSubject(
-          inProgressAssessment.current_subject || 'introduction',
-          inProgressAssessment.responses
-        )
+        phase: inProgressAssessment.phase,
+        currentSubjectIndex: inProgressAssessment.current_subject_index,
+        warmupComplete: inProgressAssessment.phase !== 'warmup',
+        firstMessage: getResumeMessage(inProgressAssessment.phase, displayName)
       });
     }
 
@@ -65,29 +82,27 @@ export async function POST(req: Request) {
       .from('placement_assessments')
       .insert({
         student_id: userId,
-        current_subject: 'introduction',
-        status: 'in_progress'
+        status: 'in_progress',
+        phase: 'warmup',
+        jurisdiction,
+        declared_grade: declaredGrade,
+        current_subject_index: 0,
+        subjects_to_assess: ['Mathematics', 'English Language Arts', 'Science', 'Social Studies']
       })
       .select()
       .single();
 
     if (error) {
-      console.error('Error creating placement assessment:', error);
+      console.error('Error creating assessment:', error);
       return NextResponse.json({ error: 'Failed to create assessment' }, { status: 500 });
     }
 
-    // Get student info for personalized greeting
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', userId)
-      .single();
-
-    const displayName = profile?.display_name || 'there';
-
     return NextResponse.json({
       assessmentId: newAssessment.id,
-      firstQuestion: `Hi ${displayName}! I'm Adeline. Before we dive into anything, I want to get to know you a little.\n\nWhat grade are you going into? Or are you homeschooled and don't really think in grades?`
+      phase: 'warmup',
+      jurisdiction,
+      declaredGrade,
+      firstMessage: `Hi ${displayName}! I'm Adeline. Before we dive in, I'd love to get to know you a little.\n\nWhat's something you're really into right now? Could be a hobby, a game, something you're learning about - anything!`
     });
 
   } catch (error: any) {
@@ -99,20 +114,9 @@ export async function POST(req: Request) {
   }
 }
 
-function getNextQuestionForSubject(subject: string, responses: any): string {
-  // Helper function to resume an assessment
-  switch (subject) {
-    case 'introduction':
-      return "Let's continue. What grade are you going into?";
-    case 'math':
-      return "Let's talk about math. What's the last math thing you remember working on?";
-    case 'reading':
-      return "Now let's talk about reading. What's the last book you read that you actually enjoyed?";
-    case 'science':
-      return "Let's talk about science. Do you know why plants need sunlight?";
-    case 'hebrew':
-      return "Your curriculum includes Hebrew word studies. Have you studied any Hebrew before?";
-    default:
-      return "Let's continue where we left off.";
+function getResumeMessage(phase: string, name: string): string {
+  if (phase === 'warmup') {
+    return `Welcome back, ${name}! Let's continue getting to know each other. What's something you enjoy doing?`;
   }
+  return `Welcome back, ${name}! Let's continue where we left off.`;
 }
