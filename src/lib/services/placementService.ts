@@ -261,3 +261,163 @@ export function calculateGradeSuccessRate(
     correct
   };
 }
+
+/**
+ * Parse grade level to number for comparison
+ * Handles: "K", "1", "2", ... "12"
+ */
+function gradeToNumber(grade: string): number {
+  if (grade.toUpperCase() === 'K') return 0;
+  return parseInt(grade, 10) || 0;
+}
+
+/**
+ * Convert number back to grade string
+ */
+function numberToGrade(num: number): string {
+  if (num <= 0) return 'K';
+  return num.toString();
+}
+
+/**
+ * Determine the next action in the assessment based on responses
+ */
+export async function determineNextAction(
+  assessmentId: string,
+  assessment: PlacementAssessment
+): Promise<NextAction> {
+  const currentSubject = assessment.subjects_to_assess[assessment.current_subject_index];
+
+  if (!currentSubject) {
+    // All subjects complete
+    return { action: 'complete', message: 'All subjects assessed!' };
+  }
+
+  const declaredGrade = assessment.declared_grade || '5';
+  const responses = await getSubjectResponses(assessmentId, currentSubject);
+
+  // Check if we've hit max questions for this subject
+  if (responses.length >= MAX_QUESTIONS_PER_SUBJECT) {
+    return moveToNextSubject(assessment, currentSubject);
+  }
+
+  // Find what grade levels we've tested
+  const testedGrades = new Set(responses.map(r => r.grade_level_tested));
+  const declaredGradeNum = gradeToNumber(declaredGrade);
+
+  // Calculate success at each tested grade
+  const gradeResults: Record<string, { rate: number; total: number }> = {};
+  for (const grade of testedGrades) {
+    gradeResults[grade] = calculateGradeSuccessRate(responses, grade);
+  }
+
+  // If we haven't tested declared grade yet, start there
+  if (!testedGrades.has(declaredGrade)) {
+    const questions = await getGatewayQuestions(currentSubject, declaredGrade);
+    if (questions.length > 0) {
+      return {
+        action: 'question',
+        question: questions[0],
+        gradeLevel: declaredGrade,
+        isProbeUp: false,
+        isProbeDown: false
+      };
+    }
+  }
+
+  // Get results at declared grade
+  const declaredResult = gradeResults[declaredGrade];
+
+  if (declaredResult) {
+    // Need at least 3 responses to make decisions
+    if (declaredResult.total < 3) {
+      // Get more questions at this level
+      const questions = await getGatewayQuestions(currentSubject, declaredGrade);
+      const answeredIds = new Set(responses.map(r => r.question_id));
+      const unanswered = questions.filter(q => !answeredIds.has(q.id));
+
+      if (unanswered.length > 0) {
+        return {
+          action: 'question',
+          question: unanswered[0],
+          gradeLevel: declaredGrade,
+          isProbeUp: false,
+          isProbeDown: false
+        };
+      }
+    }
+
+    // We have enough data - decide on probing
+    if (declaredResult.rate >= MASTERY_THRESHOLD) {
+      // Student is strong - probe up
+      const probeUpGrade = numberToGrade(declaredGradeNum + 1);
+      const alreadyProbedUp = testedGrades.has(probeUpGrade);
+
+      if (!alreadyProbedUp && declaredGradeNum + 1 <= declaredGradeNum + MAX_PROBE_LEVELS) {
+        const questions = await getGatewayQuestions(currentSubject, probeUpGrade);
+        if (questions.length > 0) {
+          return {
+            action: 'question',
+            question: questions[0],
+            gradeLevel: probeUpGrade,
+            isProbeUp: true,
+            isProbeDown: false
+          };
+        }
+      }
+
+      // Already probed up or no questions available - move on
+      return moveToNextSubject(assessment, currentSubject);
+    }
+
+    if (declaredResult.rate < 0.5) {
+      // Student is struggling - probe down
+      const probeDownGrade = numberToGrade(declaredGradeNum - 1);
+      const alreadyProbedDown = testedGrades.has(probeDownGrade);
+
+      if (!alreadyProbedDown && declaredGradeNum - 1 >= declaredGradeNum - MAX_PROBE_LEVELS) {
+        const questions = await getGatewayQuestions(currentSubject, probeDownGrade);
+        if (questions.length > 0) {
+          return {
+            action: 'question',
+            question: questions[0],
+            gradeLevel: probeDownGrade,
+            isProbeUp: false,
+            isProbeDown: true
+          };
+        }
+      }
+
+      // Already probed down or no questions - move on
+      return moveToNextSubject(assessment, currentSubject);
+    }
+  }
+
+  // Default: move to next subject
+  return moveToNextSubject(assessment, currentSubject);
+}
+
+function moveToNextSubject(
+  assessment: PlacementAssessment,
+  completedSubject: string
+): NextAction {
+  const nextIndex = assessment.current_subject_index + 1;
+  const nextSubject = assessment.subjects_to_assess[nextIndex];
+
+  if (!nextSubject) {
+    return { action: 'complete', message: "All done! Let me put together your results." };
+  }
+
+  const transitions: Record<string, string> = {
+    'Mathematics': "Great! Now let's look at some reading.",
+    'English Language Arts': "Nice work! Let's try some science questions.",
+    'Science': "Awesome! Last area - social studies.",
+    'Social Studies': "All done! Let me put together your results."
+  };
+
+  return {
+    action: 'next_subject',
+    subject: nextSubject,
+    message: transitions[completedSubject] || `Now let's try ${nextSubject}.`
+  };
+}
