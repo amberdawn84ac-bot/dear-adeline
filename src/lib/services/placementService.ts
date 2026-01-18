@@ -421,3 +421,144 @@ function moveToNextSubject(
     message: transitions[completedSubject] || `Now let's try ${nextSubject}.`
   };
 }
+
+/**
+ * Calculate placement for a subject based on responses
+ */
+export async function calculateSubjectPlacement(
+  assessmentId: string,
+  studentId: string,
+  subject: string,
+  declaredGrade: string
+): Promise<SubjectPlacement> {
+  const responses = await getSubjectResponses(assessmentId, subject);
+
+  // Group by grade level
+  const gradeResults: Record<string, { correct: number; total: number }> = {};
+
+  for (const response of responses) {
+    const grade = response.grade_level_tested;
+    if (!gradeResults[grade]) {
+      gradeResults[grade] = { correct: 0, total: 0 };
+    }
+    gradeResults[grade].total++;
+    if (response.is_correct) {
+      gradeResults[grade].correct++;
+    }
+  }
+
+  // Find comfortable grade (80%+ success)
+  let comfortableGrade = declaredGrade;
+  let stretchGrade: string | null = null;
+
+  const sortedGrades = Object.keys(gradeResults).sort(
+    (a, b) => gradeToNumber(b) - gradeToNumber(a)
+  );
+
+  for (const grade of sortedGrades) {
+    const result = gradeResults[grade];
+    const rate = result.total > 0 ? result.correct / result.total : 0;
+
+    if (rate >= MASTERY_THRESHOLD) {
+      comfortableGrade = grade;
+      // Check if there's a higher grade with 60%+
+      const higherGrade = numberToGrade(gradeToNumber(grade) + 1);
+      if (gradeResults[higherGrade]) {
+        const higherRate = gradeResults[higherGrade].correct / gradeResults[higherGrade].total;
+        if (higherRate >= STRETCH_THRESHOLD) {
+          stretchGrade = higherGrade;
+        }
+      }
+      break;
+    } else if (rate >= STRETCH_THRESHOLD) {
+      stretchGrade = grade;
+    }
+  }
+
+  // Calculate totals
+  const totalAsked = responses.length;
+  const totalCorrect = responses.filter(r => r.is_correct).length;
+
+  // Determine confidence
+  let confidence: 'high' | 'medium' | 'low' = 'medium';
+  if (totalAsked >= 5) {
+    confidence = 'high';
+  } else if (totalAsked <= 2) {
+    confidence = 'low';
+  }
+
+  return {
+    subject,
+    declared_grade: declaredGrade,
+    comfortable_grade: comfortableGrade,
+    stretch_grade: stretchGrade,
+    questions_asked: totalAsked,
+    questions_correct: totalCorrect,
+    confidence
+  };
+}
+
+/**
+ * Save subject placement to database
+ */
+export async function saveSubjectPlacement(
+  assessmentId: string,
+  studentId: string,
+  placement: SubjectPlacement
+): Promise<void> {
+  const { error } = await supabase
+    .from('subject_placements')
+    .upsert({
+      assessment_id: assessmentId,
+      student_id: studentId,
+      subject: placement.subject,
+      declared_grade: placement.declared_grade,
+      comfortable_grade: placement.comfortable_grade,
+      stretch_grade: placement.stretch_grade,
+      questions_asked: placement.questions_asked,
+      questions_correct: placement.questions_correct,
+      confidence: placement.confidence
+    }, {
+      onConflict: 'assessment_id,subject'
+    });
+
+  if (error) {
+    console.error('Error saving subject placement:', error);
+    throw error;
+  }
+}
+
+/**
+ * Calculate and save all subject placements for an assessment
+ */
+export async function finalizeAssessment(
+  assessmentId: string,
+  studentId: string,
+  declaredGrade: string,
+  subjects: string[]
+): Promise<SubjectPlacement[]> {
+  const placements: SubjectPlacement[] = [];
+
+  for (const subject of subjects) {
+    const placement = await calculateSubjectPlacement(
+      assessmentId,
+      studentId,
+      subject,
+      declaredGrade
+    );
+    await saveSubjectPlacement(assessmentId, studentId, placement);
+    placements.push(placement);
+  }
+
+  // Update assessment status
+  await supabase
+    .from('placement_assessments')
+    .update({
+      status: 'completed',
+      phase: 'complete',
+      completed_at: new Date().toISOString()
+    })
+    .eq('id', assessmentId);
+
+  return placements;
+}
