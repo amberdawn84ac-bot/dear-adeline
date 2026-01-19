@@ -7,6 +7,18 @@ import { GameRenderer } from './GameRenderer';
 import MermaidDiagram from './MermaidDiagram';
 import StorybookPage from './StorybookPage';
 
+// Helper function to safely parse JSON
+function safeJSONParse(jsonString: string): Record<string, unknown> | null {
+    try {
+        const trimmed = jsonString.trim();
+        return JSON.parse(trimmed);
+    } catch (e) {
+        console.error('Failed to parse JSON:', e);
+        console.error('JSON string was:', jsonString.substring(0, 200));
+        return null;
+    }
+}
+
 interface MessageContentProps {
     content: string;
 }
@@ -58,12 +70,12 @@ function MessageContentComponent({ content }: MessageContentProps) {
                 console.error('Failed to parse DIAGRAM tag:', e);
             }
         }
-        
+
         // Parse <GAME> tags for inline games
         const gameMatch = content.match(/<GAME>([\s\S]*?)<\/GAME>/);
         if (gameMatch) {
             const gameData = safeJSONParse(gameMatch[1]);
-            
+
             if (gameData) {
                 const beforeGame = content.substring(0, gameMatch.index);
                 const afterGame = content.substring((gameMatch.index || 0) + gameMatch[0].length);
@@ -90,7 +102,7 @@ function MessageContentComponent({ content }: MessageContentProps) {
         const gameLabMatch = content.match(/<GAMELAB>([\s\S]*?)<\/GAMELAB>/);
         if (gameLabMatch) {
             const gameLabData = safeJSONParse(gameLabMatch[1]);
-            
+
             if (gameLabData) {
                 const beforeGame = content.substring(0, gameLabMatch.index);
                 const afterGame = content.substring((gameLabMatch.index || 0) + gameLabMatch[0].length);
@@ -150,7 +162,7 @@ function MessageContentComponent({ content }: MessageContentProps) {
         const missionMatch = content.match(/<MISSION>([\s\S]*?)<\/MISSION>/);
         if (missionMatch) {
             const missionData = safeJSONParse(missionMatch[1]);
-            
+
             if (missionData) {
                 const beforeMission = content.substring(0, missionMatch.index);
                 const afterMission = content.substring((missionMatch.index || 0) + missionMatch[0].length);
