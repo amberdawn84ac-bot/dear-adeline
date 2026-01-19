@@ -4,7 +4,7 @@ import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 const apiKey = process.env.GOOGLE_API_KEY;
