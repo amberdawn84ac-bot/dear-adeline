@@ -101,7 +101,12 @@ function MessageContentComponent({ content }: MessageContentProps) {
         // Parse <GAMELAB> tags for complex games
         const gameLabMatch = content.match(/<GAMELAB>([\s\S]*?)<\/GAMELAB>/);
         if (gameLabMatch) {
-            const gameLabData = safeJSONParse(gameLabMatch[1]);
+            const gameLabData = safeJSONParse(gameLabMatch[1]) as {
+                concept: string;
+                track?: string;
+                difficulty?: string;
+                game_type?: string;
+            } | null;
 
             if (gameLabData) {
                 const beforeGame = content.substring(0, gameLabMatch.index);
@@ -135,7 +140,7 @@ function MessageContentComponent({ content }: MessageContentProps) {
                             <div className="grid grid-cols-2 gap-3 mb-4">
                                 <div className="bg-white rounded-xl p-3">
                                     <p className="text-xs text-charcoal/60 mb-1">Track</p>
-                                    <p className="font-bold text-purple">{formatTrack(gameLabData.track)}</p>
+                                    <p className="font-bold text-purple">{formatTrack(gameLabData.track as any)}</p>
                                 </div>
                                 <div className="bg-white rounded-xl p-3">
                                     <p className="text-xs text-charcoal/60 mb-1">Difficulty</p>
@@ -161,7 +166,11 @@ function MessageContentComponent({ content }: MessageContentProps) {
         // Parse <MISSION> tags for academic missions
         const missionMatch = content.match(/<MISSION>([\s\S]*?)<\/MISSION>/);
         if (missionMatch) {
-            const missionData = safeJSONParse(missionMatch[1]);
+            const missionData = safeJSONParse(missionMatch[1]) as {
+                topic: string;
+                conversation_context?: string;
+                suggested_track?: string;
+            } | null;
 
             if (missionData) {
                 const beforeMission = content.substring(0, missionMatch.index);
@@ -204,7 +213,7 @@ function MessageContentComponent({ content }: MessageContentProps) {
                             {missionData.suggested_track && (
                                 <div className="mb-4">
                                     <span className="inline-block px-3 py-1 bg-gold/10 text-gold rounded-full text-sm font-medium">
-                                        {formatTrack(missionData.suggested_track)}
+                                        {formatTrack(missionData.suggested_track as any)}
                                     </span>
                                 </div>
                             )}
