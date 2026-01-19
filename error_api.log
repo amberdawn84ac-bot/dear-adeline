@@ -1,0 +1,1 @@
+{"error":"Failed to continue placement","details":"[GoogleGenerativeAI Error]: First content should be with role 'user', got model"}

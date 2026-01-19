@@ -11,10 +11,15 @@ import StorybookPage from './StorybookPage';
 function safeJSONParse(jsonString: string): Record<string, unknown> | null {
     try {
         const trimmed = jsonString.trim();
-        return JSON.parse(trimmed);
+        // Handle unescaped newlines which are common in AI responses
+        const sanitized = trimmed.replace(/\n/g, "\\n").replace(/\r/g, "");
+        return JSON.parse(sanitized);
     } catch (e) {
-        console.error('Failed to parse JSON:', e);
-        console.error('JSON string was:', jsonString.substring(0, 200));
+        // Only log if it really looked like JSON (starts with { or [)
+        if (jsonString.trim().startsWith('{') || jsonString.trim().startsWith('[')) {
+            console.error('Failed to parse JSON:', e);
+            console.error('JSON content snippet:', jsonString.substring(0, 50) + '...');
+        }
         return null;
     }
 }

@@ -114,7 +114,7 @@ VOICE: Talk like you're explaining something to a curious teenager over coffee. 
         // STEP 4: CALL MODEL (Currently only Gemini)
         // ============================================
         // Map router model to actual model identifier
-        const selectedModel = route.model === 'gemini' ? 'gemini-1.5-flash' :
+        const selectedModel = route.model === 'gemini' ? 'gemini-2.5-flash' :
             route.model === 'grok' ? 'grok-beta' :
                 'gpt-4'; // Future: Implement Grok and GPT-4 APIs
 

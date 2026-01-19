@@ -40,11 +40,7 @@ export async function POST(req: Request) {
     const responses = assessment.responses || {};
     const conversationHistory = buildConversationHistory(responses);
 
-    // Add current response to history
-    conversationHistory.push({
-      role: 'user',
-      parts: [{ text: response }]
-    });
+    // conversationHistory.push({ role: 'user', ... }) - Removed redundant push
 
     // Get system prompt for placement mode
     const systemInstruction = getPlacementSystemPrompt(assessment);
@@ -54,7 +50,7 @@ export async function POST(req: Request) {
 
     // Call Gemini
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       systemInstruction
     });
 
@@ -187,6 +183,14 @@ function buildConversationHistory(responses: any): any[] {
         parts: [{ text: item.answer }]
       });
     }
+  }
+
+  // Ensure history starts with a user message
+  if (history.length > 0 && history[0].role === 'model') {
+    history.unshift({
+      role: 'user',
+      parts: [{ text: 'Start assessment.' }]
+    });
   }
 
   return history;
