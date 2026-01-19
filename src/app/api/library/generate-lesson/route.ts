@@ -22,7 +22,7 @@ Category: ${category || 'general'}
 The lesson should TEACH the concepts the student needs to know BEFORE they start the hands-on project.`;
 
         const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-1.5-flash',
             systemInstruction: LESSON_GENERATION_PROMPT
         });
 

@@ -335,9 +335,9 @@ FORMATTING RULES:
         const startTime = Date.now();
 
         // Map router model to actual model identifier
-        let selectedModel = 'gemini-2.5-flash'; // default
+        let selectedModel = 'gemini-1.5-flash'; // default
         if (route.model === 'gemini') {
-            selectedModel = 'gemini-2.5-flash';
+            selectedModel = 'gemini-1.5-flash';
         } else {
             console.warn(`⚠️ ${route.model} not yet implemented, falling back to Gemini`);
             // Future: Add Grok and GPT-4 API implementations here

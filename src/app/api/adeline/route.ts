@@ -9,7 +9,7 @@ import { autoFormatSketchnote } from '@/lib/sketchnoteUtils';
 import { ModelRouter } from '@/lib/services/modelRouter';
 
 // Use the recommended "flash" model for speed and cost-effectiveness
-const GOOGLE_FLASH_MODEL = 'gemini-2.5-flash';
+const GOOGLE_FLASH_MODEL = 'gemini-1.5-flash';
 const GOOGLE_PRO_MODEL = 'gemini-1.5-pro'; // More capable model for complex tasks
 
 

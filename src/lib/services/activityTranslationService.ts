@@ -11,7 +11,7 @@ const ActivityTranslationSchema = z.object({
 export type ActivityTranslation = z.infer<typeof ActivityTranslationSchema>;
 
 export class ActivityTranslationService {
-  private static modelName = 'gemini-2.5-flash';
+  private static modelName = 'gemini-1.5-flash';
 
   static async translate(activityDescription: string, studentGradeLevel?: string | null): Promise<ActivityTranslation> {
     try {

@@ -4,7 +4,7 @@ import { getGoogleAIAPIKey } from '@/lib/server/config';
 import { generateLessonPrompt } from '@/lib/services/promptService';
 
 // Use the configured flash model
-const GOOGLE_AI_MODEL = 'gemini-2.5-flash';
+const GOOGLE_AI_MODEL = 'gemini-1.5-flash';
 
 export async function POST(request: Request) {
     try {
