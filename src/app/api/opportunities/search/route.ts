@@ -5,15 +5,10 @@ import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.0-flash",
     tools: [{
-        googleSearchRetrieval: {
-            dynamicRetrievalConfig: {
-                mode: "dynamic" as any,
-                dynamicThreshold: 0.7,
-            },
-        },
-    }],
+        googleSearch: {},
+    }] as any,
     generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
