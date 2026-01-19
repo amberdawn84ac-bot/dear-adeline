@@ -62,7 +62,7 @@ export default async function DashboardPage() {
             // Handle error, maybe show an empty list or a message
         } else {
             students = (teacherStudents.map(ts => ts.student).filter(s => s !== null) as any);
-            
+
             const studentIdFromParam = searchParams.get('studentId');
             if (studentIdFromParam) {
                 selectedStudent = students.find(s => s.id === studentIdFromParam) || null;
@@ -84,23 +84,15 @@ export default async function DashboardPage() {
     }
 
     // ⚡ Bolt: Parallelize independent data fetches for currentUserId
-    const [
-        { data: studentSkills },
-        { data: graduationProgress },
-        { data: allRequirements },
-        { data: portfolioItems },
-        { data: conversationHistory },
-        { data: activeConversation },
-        { data: learningGaps },
-        { data: standardsProgress },
-    ] = await Promise.all([
+    // ⚡ Bolt: Parallelize independent data fetches with fault tolerance
+    const results = await Promise.allSettled([
         supabase
             .from('student_skills')
             .select(`
       *,
       skill:skills(*)
     `)
-            .eq('student_id', currentUserId), // Use currentUserId
+            .eq('student_id', currentUserId),
 
         supabase
             .from('student_graduation_progress')
@@ -108,7 +100,7 @@ export default async function DashboardPage() {
       *,
       requirement:graduation_requirements(*)
     `)
-            .eq('student_id', currentUserId), // Use currentUserId
+            .eq('student_id', currentUserId),
 
         supabase
             .from('graduation_requirements')
@@ -118,20 +110,21 @@ export default async function DashboardPage() {
         supabase
             .from('portfolio_items')
             .select('*')
-            .eq('student_id', currentUserId) // Use currentUserId
+            .eq('student_id', currentUserId)
             .order('created_at', { ascending: false })
             .limit(5),
 
         supabase
             .from('conversations')
             .select('id, title, updated_at, topic')
-            .eq('student_id', currentUserId) // Use currentUserId
-            .order('updated_at', { ascending: false }),
+            .eq('student_id', currentUserId)
+            .order('updated_at', { ascending: false })
+            .limit(50),
 
         supabase
             .from('conversations')
             .select('*')
-            .eq('student_id', currentUserId) // Use currentUserId
+            .eq('student_id', currentUserId)
             .eq('is_active', true)
             .order('updated_at', { ascending: false })
             .limit(1)
@@ -140,7 +133,7 @@ export default async function DashboardPage() {
         supabase
             .from('learning_gaps')
             .select('*')
-            .eq('student_id', currentUserId) // Use currentUserId
+            .eq('student_id', currentUserId)
             .is('resolved_at', null),
 
         supabase
@@ -149,9 +142,26 @@ export default async function DashboardPage() {
                 *,
                 standard:state_standards(*)
             `)
-            .eq('student_id', currentUserId) // Use currentUserId
+            .eq('student_id', currentUserId)
             .order('demonstrated_at', { ascending: false }),
     ]);
+
+    // Unpack results safely
+    const studentSkills = results[0].status === 'fulfilled' ? results[0].value.data : [];
+    const graduationProgress = results[1].status === 'fulfilled' ? results[1].value.data : [];
+    const allRequirements = results[2].status === 'fulfilled' ? results[2].value.data : [];
+    const portfolioItems = results[3].status === 'fulfilled' ? results[3].value.data : [];
+    const conversationHistory = results[4].status === 'fulfilled' ? results[4].value.data : [];
+    const activeConversation = results[5].status === 'fulfilled' ? results[5].value.data : null;
+    const learningGaps = results[6].status === 'fulfilled' ? results[6].value.data : [];
+    const standardsProgress = results[7].status === 'fulfilled' ? results[7].value.data : [];
+
+    // Log errors if any
+    results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+            console.error(`Error fetching data at index ${index}:`, result.reason);
+        }
+    });
 
 
     return (
