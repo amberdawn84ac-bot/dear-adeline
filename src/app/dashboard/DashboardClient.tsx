@@ -732,10 +732,11 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                     <button
                                         type="button"
                                         onClick={() => setShowSimpleActivityModal(true)}
-                                        className="bg-[var(--ochre)] text-white p-2.5 rounded-xl hover:brightness-110 transition-all shadow-sm"
+                                        className="bg-[var(--ochre)] text-white px-3 py-2.5 rounded-xl hover:brightness-110 transition-all shadow-sm flex items-center gap-2"
                                         title="Log an activity for academic credit"
                                     >
                                         <Trophy className="w-5 h-5" />
+                                        <span className="text-sm font-medium hidden sm:inline">Log Activity</span>
                                     </button>
                                     <button
                                         type="button"
