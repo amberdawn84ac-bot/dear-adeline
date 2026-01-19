@@ -86,8 +86,8 @@ function MessageContentComponent({ content }: MessageContentProps) {
 
                         <div className="my-4">
                             <GameRenderer
-                                type={gameData.type}
-                                content={gameData.content}
+                                type={gameData.type as 'quiz' | 'matching' | 'wordsearch' | 'fillinblank' | 'truefalse'}
+                                content={gameData.content as Record<string, unknown>}
                                 onComplete={() => console.log('Game completed!')}
                             />
                         </div>
