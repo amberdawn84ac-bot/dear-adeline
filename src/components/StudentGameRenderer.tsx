@@ -221,13 +221,12 @@ function MatchingGame({
             key={item.id}
             onClick={() => handleSelect(item, 'left')}
             disabled={selections.has(item.id)}
-            className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
-              selections.has(item.id)
+            className={`w-full p-4 rounded-lg border-2 text-left transition-all ${selections.has(item.id)
                 ? 'bg-green-100 border-green-400 cursor-default'
                 : selectedLeft === item.id
-                ? 'bg-blue-100 border-blue-400'
-                : 'bg-white border-gray-300 hover:border-gray-400'
-            }`}
+                  ? 'bg-blue-100 border-blue-400'
+                  : 'bg-white border-gray-300 hover:border-gray-400'
+              }`}
           >
             {item.content}
           </button>
@@ -239,13 +238,12 @@ function MatchingGame({
             key={item.id}
             onClick={() => handleSelect(item, 'right')}
             disabled={selections.has(item.id)}
-            className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
-              selections.has(item.id)
+            className={`w-full p-4 rounded-lg border-2 text-left transition-all ${selections.has(item.id)
                 ? 'bg-green-100 border-green-400 cursor-default'
                 : selectedRight === item.id
-                ? 'bg-blue-100 border-blue-400'
-                : 'bg-white border-gray-300 hover:border-gray-400'
-            }`}
+                  ? 'bg-blue-100 border-blue-400'
+                  : 'bg-white border-gray-300 hover:border-gray-400'
+              }`}
           >
             {item.content}
           </button>
@@ -268,7 +266,7 @@ function QuizGame({
 
   const choices = useMemo(() => {
     if (!currentElement) return [];
-    
+
     const allChoices = [
       currentElement.correctAnswer as string,
       ...manifest.assets.elements
@@ -276,7 +274,7 @@ function QuizGame({
         .slice(0, 3)
         .map(e => e.content)
     ];
-    
+
     return allChoices.sort(() => Math.random() - 0.5);
   }, [currentElement, manifest.assets.elements]);
 
@@ -285,6 +283,20 @@ function QuizGame({
   }
 
   const handleChoice = (choice: string) => {
+    const correct = currentElement.correctAnswer;
+    const isCorrect = Array.isArray(correct)
+      ? correct.includes(choice)
+      : correct === choice;
+
+    onAnswer(currentElement.id, choice, isCorrect);
+
+    if (currentIndex < manifest.assets.elements.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    }
+  };
+
+  return (
+    <div>
       <div className="mb-8">
         <p className="text-sm text-gray-500 mb-2">Question {currentIndex + 1} of {manifest.assets.elements.length}</p>
         <h3 className="text-xl font-semibold text-gray-900">{currentElement.content}</h3>
@@ -336,11 +348,10 @@ function LabelingGame({
             key={element.id}
             onClick={() => handleClick(element)}
             disabled={selections.has(element.id)}
-            className={`absolute w-12 h-12 rounded-full border-4 transition-all ${
-              selections.has(element.id)
+            className={`absolute w-12 h-12 rounded-full border-4 transition-all ${selections.has(element.id)
                 ? 'bg-green-500 border-green-600 cursor-default'
                 : 'bg-blue-500 border-blue-600 hover:bg-blue-600 animate-pulse'
-            }`}
+              }`}
             style={{
               left: `${element.position?.x || 0}%`,
               top: `${element.position?.y || 0}%`,
