@@ -6,15 +6,15 @@ import { ModelRouter, ModelMode } from '@/lib/services/modelRouter';
 
 const apiKey = process.env.GOOGLE_API_KEY;
 const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!, 
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : undefined;
 
 interface ChatMessage {
-  role: 'user' | 'assistant' | 'ai';
-  content: string;
+    role: 'user' | 'assistant' | 'ai';
+    content: string;
 }
 
 /**
@@ -31,7 +31,7 @@ interface ChatMessage {
  */
 export async function POST(req: Request) {
     console.log('🔵 /api/chat/routed - Request received');
-    
+
     try {
         if (!genAI) {
             console.error('❌ GOOGLE_API_KEY is missing!');
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
         }
 
         const { messages, mode } = await req.json();
-        
+
         const lastMessage = messages[messages.length - 1];
         const userPrompt = lastMessage.content;
 
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
         // Inject "truth documents" into context
         // ============================================
         let libraryContext = '';
-        
+
         try {
             const libraryMatches = await LibraryService.search(
                 userPrompt,
@@ -114,9 +114,9 @@ VOICE: Talk like you're explaining something to a curious teenager over coffee. 
         // STEP 4: CALL MODEL (Currently only Gemini)
         // ============================================
         // Map router model to actual model identifier
-        const selectedModel = route.model === 'gemini' ? 'gemini-2.5-flash' :
-                             route.model === 'grok' ? 'grok-beta' :
-                             'gpt-4'; // Future: Implement Grok and GPT-4 APIs
+        const selectedModel = route.model === 'gemini' ? 'gemini-1.5-flash' :
+            route.model === 'grok' ? 'grok-beta' :
+                'gpt-4'; // Future: Implement Grok and GPT-4 APIs
 
         const model = genAI.getGenerativeModel({
             model: selectedModel,
@@ -137,7 +137,7 @@ VOICE: Talk like you're explaining something to a curious teenager over coffee. 
         // ============================================
         // TODO: Extract activities and log to adventure_logs table
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             reply: text,
             model: route.model,
             usedLibrary: libraryContext.length > 0
