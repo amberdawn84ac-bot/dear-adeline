@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
         console.log('✅ genAI initialized');
 
-        const { messages, userId, studentInfo, conversationId, imageData } = await req.json();
+        const { messages, userId, studentInfo, conversationId, imageData, mode } = await req.json(); // Added mode
         console.log('📦 Parsed request body:', { userId, conversationId, messageCount: messages?.length });
 
         // Gemini requires 'model' role, not 'assistant'
@@ -92,8 +92,8 @@ export async function POST(req: Request) {
             }
         }
 
-        // Detect which AI model to use based on conversation content
-        const route = ModelRouter.detectMode(userPrompt);
+        // Detect which AI model to use based on conversation content or explicit mode
+        const route = ModelRouter.detectMode(userPrompt, mode);
         console.log(`🎯 Model Router: ${route.model} (${route.reason})`);
 
         // Retrieve context from multiple sources
@@ -101,6 +101,17 @@ export async function POST(req: Request) {
         const libraryContext = await LibraryService.search(userPrompt, supabase);
 
         let systemInstruction = generateSystemPrompt(studentInfo, similarMemories, lastMessage);
+
+        // Inject Investigation Mode context if routed to Grok
+        if (route.model === 'grok') {
+            systemInstruction += `\n\n=== INVESTIGATION MODE ===
+\nINVESTIGATION PROTOCOL:
+- Follow the money. Question everything. Expose conflicts of interest.
+- Question mainstream narratives - look for corporate funding and influence.
+- Be direct and unfiltered. Real truth over polite consensus.
+`;
+            console.log('🕵️ Injected Investigation Mode prompt');
+        }
 
         // Inject library context (truth documents) if found
         if (libraryContext && libraryContext.length > 0) {

@@ -15,6 +15,10 @@ import {
     Settings,
     LogOut,
     ChevronRight,
+    ChevronDown,
+    Book,
+    FlaskRound,
+    History,
     Lightbulb,
     Gamepad2,
     FolderOpen,
@@ -246,6 +250,7 @@ export default function DashboardClient({
     const [showCameraInput, setShowCameraInput] = useState(false);
     const [showSimpleActivityModal, setShowSimpleActivityModal] = useState(false);
     const [simpleActivityInput, setSimpleActivityInput] = useState('');
+    const [textbooksExpanded, setTextbooksExpanded] = useState(false);
 
     // Sketchnotes disabled - always use MessageContent for proper rendering
     const shouldUseSketchnote = (content: string): boolean => {
@@ -498,6 +503,33 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                             <Library className="w-4 h-4" />
                             <span className="text-sm">Project Library</span>
                         </Link>
+
+                        {/* Textbooks Section */}
+                        <div>
+                            <button
+                                onClick={() => setTextbooksExpanded(!textbooksExpanded)}
+                                className={`w-full flex items-center justify-between px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname.startsWith('/textbooks') ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <Book className="w-4 h-4" />
+                                    <span className="text-sm">Textbooks</span>
+                                </div>
+                                <ChevronDown className={`w-4 h-4 transition-transform ${textbooksExpanded ? 'rotate-180' : ''}`} />
+                            </button>
+                            {textbooksExpanded && (
+                                <div className="ml-4 mt-1 space-y-1 border-l-2 border-[var(--cream-dark)] pl-3">
+                                    <Link href="/textbooks/science" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/textbooks/science' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
+                                        <FlaskRound className="w-4 h-4" />
+                                        <span className="text-sm">Science</span>
+                                    </Link>
+                                    <Link href="/textbooks/history" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/textbooks/history' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
+                                        <History className="w-4 h-4" />
+                                        <span className="text-sm">History</span>
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
+
                         <Link href="/opportunities" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/opportunities' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
                             <Trophy className="w-4 h-4" />
                             <span className="text-sm">Opportunities</span>

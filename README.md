@@ -1,177 +1,70 @@
-# Supabase CLI
+# Dear Adeline
 
-[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
-](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
+**Dear Adeline** is a personalized, AI-powered learning platform designed to adapt to a student's unique interests, pace, and state standards (specifically Oklahoma). It moves beyond rote memorization to foster genuine understanding through conversation and project-based learning.
 
-[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
+![Adeline Interface](/public/adeline-sketch.png)
 
-This repository contains all the functionality for Supabase CLI.
+## Tech Stack
 
-- [x] Running Supabase locally
-- [x] Managing database migrations
-- [x] Creating and deploying Supabase Functions
-- [x] Generating types directly from your database schema
-- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Turbopack)
+- **Language**: TypeScript
+- **Database**: [Supabase](https://supabase.com/) (PostgreSQL + pgvector)
+- **AI**: 
+  - **Google Gemini 2.5 Flash** (Primary Conversational Model)
+  - **Google Gemini Pro** (Backup/Reasoning)
+  - **Model Router** (Intelligent switching between Gemini, Grok, GPT-4)
+- **Styling**: Tailwind CSS (v4)
 
-## Getting started
+## Key Features
 
-### Install the CLI
+- **Conversational Placement Assessment**: Assesses student level naturally without a "test".
+- **Adaptive Difficulty**: AI adjusts complexity (Lexile level, scaffolding) based on student performance in real-time.
+- **The Hippocampus**: RAG (Retrieval Augmented Generation) system that injects "Truth Documents" into the AI context.
+- **Project-Based Learning**: Students co-design games and projects with Adeline.
+- **State Standards Tracking**: Automatically maps activities to Oklahoma Academic Standards.
 
-Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
+## Getting Started
 
-```bash
-npm i supabase --save-dev
-```
+### Prerequisites
 
-When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
+- Node.js 18+
+- Supabase CLI installed (`npm i -g supabase`)
 
-```
-NODE_OPTIONS=--no-experimental-fetch yarn add supabase
-```
+### Environment Setup
 
-> **Note**
-For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
-
-<details>
-  <summary><b>macOS</b></summary>
-
-  Available via [Homebrew](https://brew.sh). To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To install the beta release channel:
-  
-  ```sh
-  brew install supabase/tap/supabase-beta
-  brew link --overwrite supabase-beta
-  ```
-  
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-</details>
-
-<details>
-  <summary><b>Windows</b></summary>
-
-  Available via [Scoop](https://scoop.sh). To install:
-
-  ```powershell
-  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
-  scoop install supabase
-  ```
-
-  To upgrade:
-
-  ```powershell
-  scoop update supabase
-  ```
-</details>
-
-<details>
-  <summary><b>Linux</b></summary>
-
-  Available via [Homebrew](https://brew.sh) and Linux packages.
-
-  #### via Homebrew
-
-  To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-
-  #### via Linux packages
-
-  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
-
-  ```sh
-  sudo apk add --allow-untrusted <...>.apk
-  ```
-
-  ```sh
-  sudo dpkg -i <...>.deb
-  ```
-
-  ```sh
-  sudo rpm -i <...>.rpm
-  ```
-
-  ```sh
-  sudo pacman -U <...>.pkg.tar.zst
-  ```
-</details>
-
-<details>
-  <summary><b>Other Platforms</b></summary>
-
-  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
-
-  ```sh
-  go install github.com/supabase/cli@latest
-  ```
-
-  Add a symlink to the binary in `$PATH` for easier access:
-
-  ```sh
-  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
-  ```
-
-  This works on other non-standard Linux distros.
-</details>
-
-<details>
-  <summary><b>Community Maintained Packages</b></summary>
-
-  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
-  To install in your working directory:
-
-  ```bash
-  pkgx install supabase
-  ```
-
-  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
-</details>
-
-### Run the CLI
+Create a `.env.local` file in the root directory:
 
 ```bash
-supabase bootstrap
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+GOOGLE_API_KEY=your_gemini_api_key
 ```
 
-Or using npx:
+### Local Development
 
-```bash
-npx supabase bootstrap
-```
+1.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+2.  **Start local database:**
+    ```bash
+    supabase start
+    ```
 
-## Docs
+3.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
 
-Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+4.  **Open the app:**
+    Navigate to [http://localhost:3000](http://localhost:3000)
 
-## Breaking changes
+## Deployment
 
-We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+The project is deployed on [Vercel](https://vercel.com).
+Live URL: [https://dearadeline.vercel.app](https://dearadeline.vercel.app)
 
-However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
-
-## Developing
-
-To run from source:
-
-```sh
-# Go >= 1.22
-go run . help
-```
+## License
+Proprietary.

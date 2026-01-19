@@ -47,7 +47,15 @@
       "Skill(superpowers:subagent-driven-development)",
       "Skill(superpowers:executing-plans)",
       "Bash(git remote set-url:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Skill(superpowers:brainstorming)",
+      "Bash(git check-ignore:*)",
+      "Skill(superpowers:test-driven-development)",
+      "Bash(CI=true npm test:*)",
+      "Bash(pnpm add:*)",
+      "Bash(CI=true npx jest:*)",
+      "Bash(./node_modules/.bin/jest:*)",
+      "Bash(node node_modules/jest/bin/jest.js:*)"
     ]
   }
 }
