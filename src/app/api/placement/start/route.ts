@@ -60,13 +60,30 @@ export async function POST(req: Request) {
       });
     }
 
+    // Get student info for personalized greeting
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', userId)
+      .single();
+
+    const displayName = profile?.display_name || 'there';
+    const firstQuestion = `Hi ${displayName}! I'm Adeline. Before we dive into anything, I want to get to know you a little.\n\nWhat grade are you going into? Or are you homeschooled and don't really think in grades?`;
+
     // Create new assessment
     const { data: newAssessment, error } = await supabase
       .from('placement_assessments')
       .insert({
         student_id: userId,
         current_subject: 'introduction',
-        status: 'in_progress'
+        status: 'in_progress',
+        responses: {
+          "0": {
+            question: firstQuestion,
+            answer: null,
+            timestamp: new Date().toISOString()
+          }
+        }
       })
       .select()
       .single();
@@ -76,18 +93,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Failed to create assessment' }, { status: 500 });
     }
 
-    // Get student info for personalized greeting
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', userId)
-      .single();
-
-    const displayName = profile?.display_name || 'there';
-
     return NextResponse.json({
       assessmentId: newAssessment.id,
-      firstQuestion: `Hi ${displayName}! I'm Adeline. Before we dive into anything, I want to get to know you a little.\n\nWhat grade are you going into? Or are you homeschooled and don't really think in grades?`
+      firstQuestion
     });
 
   } catch (error: any) {

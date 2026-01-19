@@ -129,14 +129,33 @@ export async function POST(req: Request) {
     // Determine current subject from question content
     const currentSubject = determineCurrentSubject(nextQuestion, assessment.current_subject);
 
-    // Save Q&A to responses
-    const updatedResponses = {
-      ...responses,
-      [conversationHistory.length]: {
-        question: conversationHistory[conversationHistory.length - 2]?.parts[0]?.text || 'Starting question',
+    // Update responses:
+    // 1. Find the current turn (last key) and add the user's answer
+    // 2. Create the NEXT turn with the new AI question
+    const keys = Object.keys(responses).map(Number).sort((a, b) => a - b);
+    const currentKey = keys.length > 0 ? keys[keys.length - 1] : 0; // Should be initialized by start
+
+    // Create deep copy to modify
+    const updatedResponses = JSON.parse(JSON.stringify(responses));
+
+    // Update current turn with user answer
+    if (updatedResponses[currentKey]) {
+      updatedResponses[currentKey].answer = response;
+      updatedResponses[currentKey].answer_timestamp = new Date().toISOString();
+    } else {
+      // Fallback if somehow empty (legacy support)
+      updatedResponses[currentKey] = {
+        question: 'Resume...',
         answer: response,
         timestamp: new Date().toISOString()
-      }
+      };
+    }
+
+    // Add next turn
+    updatedResponses[currentKey + 1] = {
+      question: nextQuestion,
+      answer: null,
+      timestamp: new Date().toISOString()
     };
 
     // Update assessment
