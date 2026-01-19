@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { ActivityTranslationService } from '@/lib/services/activityTranslationService';
 import { MasteryService } from '@/lib/services/masteryService';
 import { LearningGapService } from '@/lib/services/learningGapService';
+import { ActivitySuggestionService } from '@/lib/services/activitySuggestionService';
 import { ActivityToStandardsMapper } from '@/lib/services/activityToStandardsMapper';
 
 export async function POST(request: Request) {
@@ -42,6 +43,12 @@ export async function POST(request: Request) {
         const resolvedGaps = await LearningGapService.resolveGaps(
             targetStudentId,
             aiAnalysis.skills,
+            supabase
+        );
+
+        // 3.6. Get Suggestions for Remaining Gaps
+        const suggestions = await ActivitySuggestionService.getSuggestionsForRemainingGaps(
+            targetStudentId,
             supabase
         );
 
@@ -90,6 +97,7 @@ export async function POST(request: Request) {
             analysis: aiAnalysis,
             mastery: masteryResults,
             resolvedGaps,
+            suggestions,
             standardsProgress: standardsProgress.map(s => ({
                 code: s.standard_code,
                 subject: s.subject,

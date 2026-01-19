@@ -1,9 +1,13 @@
+/**
+ * @jest-environment node
+ */
 import { NextRequest } from 'next/server';
 import { POST } from '../route';
 import { createClient } from '@/lib/supabase/server';
 import { ActivityTranslationService } from '@/lib/services/activityTranslationService';
 import { MasteryService } from '@/lib/services/masteryService';
 import { LearningGapService } from '@/lib/services/learningGapService';
+import { ActivitySuggestionService } from '@/lib/services/activitySuggestionService';
 
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(),
@@ -12,8 +16,14 @@ jest.mock('@/lib/supabase/server', () => ({
 jest.mock('@/lib/services/activityTranslationService');
 jest.mock('@/lib/services/masteryService');
 jest.mock('@/lib/services/learningGapService');
+jest.mock('@/lib/services/activitySuggestionService');
 
 describe('/api/logs/translate POST', () => {
+  // Shared mock for activity_logs insert chain
+  const mockActivityLogsSingle = jest.fn();
+  const mockActivityLogsSelect = jest.fn(() => ({ single: mockActivityLogsSingle }));
+  const mockActivityLogsInsert = jest.fn(() => ({ select: mockActivityLogsSelect }));
+
   const mockSupabase = {
     auth: {
       getUser: jest.fn(),
@@ -31,12 +41,9 @@ describe('/api/logs/translate POST', () => {
           })),
         };
       }
+      // activity_logs table
       return {
-        insert: jest.fn(() => ({
-          select: jest.fn(() => ({
-            single: jest.fn(),
-          })),
-        })),
+        insert: mockActivityLogsInsert,
       };
     }),
   };
@@ -67,7 +74,7 @@ describe('/api/logs/translate POST', () => {
       'Mixing'
     ]);
 
-    mockSupabase.from().insert().select().single.mockResolvedValue({
+    mockActivityLogsSingle.mockResolvedValue({
       data: { id: 'log-1', caption: 'Cooked stuff' },
       error: null,
     });
@@ -85,5 +92,56 @@ describe('/api/logs/translate POST', () => {
     expect(body.mastery).toHaveLength(2);
     expect(body.mastery[0].status).toBe('Mastered');
     expect(body.resolvedGaps).toEqual(['Mixing']);
+  });
+
+  it('should return activity suggestions for remaining gaps after logging', async () => {
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: 'test-user' } },
+      error: null,
+    });
+
+    (ActivityTranslationService.translate as jest.Mock).mockResolvedValue({
+      translation: 'Baking Fundamentals',
+      skills: ['Measuring', 'Mixing'],
+      grade: '5th',
+    });
+
+    (MasteryService.processSkills as jest.Mock).mockResolvedValue([
+      { skill: 'Measuring', status: 'Mastered', creditEarned: 0.25 },
+    ]);
+
+    (LearningGapService.resolveGaps as jest.Mock).mockResolvedValue([]);
+
+    (ActivitySuggestionService.getSuggestionsForRemainingGaps as jest.Mock).mockResolvedValue([
+      {
+        skillArea: 'Fractions',
+        description: 'Needs practice with fractions',
+        severity: 'moderate',
+        suggestions: ['Use fraction manipulatives', 'Practice with pizza slices'],
+      },
+    ]);
+
+    mockActivityLogsSingle.mockResolvedValue({
+      data: { id: 'log-1', caption: 'Made cookies' },
+      error: null,
+    });
+
+    const req = new NextRequest('http://localhost/api/logs/translate', {
+      method: 'POST',
+      body: JSON.stringify({ caption: 'Made cookies' }),
+    });
+
+    const response = await POST(req);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.suggestions).toBeDefined();
+    expect(body.suggestions).toHaveLength(1);
+    expect(body.suggestions[0].skillArea).toBe('Fractions');
+    expect(body.suggestions[0].suggestions).toContain('Use fraction manipulatives');
+    expect(ActivitySuggestionService.getSuggestionsForRemainingGaps).toHaveBeenCalledWith(
+      'test-user',
+      expect.anything()
+    );
   });
 });
