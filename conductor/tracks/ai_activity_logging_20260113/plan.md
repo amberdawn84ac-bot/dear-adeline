@@ -24,14 +24,14 @@
 ## Phase 2: Gap Filling & Proactive Suggestions
 *Integrate logging with the learning gaps system and enable proactive guidance.*
 
-- [~] Task 1: Gap Matching Logic
-    - [ ] Sub-task: Write unit tests for matching identified skills against open learning gaps.
-    - [ ] Sub-task: Implement logic to update `learning_gaps` status when a skill is demonstrated.
-- [ ] Task 2: Proactive Activity Suggestions
-    - [ ] Sub-task: Create a service to generate activity suggestions for remaining gaps.
-    - [ ] Sub-task: Update the Dashboard/API to return these suggestions after logging an activity.
-    - [ ] Sub-task: Write tests for suggestion relevance and formatting.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Gap Filling & Proactive Suggestions' (Protocol in workflow.md)
+- [x] Task 1: Gap Matching Logic
+    - [x] Sub-task: Write unit tests for matching identified skills against open learning gaps.
+    - [x] Sub-task: Implement logic to update `learning_gaps` status when a skill is demonstrated.
+- [x] Task 2: Proactive Activity Suggestions
+    - [x] Sub-task: Create a service to generate activity suggestions for remaining gaps.
+    - [x] Sub-task: Update the Dashboard/API to return these suggestions after logging an activity.
+    - [x] Sub-task: Write tests for suggestion relevance and formatting.
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Gap Filling & Proactive Suggestions' (Protocol in workflow.md)
 
 ## Phase 3: Mastery Reporting & Parent Feedback
 *Finalize the loop by including gap status in parent reports.*
