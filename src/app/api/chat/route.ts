@@ -15,24 +15,24 @@ import { SkillGraphService } from '@/lib/services/skillGraphService';
 
 const apiKey = process.env.GOOGLE_API_KEY;
 const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!, 
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : undefined;
 
 interface ChatMessage {
-  role: 'user' | 'assistant' | 'ai';
-  content: string;
+    role: 'user' | 'assistant' | 'ai';
+    content: string;
 }
 
 interface FunctionCall {
-  name: string;
-  args: Record<string, unknown>;
+    name: string;
+    args: Record<string, unknown>;
 }
 
 export async function POST(req: Request) {
     console.log('🔵 /api/chat - Request received');
-    
+
     try {
         if (!genAI) {
             console.error('❌ GOOGLE_API_KEY is missing!');
@@ -335,9 +335,9 @@ FORMATTING RULES:
         const startTime = Date.now();
 
         // Map router model to actual model identifier
-        let selectedModel = 'gemini-2.5-flash'; // default
+        let selectedModel = 'gemini-1.5-flash'; // default
         if (route.model === 'gemini') {
-            selectedModel = 'gemini-2.5-flash';
+            selectedModel = 'gemini-1.5-flash';
         } else {
             console.warn(`⚠️ ${route.model} not yet implemented, falling back to Gemini`);
             // Future: Add Grok and GPT-4 API implementations here
@@ -426,20 +426,20 @@ FORMATTING RULES:
 
         // Persist conversation with same ID to maintain sidebar continuity
         const { activeConversationId, newTitle } = await persistConversation(
-            conversationId, 
-            userPrompt, 
-            finalResponseText, 
-            messages, 
-            userId, 
+            conversationId,
+            userPrompt,
+            finalResponseText,
+            messages,
+            userId,
             supabase
         );
 
         console.log('✅ Chat complete!');
 
-        return NextResponse.json({ 
-            content: finalResponseText, 
+        return NextResponse.json({
+            content: finalResponseText,
             conversationId: activeConversationId,
-            title: newTitle 
+            title: newTitle
         });
 
     } catch (error: unknown) {
@@ -448,9 +448,9 @@ FORMATTING RULES:
             console.error('Error stack:', error.stack);
             console.error('Error message:', error.message);
         }
-        
+
         const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
-        return NextResponse.json({ 
+        return NextResponse.json({
             error: 'Chat processing failed',
             details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
         }, { status: 500 });
