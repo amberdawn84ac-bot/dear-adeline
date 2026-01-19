@@ -54,11 +54,11 @@ export function WhimsicalDashboard({
                     <ConversationFlow>
                         <ConversationBubble speaker="adeline" colorTheme="purple">
                             <p className="mb-3">
-                                Welcome back, dear one! ✨ I've been thinking about you and wondering
-                                what wonderful things you'll discover today.
+                                Welcome back, dear one! ✨ I&apos;ve been thinking about you and wondering
+                                what wonderful things you&apos;ll discover today.
                             </p>
                             <p>
-                                In my years of teaching, I've learned that the best learning happens
+                                In my years of teaching, I&apos;ve learned that the best learning happens
                                 when curiosity leads the way. So tell me - what calls to your heart?
                             </p>
                         </ConversationBubble>
@@ -80,7 +80,7 @@ export function WhimsicalDashboard({
                                 Every seed of knowledge we plant today will grow into wisdom tomorrow.
                             </p>
                             <p className="text-purple-light">
-                                Let's discover something wonderful together!
+                                Let&apos;s discover something wonderful together!
                             </p>
                         </CardContent>
                     </PresentationCard>
@@ -134,7 +134,7 @@ export function WhimsicalDashboard({
                                 Real wisdom shows itself in the choices we make each day.
                             </p>
                             <p className="text-blue-light">
-                                Let's explore a scenario together!
+                                Let&apos;s explore a scenario together!
                             </p>
                         </CardContent>
                     </PresentationCard>
@@ -183,7 +183,7 @@ export function WhimsicalDashboard({
                 <div className="bg-gradient-to-r from-purple/10 via-magenta/10 to-coral/10 rounded-[3rem] p-10 text-center border-2 border-purple/20">
                     <div className="text-4xl mb-4">🌻</div>
                     <p className="text-xl font-body text-charcoal italic mb-2">
-                        "In my years of study, I've found that..."
+                        &quot;In my years of study, I&apos;ve found that...&quot;
                     </p>
                     <p className="text-2xl font-heading text-purple">
                         Every question is a seed waiting to bloom

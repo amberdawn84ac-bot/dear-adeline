@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 interface PinterestMessageProps {
@@ -28,7 +28,10 @@ export function PinterestMessage({ content, role, timestamp }: PinterestMessageP
     // Pick consistent color based on role
     const colorIndex = role === 'user' ? 2 : 0; // Blue for user, yellow for Adeline
     const noteColor = NOTE_COLORS[colorIndex];
-    const tapeStyle = TAPE_STYLES[Math.floor(Math.random() * TAPE_STYLES.length)];
+    
+    const tapeStyle = useMemo(() => {
+        return TAPE_STYLES[Math.floor(Math.random() * TAPE_STYLES.length)];
+    }, []);
     
     if (role === 'user') {
         // User messages: Simple handwritten note

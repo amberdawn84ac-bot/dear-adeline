@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, Plus, CheckCircle, Clock, Rocket } from 'lucide-react';
 import Link from 'next/link';
 import DailyJournal from '@/components/DailyJournal';
@@ -19,24 +19,24 @@ export default function NewJournalClient() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadDailyData();
-        loadProjects();
-    }, [currentDate]);
-
-    const loadDailyData = async () => {
+    const loadDailyData = useCallback(async () => {
         const dateStr = currentDate.toISOString().split('T')[0];
         const response = await fetch(`/api/journal/daily?date=${dateStr}`);
         const data = await response.json();
         setTodayEntry(data.entry);
         setLoading(false);
-    };
+    }, [currentDate]);
 
-    const loadProjects = async () => {
+    const loadProjects = useCallback(async () => {
         const response = await fetch('/api/projects/in-progress');
         const data = await response.json();
         setProjects(data.projects || []);
-    };
+    }, []);
+
+    useEffect(() => {
+        loadDailyData();
+        loadProjects();
+    }, [loadDailyData, loadProjects]);
 
     const handleSaveEntry = async (entryData: any) => {
         await fetch('/api/journal/daily', {

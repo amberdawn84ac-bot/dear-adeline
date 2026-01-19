@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { CheckCircle2, X, Trophy, RotateCcw, Timer } from 'lucide-react';
 
 interface GameManifest {
@@ -266,30 +266,25 @@ function QuizGame({
   const [currentIndex, setCurrentIndex] = useState(0);
   const currentElement = manifest.assets.elements[currentIndex];
 
+  const choices = useMemo(() => {
+    if (!currentElement) return [];
+    
+    const allChoices = [
+      currentElement.correctAnswer as string,
+      ...manifest.assets.elements
+        .filter(e => e.id !== currentElement.id && e.content)
+        .slice(0, 3)
+        .map(e => e.content)
+    ];
+    
+    return allChoices.sort(() => Math.random() - 0.5);
+  }, [currentElement, manifest.assets.elements]);
+
   if (!currentElement) {
     return <div className="text-center text-gray-500">No quiz questions available</div>;
   }
 
   const handleChoice = (choice: string) => {
-    const isCorrect = choice === currentElement.correctAnswer;
-    onAnswer(currentElement.id, choice, isCorrect);
-
-    if (isCorrect && currentIndex < manifest.assets.elements.length - 1) {
-      setTimeout(() => setCurrentIndex(prev => prev + 1), 1000);
-    }
-  };
-
-  // Extract choices from element (assumed to be in correctAnswer and other elements)
-  const choices = [
-    currentElement.correctAnswer as string,
-    ...manifest.assets.elements
-      .filter(e => e.id !== currentElement.id && e.content)
-      .slice(0, 3)
-      .map(e => e.content)
-  ].sort(() => Math.random() - 0.5);
-
-  return (
-    <div className="max-w-2xl mx-auto">
       <div className="mb-8">
         <p className="text-sm text-gray-500 mb-2">Question {currentIndex + 1} of {manifest.assets.elements.length}</p>
         <h3 className="text-xl font-semibold text-gray-900">{currentElement.content}</h3>

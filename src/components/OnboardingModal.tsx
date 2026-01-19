@@ -133,7 +133,7 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                         </div>
                         <div>
                             <h2 className="text-2xl font-bold serif text-[var(--purple)]">Welcome to Adeline</h2>
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--gold)]">Let's Personalize Your Journey</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--gold)]">Let&apos;s Personalize Your Journey</p>
                         </div>
                     </div>
 
@@ -255,9 +255,9 @@ export function OnboardingModal({ userId, onComplete }: OnboardingModalProps) {
                                     <Brain className="w-4 h-4" />
                                     Finding Your Starting Point
                                 </label>
-                                <h3 className="text-xl font-bold serif text-[var(--purple)] mb-6">Let's figure out where you are</h3>
+                                <h3 className="text-xl font-bold serif text-[var(--purple)] mb-6">Let&apos;s figure out where you are</h3>
                                 <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-                                    Have a short conversation with Adeline so she knows where to start teaching you. This isn't a test - it's okay to say "I don't know!"
+                                    Have a short conversation with Adeline so she knows where to start teaching you. This isn&apos;t a test - it&apos;s okay to say &quot;I don&apos;t know!&quot;
                                 </p>
                                 <PlacementAssessment
                                     userId={userId}

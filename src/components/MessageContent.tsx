@@ -11,31 +11,20 @@ interface MessageContentProps {
     content: string;
 }
 
-// Helper function to safely parse JSON with control characters
-function safeJSONParse(jsonString: string) {
-    try {
-        // Remove control characters that break JSON parsing
-        const cleaned = jsonString
-            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
-            .trim();
-        
-        return JSON.parse(cleaned);
-    } catch (error) {
-        console.error('JSON parse error:', error);
-        console.error('Attempted to parse:', jsonString.substring(0, 200) + '...');
-        return null;
-    }
-}
+import { useRouter } from 'next/navigation';
+
+// ... (imports remain)
 
 function MessageContentComponent({ content }: MessageContentProps) {
+    const router = useRouter();
+
     // Check if this is a Storybook message
     const isStorybook = content.startsWith('# 📖') || content.startsWith('[STORYBOOK]') || content.startsWith('# 📖 ') || content.startsWith('[STORYBOOK] ');
 
-    if (isStorybook) {
-        return <StorybookPage content={content} />;
-    }
-
     const parsedContent = React.useMemo(() => {
+        // Optimization: Don't parse if it's a storybook, we won't use it
+        if (isStorybook) return null;
+
         // Parse <DIAGRAM> tags for Mermaid diagrams
         const diagramMatch = content.match(/<DIAGRAM>([\s\S]*?)<\/DIAGRAM>/);
         if (diagramMatch) {
@@ -114,7 +103,7 @@ function MessageContentComponent({ content }: MessageContentProps) {
                     localStorage.setItem('pendingGameType', gameLabData.game_type || 'educational');
 
                     // Navigate to Game Lab
-                    window.location.href = '/gamelab';
+                    router.push('/gamelab');
                 };
 
                 return (
@@ -231,7 +220,11 @@ function MessageContentComponent({ content }: MessageContentProps) {
                 dangerouslySetInnerHTML={{ __html: content }}
             />
         );
-    }, [content]);
+    }, [content, isStorybook, router]);
+
+    if (isStorybook) {
+        return <StorybookPage content={content} />;
+    }
 
     return <>{parsedContent}</>;
 }

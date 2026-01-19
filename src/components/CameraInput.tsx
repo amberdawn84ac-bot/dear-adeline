@@ -15,9 +15,9 @@ export function CameraInput({ onClose, onPictureTaken }: CameraInputProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const startCamera = async () => {
-        setError(null);
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            setError(null);
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
             }

@@ -37,7 +37,17 @@
       "Bash(../bin/supabase.exe db push:*)",
       "Bash(../bin/supabase.exe link:*)",
       "Bash(git pull:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(psql:*)",
+      "Bash(claude mcp add context7 -- npx -y @upstash/context7-mcp)",
+      "Bash(claude mcp add supabase -- npx -y @supabase/mcp-server-supabase@latest --supabase-url https://pmbupwlgilmmxobxxedp.supabase.co --service-role-key eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtYnVwd2xnaWxtbXhvYnh4ZWRwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjAzMDI4MCwiZXhwIjoyMDgxNjA2MjgwfQ.rCpfd12qcJqhVttyFy3iDbEb23Nx_7fLtMX6QWGPPzs)",
+      "Skill(superpowers:using-git-worktrees)",
+      "Bash(git worktree add:*)",
+      "Skill(superpowers:writing-plans)",
+      "Skill(superpowers:subagent-driven-development)",
+      "Skill(superpowers:executing-plans)",
+      "Bash(git remote set-url:*)",
+      "Bash(node -e:*)"
     ]
   }
 }

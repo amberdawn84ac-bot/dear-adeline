@@ -82,7 +82,7 @@ export default async function Home() {
             </div>
 
             <p className="text-xl text-[var(--forest)]/80 font-medium max-w-lg leading-relaxed">
-              An AI-powered learning companion that adapts to your student's interests, tracks skills toward graduation, and transforms curiosity into achievement.
+              An AI-powered learning companion that adapts to your student&apos;s interests, tracks skills toward graduation, and transforms curiosity into achievement.
             </p>
 
             <div className="flex flex-wrap gap-6 pt-4">
@@ -139,7 +139,7 @@ export default async function Home() {
                     </div>
                     <div className="flex justify-start">
                       <div className="bg-white p-5 rounded-2xl rounded-tl-none border border-[var(--forest)]/10 text-sm text-[var(--forest)] max-w-[85%] shadow-sm">
-                        That's amazing! 🧶 Do you have a website to sell your products yet?
+                        That&apos;s amazing! 🧶 Do you have a website to sell your products yet?
                       </div>
                     </div>
                     <div className="flex justify-end">
@@ -149,8 +149,8 @@ export default async function Home() {
                     </div>
                     <div className="flex justify-start">
                       <div className="bg-white p-6 rounded-2xl rounded-tl-none border-2 border-[var(--ochre)] text-sm space-y-4 shadow-xl">
-                        <p className="font-bold text-[var(--ochre)]">Perfect! Let's build one together!</p>
-                        <p className="text-xs opacity-80 italic">You'll learn web design, marketing, AND run your business. Here are the skills you'll earn:</p>
+                        <p className="font-bold text-[var(--ochre)]">Perfect! Let&apos;s build one together!</p>
+                        <p className="text-xs opacity-80 italic">You&apos;ll learn web design, marketing, AND run your business. Here are the skills you&apos;ll earn:</p>
                         <div className="flex flex-wrap gap-2">
                           <span className="px-3 py-0.5 bg-[var(--forest)]/10 text-[var(--forest)] font-bold rounded-full text-[10px] uppercase">Web Design</span>
                           <span className="px-3 py-0.5 bg-[var(--forest)]/10 text-[var(--forest)] font-bold rounded-full text-[10px] uppercase">Marketing</span>
@@ -188,12 +188,12 @@ export default async function Home() {
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { title: 'Student-Led Learning', icon: MessageCircle, desc: "Your student tells the AI what they're interested in. Curiosity becomes curriculum, making education meaningful and engaging." },
+              { title: 'Student-Led Learning', icon: MessageCircle, desc: "Your student tells the AI what they&apos;re interested in. Curiosity becomes curriculum, making education meaningful and engaging." },
               { title: 'Skills & Credits Tracking', icon: Target, desc: "Everything learned earns skills. Watch progress build toward graduation requirements in real-time." },
               { title: 'Graduation Tracker', icon: GraduationCap, desc: "State standards (Oklahoma and beyond) mapped clearly. Know exactly where you stand on the path to graduation." },
               { title: 'Portfolio Builder', icon: BookOpen, desc: "Every project, every lesson, every achievement becomes part of a beautiful, shareable portfolio." },
               { title: 'Gap Detection', icon: Brain, desc: "AI identifies learning gaps and suggests activities to strengthen understanding—no struggling in silence." },
-              { title: 'Gamification & Fun', icon: Sparkles, desc: "'Let's play a spelling game!' Interactive learning keeps students motivated and makes education feel like play." },
+              { title: 'Gamification & Fun', icon: Sparkles, desc: "&apos;Let&apos;s play a spelling game!&apos; Interactive learning keeps students motivated and makes education feel like play." },
             ].map((feature, i) => (
               <div key={i} className="card group">
                 <div className="w-16 h-16 bg-[var(--cream-dark)]/50 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-[var(--ochre)]/10 transition-colors">
@@ -259,7 +259,7 @@ export default async function Home() {
               Education should look <span className="text-[var(--ochre)]">nothing like</span> a factory.
             </h2>
             <p className="text-xl text-[var(--forest)]/60 font-medium leading-relaxed">
-              We've replaced the assembly line with a laboratory. Dear Adeline adapts to each student's pulse—discovering their strengths and gently revealing their gaps.
+              We&apos;ve replaced the assembly line with a laboratory. Dear Adeline adapts to each student&apos;s pulse—discovering their strengths and gently revealing their gaps.
             </p>
           </div>
 

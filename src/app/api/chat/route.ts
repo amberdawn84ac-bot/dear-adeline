@@ -232,7 +232,7 @@ FORMATTING RULES:
 
 
         // ✅ FIX: Define tools for Gemini
-        const tools: any[] = [{
+        const tools = [{
             functionDeclarations: [
                 {
                     name: "update_student_progress",

@@ -230,7 +230,7 @@ export function PlacementAssessment({ userId, onComplete }: PlacementAssessmentP
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-2 text-center">
-            This isn't a test - just say "I don't know" if you're not sure!
+            This isn&apos;t a test - just say &quot;I don&apos;t know&quot; if you&apos;re not sure!
           </p>
         </div>
       )}
