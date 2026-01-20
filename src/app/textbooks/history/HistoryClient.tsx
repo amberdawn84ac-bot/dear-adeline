@@ -1,17 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import {
     ChevronLeft,
     ChevronRight,
     MessageCircle,
     Target,
-    BookOpen,
     Home,
     X,
-    ZoomIn,
-    ZoomOut,
+    Plus,
 } from 'lucide-react';
 import TextbookChat from '@/components/TextbookChat';
 
@@ -42,33 +40,69 @@ interface Props {
 }
 
 const ERAS = [
-    { id: 'creation', name: 'Creation & Early Earth', color: 'bg-amber-500' },
-    { id: 'ancient', name: 'Ancient World', color: 'bg-orange-500' },
-    { id: 'classical', name: 'Classical Era', color: 'bg-red-500' },
-    { id: 'medieval', name: 'Medieval Period', color: 'bg-purple-500' },
-    { id: 'reformation', name: 'Reformation & Renaissance', color: 'bg-blue-500' },
-    { id: 'modern', name: 'Modern Era', color: 'bg-green-500' },
-    { id: 'current', name: 'Current Events', color: 'bg-teal-500' },
+    { id: 'creation', name: 'Creation', color: 'bg-amber-500', textColor: 'text-amber-700', bgLight: 'bg-amber-50', border: 'border-amber-300' },
+    { id: 'ancient', name: 'Ancient', color: 'bg-orange-500', textColor: 'text-orange-700', bgLight: 'bg-orange-50', border: 'border-orange-300' },
+    { id: 'classical', name: 'Classical', color: 'bg-red-500', textColor: 'text-red-700', bgLight: 'bg-red-50', border: 'border-red-300' },
+    { id: 'medieval', name: 'Medieval', color: 'bg-purple-500', textColor: 'text-purple-700', bgLight: 'bg-purple-50', border: 'border-purple-300' },
+    { id: 'reformation', name: 'Reformation', color: 'bg-blue-500', textColor: 'text-blue-700', bgLight: 'bg-blue-50', border: 'border-blue-300' },
+    { id: 'modern', name: 'Modern', color: 'bg-green-500', textColor: 'text-green-700', bgLight: 'bg-green-50', border: 'border-green-300' },
+    { id: 'current', name: 'Current', color: 'bg-teal-500', textColor: 'text-teal-700', bgLight: 'bg-teal-50', border: 'border-teal-300' },
 ];
 
 export default function HistoryClient({ events, progress, userId }: Props) {
     const [selectedEvent, setSelectedEvent] = useState<TextbookEvent | null>(null);
-    const [zoomLevel, setZoomLevel] = useState<'era' | 'century' | 'decade'>('era');
-    const [selectedEra, setSelectedEra] = useState<string | null>(null);
     const [showChat, setShowChat] = useState(false);
+    const [showSuggestForm, setShowSuggestForm] = useState(false);
+    const timelineRef = useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(true);
 
     const getProgressForEvent = (eventId: string) => {
         return progress.find(p => p.item_id === eventId);
     };
 
-    const filteredEvents = selectedEra
-        ? events.filter(e => e.era === selectedEra)
-        : events;
+    const checkScrollButtons = () => {
+        if (timelineRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = timelineRef.current;
+            setCanScrollLeft(scrollLeft > 0);
+            setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+        }
+    };
 
-    const groupedByEra = ERAS.map(era => ({
+    useEffect(() => {
+        checkScrollButtons();
+        const timeline = timelineRef.current;
+        if (timeline) {
+            timeline.addEventListener('scroll', checkScrollButtons);
+            return () => timeline.removeEventListener('scroll', checkScrollButtons);
+        }
+    }, [events]);
+
+    const scroll = (direction: 'left' | 'right') => {
+        if (timelineRef.current) {
+            const scrollAmount = timelineRef.current.clientWidth * 0.8;
+            timelineRef.current.scrollBy({
+                left: direction === 'left' ? -scrollAmount : scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+    };
+
+    const scrollToEra = (eraId: string) => {
+        const eraElement = document.getElementById(`era-${eraId}`);
+        if (eraElement && timelineRef.current) {
+            const containerRect = timelineRef.current.getBoundingClientRect();
+            const eraRect = eraElement.getBoundingClientRect();
+            const scrollLeft = eraRect.left - containerRect.left + timelineRef.current.scrollLeft - 50;
+            timelineRef.current.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+        }
+    };
+
+    // Group events by era
+    const eventsByEra = ERAS.map(era => ({
         ...era,
-        events: events.filter(e => e.era === era.id),
-    }));
+        events: events.filter(e => e.era === era.id).sort((a, b) => a.sort_order - b.sort_order)
+    })).filter(era => era.events.length > 0);
 
     return (
         <div className="min-h-screen bg-[var(--cream)]">
@@ -80,104 +114,164 @@ export default function HistoryClient({ events, progress, userId }: Props) {
                             <Home className="w-5 h-5" />
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-bold text-[var(--forest)] serif">History Timeline</h1>
+                            <h1 className="text-2xl font-bold text-[var(--forest)] font-serif">History Timeline</h1>
                             <p className="text-sm text-[var(--charcoal-light)]">From Creation to Current Events</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setZoomLevel('era')}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${zoomLevel === 'era' ? 'bg-[var(--forest)] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-                        >
-                            Eras
-                        </button>
-                        <button
-                            onClick={() => setZoomLevel('century')}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${zoomLevel === 'century' ? 'bg-[var(--forest)] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-                        >
-                            Centuries
-                        </button>
-                        <button
-                            onClick={() => setZoomLevel('decade')}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${zoomLevel === 'decade' ? 'bg-[var(--forest)] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-                        >
-                            Decades
-                        </button>
-                    </div>
+                    <button
+                        onClick={() => setShowSuggestForm(true)}
+                        className="flex items-center gap-2 bg-[var(--sage)] text-white px-4 py-2 rounded-xl hover:brightness-110 transition-all"
+                    >
+                        <Plus className="w-4 h-4" />
+                        <span className="hidden sm:inline">Suggest Event</span>
+                    </button>
                 </div>
             </header>
 
-            {/* Timeline */}
-            <div className="max-w-7xl mx-auto px-4 py-8">
-                {/* Era Navigation */}
-                <div className="relative mb-8">
-                    <div className="absolute top-1/2 left-0 right-0 h-1 bg-[var(--forest)]/20 -translate-y-1/2" />
-                    <div className="flex justify-between relative">
-                        {groupedByEra.map((era) => (
-                            <button
-                                key={era.id}
-                                onClick={() => {
-                                    setSelectedEra(selectedEra === era.id ? null : era.id);
-                                    setZoomLevel('century');
-                                }}
-                                className={`flex flex-col items-center group ${selectedEra === era.id ? 'scale-110' : ''} transition-transform`}
-                            >
-                                <div className={`w-6 h-6 rounded-full ${era.color} border-4 border-white shadow-lg group-hover:scale-125 transition-transform ${selectedEra === era.id ? 'ring-4 ring-[var(--forest)]/30' : ''}`} />
-                                <span className={`mt-2 text-xs font-medium text-center max-w-[80px] ${selectedEra === era.id ? 'text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)]'}`}>
-                                    {era.name}
-                                </span>
-                                <span className="text-[10px] text-gray-400">
-                                    {era.events.length} events
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Selected Era Events or All Events Grid */}
-                {events.length === 0 ? (
-                    <div className="text-center py-16">
-                        <BookOpen className="w-16 h-16 mx-auto text-[var(--charcoal-light)]/30 mb-4" />
-                        <h2 className="text-xl font-bold text-[var(--charcoal)] mb-2">Timeline Coming Soon</h2>
-                        <p className="text-[var(--charcoal-light)]">
-                            Historical events are being added. Check back soon!
-                        </p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredEvents.map((event) => {
-                            const eventProgress = getProgressForEvent(event.id);
-                            const isCompleted = eventProgress?.mastery_level === 'mastered';
-
+            {/* Era Quick Navigation */}
+            <div className="bg-white border-b sticky top-[72px] z-30">
+                <div className="max-w-7xl mx-auto px-4 py-3">
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                        {ERAS.map(era => {
+                            const eraEvents = events.filter(e => e.era === era.id);
+                            if (eraEvents.length === 0 && events.length > 0) return null;
                             return (
                                 <button
-                                    key={event.id}
-                                    onClick={() => setSelectedEvent(event)}
-                                    className={`text-left p-4 rounded-xl border-2 transition-all hover:shadow-lg ${isCompleted ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200 hover:border-[var(--forest)]'}`}
+                                    key={era.id}
+                                    onClick={() => scrollToEra(era.id)}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${era.color} text-white hover:brightness-110 transition-all`}
                                 >
-                                    <div className="flex items-start justify-between mb-2">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-[var(--ochre)]">
-                                            {event.date_display}
-                                        </span>
-                                        {isCompleted && (
-                                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                                                Completed
-                                            </span>
-                                        )}
-                                    </div>
-                                    <h3 className="font-bold text-[var(--forest)] mb-2">{event.title}</h3>
-                                    <p className="text-sm text-[var(--charcoal-light)] line-clamp-2">
-                                        {event.mainstream_narrative.substring(0, 100)}...
-                                    </p>
+                                    {era.name}
+                                    <span className="bg-white/30 px-1.5 rounded-full">{eraEvents.length}</span>
                                 </button>
                             );
                         })}
                     </div>
+                </div>
+            </div>
+
+            {/* Timeline Container */}
+            <div className="relative mt-4">
+                {/* Scroll Buttons */}
+                {canScrollLeft && (
+                    <button
+                        onClick={() => scroll('left')}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white shadow-lg rounded-full p-3 hover:bg-gray-50 transition-colors"
+                    >
+                        <ChevronLeft className="w-6 h-6 text-[var(--forest)]" />
+                    </button>
                 )}
+                {canScrollRight && events.length > 0 && (
+                    <button
+                        onClick={() => scroll('right')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white shadow-lg rounded-full p-3 hover:bg-gray-50 transition-colors"
+                    >
+                        <ChevronRight className="w-6 h-6 text-[var(--forest)]" />
+                    </button>
+                )}
+
+                {/* Horizontal Timeline */}
+                <div
+                    ref={timelineRef}
+                    className="overflow-x-auto overflow-y-hidden pb-4"
+                    style={{ scrollbarWidth: 'thin' }}
+                >
+                    {events.length === 0 ? (
+                        <div className="text-center py-16 px-4">
+                            <h2 className="text-xl font-bold text-[var(--charcoal)] mb-2">Timeline Coming Soon</h2>
+                            <p className="text-[var(--charcoal-light)] mb-4">
+                                Historical events are being added. Check back soon!
+                            </p>
+                            <button
+                                onClick={() => setShowSuggestForm(true)}
+                                className="inline-flex items-center gap-2 bg-[var(--forest)] text-white px-6 py-3 rounded-xl hover:brightness-110"
+                            >
+                                <Plus className="w-5 h-5" />
+                                Suggest an Event
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="inline-flex min-w-full px-8 pt-4">
+                            {eventsByEra.map((era, eraIndex) => (
+                                <div
+                                    key={era.id}
+                                    id={`era-${era.id}`}
+                                    className="flex-shrink-0 mr-2"
+                                >
+                                    {/* Era Section */}
+                                    <div className={`${era.bgLight} rounded-2xl border-2 ${era.border} overflow-hidden`}>
+                                        {/* Era Header */}
+                                        <div className={`${era.color} px-4 py-2`}>
+                                            <h2 className="text-white font-bold text-center">{era.name}</h2>
+                                        </div>
+
+                                        {/* Events Container with Timeline */}
+                                        <div className="p-4 min-h-[420px] relative">
+                                            {/* Horizontal Timeline Line */}
+                                            <div className={`absolute left-4 right-4 top-1/2 h-1 ${era.color} opacity-40 rounded-full`} />
+
+                                            {/* Events */}
+                                            <div className="flex gap-3 relative">
+                                                {era.events.map((event, eventIndex) => {
+                                                    const eventProgress = getProgressForEvent(event.id);
+                                                    const isCompleted = eventProgress?.mastery_level === 'mastered';
+                                                    const isAboveLine = eventIndex % 2 === 0;
+
+                                                    return (
+                                                        <div
+                                                            key={event.id}
+                                                            className="flex flex-col items-center"
+                                                            style={{ width: '180px' }}
+                                                        >
+                                                            {/* Card - positioned above or below */}
+                                                            <div className={`flex flex-col items-center ${isAboveLine ? '' : 'flex-col-reverse'}`}>
+                                                                {/* Event Card */}
+                                                                <button
+                                                                    onClick={() => setSelectedEvent(event)}
+                                                                    className={`w-full p-3 rounded-xl border-2 transition-all hover:shadow-lg hover:scale-105 text-left ${
+                                                                        isCompleted
+                                                                            ? 'bg-green-50 border-green-300'
+                                                                            : 'bg-white border-gray-200 hover:border-[var(--forest)]'
+                                                                    }`}
+                                                                    style={{ height: '140px' }}
+                                                                >
+                                                                    <span className={`text-xs font-bold ${era.textColor}`}>
+                                                                        {event.date_display}
+                                                                    </span>
+                                                                    <h3 className="font-bold text-[var(--forest)] text-sm mt-1 line-clamp-3">
+                                                                        {event.title}
+                                                                    </h3>
+                                                                    {isCompleted && (
+                                                                        <span className="inline-block mt-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                                                            Completed
+                                                                        </span>
+                                                                    )}
+                                                                </button>
+
+                                                                {/* Connector */}
+                                                                <div className={`w-0.5 h-6 ${era.color} opacity-60`} />
+
+                                                                {/* Timeline Node */}
+                                                                <div className={`w-4 h-4 rounded-full ${era.color} border-4 border-white shadow-md flex-shrink-0`} />
+
+                                                                {/* Spacer for opposite side */}
+                                                                <div className="h-[170px]" />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Event Detail Modal */}
-            {selectedEvent && (
+            {selectedEvent && !showChat && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
@@ -257,12 +351,70 @@ export default function HistoryClient({ events, progress, userId }: Props) {
                 </div>
             )}
 
+            {/* Suggest Event Modal */}
+            {showSuggestForm && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-bold text-[var(--forest)]">Suggest an Event</h2>
+                            <button
+                                onClick={() => setShowSuggestForm(false)}
+                                className="p-2 hover:bg-gray-100 rounded-lg"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <p className="text-sm text-[var(--charcoal-light)] mb-4">
+                            Know about a historical event that should be on the timeline? Tell Adeline!
+                        </p>
+                        <form onSubmit={async (e) => {
+                            e.preventDefault();
+                            const form = e.target as HTMLFormElement;
+                            const input = form.elements.namedItem('suggestion') as HTMLTextAreaElement;
+                            const suggestion = input.value;
+                            if (!suggestion.trim()) return;
+                            try {
+                                const res = await fetch('/api/textbooks/suggest', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ suggestion, type: 'event' })
+                                });
+                                if (res.ok) {
+                                    alert('Thanks! Your suggestion has been sent to Adeline.');
+                                    setShowSuggestForm(false);
+                                } else {
+                                    alert('Failed to send suggestion. Please try again.');
+                                }
+                            } catch (err) {
+                                console.error(err);
+                                alert('Error sending suggestion.');
+                            }
+                        }}>
+                            <textarea
+                                name="suggestion"
+                                className="w-full h-32 p-3 border border-gray-300 rounded-xl resize-none focus:ring-2 focus:ring-[var(--forest)] focus:outline-none mb-4"
+                                placeholder="I want to learn about..."
+                                required
+                            />
+                            <div className="flex justify-end">
+                                <button
+                                    type="submit"
+                                    className="bg-[var(--forest)] text-white px-6 py-2 rounded-xl font-bold hover:brightness-110 transition-all"
+                                >
+                                    Send Suggestion
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {/* Chat Panel */}
             {showChat && selectedEvent && (
                 <TextbookChat
                     userId={userId}
                     title={selectedEvent.title}
-                    context={`History Event: ${selectedEvent.title} (${selectedEvent.date_display}). Era: ${selectedEvent.era}. Mainstream Narrative: "${selectedEvent.mainstream_narrative}". Primary Sources/Truth: "${selectedEvent.primary_sources}".`}
+                    context={`Historical Event: ${selectedEvent.title} (${selectedEvent.date_display}, ${selectedEvent.era} era). Mainstream narrative: "${selectedEvent.mainstream_narrative}". Primary sources say: "${selectedEvent.primary_sources}".`}
                     onClose={() => setShowChat(false)}
                 />
             )}

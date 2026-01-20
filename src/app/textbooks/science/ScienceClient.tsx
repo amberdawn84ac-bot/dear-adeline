@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import {
     MessageCircle,
@@ -19,6 +19,8 @@ import {
     Cloud,
     HelpCircle,
     Plus,
+    ChevronDown,
+    ChevronRight,
 } from 'lucide-react';
 import TextbookChat from '@/components/TextbookChat';
 
@@ -49,24 +51,24 @@ interface Props {
 }
 
 const BRANCHES = [
-    { id: 'matter', name: 'Matter', icon: FlaskConical, color: 'bg-purple-500' },
-    { id: 'energy', name: 'Energy', icon: Zap, color: 'bg-yellow-500' },
-    { id: 'forces', name: 'Forces & Motion', icon: Cog, color: 'bg-blue-500' },
-    { id: 'gravity', name: 'Gravity', icon: HelpCircle, color: 'bg-indigo-500' },
-    { id: 'growing', name: 'Growing Things', icon: Leaf, color: 'bg-green-500' },
-    { id: 'animals', name: 'Animals', icon: Heart, color: 'bg-pink-500' },
-    { id: 'food', name: 'Food & Preservation', icon: FlaskConical, color: 'bg-orange-500' },
-    { id: 'health', name: 'Natural Health', icon: Heart, color: 'bg-red-500' },
-    { id: 'weather', name: 'Weather & Navigation', icon: Cloud, color: 'bg-sky-500' },
-    { id: 'water', name: 'Water', icon: Droplets, color: 'bg-cyan-500' },
-    { id: 'life', name: 'Life', icon: Leaf, color: 'bg-emerald-500' },
+    { id: 'matter', name: 'Matter', icon: FlaskConical, color: 'bg-purple-500', lightBg: 'bg-purple-50', border: 'border-purple-300', text: 'text-purple-700' },
+    { id: 'energy', name: 'Energy', icon: Zap, color: 'bg-yellow-500', lightBg: 'bg-yellow-50', border: 'border-yellow-300', text: 'text-yellow-700' },
+    { id: 'forces', name: 'Forces & Motion', icon: Cog, color: 'bg-blue-500', lightBg: 'bg-blue-50', border: 'border-blue-300', text: 'text-blue-700' },
+    { id: 'gravity', name: 'Gravity', icon: HelpCircle, color: 'bg-indigo-500', lightBg: 'bg-indigo-50', border: 'border-indigo-300', text: 'text-indigo-700' },
+    { id: 'growing', name: 'Growing Things', icon: Leaf, color: 'bg-green-500', lightBg: 'bg-green-50', border: 'border-green-300', text: 'text-green-700' },
+    { id: 'animals', name: 'Animals', icon: Heart, color: 'bg-pink-500', lightBg: 'bg-pink-50', border: 'border-pink-300', text: 'text-pink-700' },
+    { id: 'food', name: 'Food & Preservation', icon: FlaskConical, color: 'bg-orange-500', lightBg: 'bg-orange-50', border: 'border-orange-300', text: 'text-orange-700' },
+    { id: 'health', name: 'Natural Health', icon: Heart, color: 'bg-red-500', lightBg: 'bg-red-50', border: 'border-red-300', text: 'text-red-700' },
+    { id: 'weather', name: 'Weather & Navigation', icon: Cloud, color: 'bg-sky-500', lightBg: 'bg-sky-50', border: 'border-sky-300', text: 'text-sky-700' },
+    { id: 'water', name: 'Water', icon: Droplets, color: 'bg-cyan-500', lightBg: 'bg-cyan-50', border: 'border-cyan-300', text: 'text-cyan-700' },
+    { id: 'life', name: 'Life', icon: Leaf, color: 'bg-emerald-500', lightBg: 'bg-emerald-50', border: 'border-emerald-300', text: 'text-emerald-700' },
 ];
 
 export default function ScienceClient({ concepts, progress, userId }: Props) {
     const [selectedConcept, setSelectedConcept] = useState<TextbookConcept | null>(null);
-    const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
     const [showChat, setShowChat] = useState(false);
     const [showSuggestForm, setShowSuggestForm] = useState(false);
+    const [expandedBranches, setExpandedBranches] = useState<Set<string>>(new Set(BRANCHES.map(b => b.id)));
 
     const getProgressForConcept = (conceptId: string) => {
         return progress.find(p => p.item_id === conceptId);
@@ -82,14 +84,30 @@ export default function ScienceClient({ concepts, progress, userId }: Props) {
         });
     };
 
-    const filteredConcepts = selectedBranch
-        ? concepts.filter(c => c.branch === selectedBranch)
-        : concepts;
+    const toggleBranch = (branchId: string) => {
+        setExpandedBranches(prev => {
+            const next = new Set(prev);
+            if (next.has(branchId)) {
+                next.delete(branchId);
+            } else {
+                next.add(branchId);
+            }
+            return next;
+        });
+    };
 
-    const groupedByBranch = BRANCHES.map(branch => ({
+    // Group concepts by branch
+    const conceptsByBranch = BRANCHES.map(branch => ({
         ...branch,
-        concepts: concepts.filter(c => c.branch === branch.id),
-    })).filter(b => b.concepts.length > 0 || concepts.length === 0);
+        concepts: concepts.filter(c => c.branch === branch.id).sort((a, b) => a.sort_order - b.sort_order)
+    })).filter(b => b.concepts.length > 0);
+
+    // Calculate progress stats
+    const totalConcepts = concepts.length;
+    const masteredConcepts = concepts.filter(c => {
+        const p = getProgressForConcept(c.id);
+        return p?.mastery_level === 'mastered' || p?.mastery_level === 'proficient';
+    }).length;
 
     return (
         <div className="min-h-screen bg-[var(--cream)]">
@@ -101,49 +119,30 @@ export default function ScienceClient({ concepts, progress, userId }: Props) {
                             <Home className="w-5 h-5" />
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-bold text-[var(--forest)] serif">Science Skill Tree</h1>
+                            <h1 className="text-2xl font-bold text-[var(--forest)] font-serif">Science Skill Tree</h1>
                             <p className="text-sm text-[var(--charcoal-light)]">Real knowledge for real life</p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setShowSuggestForm(true)}
-                        className="flex items-center gap-2 bg-[var(--sage)] text-white px-4 py-2 rounded-xl hover:brightness-110 transition-all"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span className="hidden sm:inline">Suggest Topic</span>
-                    </button>
+                    <div className="flex items-center gap-4">
+                        {totalConcepts > 0 && (
+                            <div className="hidden sm:block text-right">
+                                <div className="text-sm font-bold text-[var(--forest)]">{masteredConcepts}/{totalConcepts}</div>
+                                <div className="text-xs text-[var(--charcoal-light)]">Mastered</div>
+                            </div>
+                        )}
+                        <button
+                            onClick={() => setShowSuggestForm(true)}
+                            className="flex items-center gap-2 bg-[var(--sage)] text-white px-4 py-2 rounded-xl hover:brightness-110 transition-all"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span className="hidden sm:inline">Suggest Topic</span>
+                        </button>
+                    </div>
                 </div>
             </header>
 
-            <div className="max-w-7xl mx-auto px-4 py-8">
-                {/* Branch Filter */}
-                <div className="flex flex-wrap gap-2 mb-8">
-                    <button
-                        onClick={() => setSelectedBranch(null)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${!selectedBranch ? 'bg-[var(--forest)] text-white' : 'bg-white border hover:bg-gray-50'}`}
-                    >
-                        All Topics
-                    </button>
-                    {BRANCHES.map(branch => {
-                        const Icon = branch.icon;
-                        const branchConcepts = concepts.filter(c => c.branch === branch.id);
-                        if (branchConcepts.length === 0 && concepts.length > 0) return null;
-
-                        return (
-                            <button
-                                key={branch.id}
-                                onClick={() => setSelectedBranch(selectedBranch === branch.id ? null : branch.id)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedBranch === branch.id ? `${branch.color} text-white` : 'bg-white border hover:bg-gray-50'}`}
-                            >
-                                <Icon className="w-4 h-4" />
-                                {branch.name}
-                                <span className="opacity-60">({branchConcepts.length})</span>
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* Concepts Grid */}
+            {/* Skill Tree */}
+            <div className="max-w-5xl mx-auto px-4 py-8">
                 {concepts.length === 0 ? (
                     <div className="text-center py-16">
                         <FlaskConical className="w-16 h-16 mx-auto text-[var(--charcoal-light)]/30 mb-4" />
@@ -160,52 +159,129 @@ export default function ScienceClient({ concepts, progress, userId }: Props) {
                         </button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredConcepts.map((concept) => {
-                            const conceptProgress = getProgressForConcept(concept.id);
-                            const isUnlocked = isConceptUnlocked(concept);
-                            const isMastered = conceptProgress?.mastery_level === 'mastered';
-                            const inProgress = conceptProgress?.mastery_level === 'developing' || conceptProgress?.mastery_level === 'proficient';
-
-                            const branch = BRANCHES.find(b => b.id === concept.branch);
-                            const Icon = branch?.icon || FlaskConical;
+                    <div className="space-y-4">
+                        {conceptsByBranch.map((branch) => {
+                            const Icon = branch.icon;
+                            const isExpanded = expandedBranches.has(branch.id);
+                            const branchMastered = branch.concepts.filter(c => {
+                                const p = getProgressForConcept(c.id);
+                                return p?.mastery_level === 'mastered' || p?.mastery_level === 'proficient';
+                            }).length;
 
                             return (
-                                <button
-                                    key={concept.id}
-                                    onClick={() => isUnlocked && setSelectedConcept(concept)}
-                                    disabled={!isUnlocked}
-                                    className={`text-left p-4 rounded-xl border-2 transition-all ${!isUnlocked
-                                        ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed'
-                                        : isMastered
-                                            ? 'bg-green-50 border-green-300 hover:shadow-lg'
-                                            : inProgress
-                                                ? 'bg-blue-50 border-blue-200 hover:shadow-lg'
-                                                : 'bg-white border-gray-200 hover:border-[var(--forest)] hover:shadow-lg'
-                                        }`}
-                                >
-                                    <div className="flex items-start justify-between mb-2">
-                                        <div className={`p-2 rounded-lg ${branch?.color || 'bg-gray-500'} bg-opacity-20`}>
-                                            <Icon className={`w-5 h-5 ${branch?.color.replace('bg-', 'text-') || 'text-gray-500'}`} />
-                                        </div>
-                                        {!isUnlocked ? (
-                                            <Lock className="w-5 h-5 text-gray-400" />
-                                        ) : isMastered ? (
-                                            <CheckCircle className="w-5 h-5 text-green-500" />
-                                        ) : inProgress ? (
-                                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                                                In Progress
+                                <div key={branch.id} className={`${branch.lightBg} rounded-2xl border-2 ${branch.border} overflow-hidden`}>
+                                    {/* Branch Header */}
+                                    <button
+                                        onClick={() => toggleBranch(branch.id)}
+                                        className={`w-full flex items-center justify-between p-4 ${branch.color} text-white hover:brightness-110 transition-all`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Icon className="w-6 h-6" />
+                                            <span className="font-bold text-lg">{branch.name}</span>
+                                            <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm">
+                                                {branchMastered}/{branch.concepts.length}
                                             </span>
-                                        ) : null}
-                                    </div>
-                                    <h3 className="font-bold text-[var(--forest)] mb-1">{concept.title}</h3>
-                                    <p className="text-xs text-[var(--charcoal-light)] uppercase tracking-wider mb-2">
-                                        {branch?.name || concept.branch}
-                                    </p>
-                                    <p className="text-sm text-[var(--charcoal-light)] line-clamp-2">
-                                        {concept.why_it_matters}
-                                    </p>
-                                </button>
+                                        </div>
+                                        {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                                    </button>
+
+                                    {/* Branch Concepts - Skill Tree Style */}
+                                    {isExpanded && (
+                                        <div className="p-4">
+                                            <div className="flex flex-wrap gap-3 relative">
+                                                {/* Connection Lines (SVG) */}
+                                                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
+                                                    {branch.concepts.map((concept, idx) => {
+                                                        if (idx === 0) return null;
+                                                        // Draw line from previous concept
+                                                        const x1 = (idx - 1) * 200 + 90;
+                                                        const x2 = idx * 200 + 10;
+                                                        return (
+                                                            <line
+                                                                key={`line-${concept.id}`}
+                                                                x1={x1}
+                                                                y1={50}
+                                                                x2={x2}
+                                                                y2={50}
+                                                                stroke={branch.color.replace('bg-', '#').replace('-500', '')}
+                                                                strokeWidth="3"
+                                                                strokeDasharray="8,4"
+                                                                opacity="0.3"
+                                                            />
+                                                        );
+                                                    })}
+                                                </svg>
+
+                                                {/* Concept Nodes */}
+                                                {branch.concepts.map((concept, idx) => {
+                                                    const conceptProgress = getProgressForConcept(concept.id);
+                                                    const isUnlocked = isConceptUnlocked(concept);
+                                                    const isMastered = conceptProgress?.mastery_level === 'mastered' || conceptProgress?.mastery_level === 'proficient';
+                                                    const inProgress = conceptProgress?.mastery_level === 'developing' || conceptProgress?.mastery_level === 'introduced';
+
+                                                    return (
+                                                        <div key={concept.id} className="relative z-10" style={{ width: '180px' }}>
+                                                            {/* Node */}
+                                                            <button
+                                                                onClick={() => isUnlocked && setSelectedConcept(concept)}
+                                                                disabled={!isUnlocked}
+                                                                className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+                                                                    !isUnlocked
+                                                                        ? 'bg-gray-100 border-gray-300 opacity-60 cursor-not-allowed'
+                                                                        : isMastered
+                                                                        ? 'bg-green-50 border-green-400 shadow-md hover:shadow-lg'
+                                                                        : inProgress
+                                                                        ? 'bg-blue-50 border-blue-300 shadow-md hover:shadow-lg'
+                                                                        : 'bg-white border-gray-200 shadow-sm hover:shadow-lg hover:border-[var(--forest)]'
+                                                                }`}
+                                                            >
+                                                                {/* Status Icon */}
+                                                                <div className="flex justify-between items-start mb-2">
+                                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                                                        !isUnlocked ? 'bg-gray-200' :
+                                                                        isMastered ? 'bg-green-500' :
+                                                                        inProgress ? 'bg-blue-400' :
+                                                                        branch.color
+                                                                    }`}>
+                                                                        {!isUnlocked ? (
+                                                                            <Lock className="w-4 h-4 text-gray-500" />
+                                                                        ) : isMastered ? (
+                                                                            <CheckCircle className="w-4 h-4 text-white" />
+                                                                        ) : (
+                                                                            <span className="text-white font-bold text-sm">{idx + 1}</span>
+                                                                        )}
+                                                                    </div>
+                                                                    {inProgress && !isMastered && (
+                                                                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                                                            Learning
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Title */}
+                                                                <h3 className={`font-bold text-sm mb-1 ${!isUnlocked ? 'text-gray-500' : 'text-[var(--forest)]'}`}>
+                                                                    {concept.title}
+                                                                </h3>
+
+                                                                {/* Why it matters preview */}
+                                                                <p className={`text-xs line-clamp-2 ${!isUnlocked ? 'text-gray-400' : 'text-[var(--charcoal-light)]'}`}>
+                                                                    {concept.why_it_matters}
+                                                                </p>
+                                                            </button>
+
+                                                            {/* Arrow to next */}
+                                                            {idx < branch.concepts.length - 1 && (
+                                                                <div className="absolute -right-3 top-1/2 -translate-y-1/2 z-20">
+                                                                    <ChevronRight className={`w-6 h-6 ${branch.text}`} />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             );
                         })}
                     </div>
@@ -213,7 +289,7 @@ export default function ScienceClient({ concepts, progress, userId }: Props) {
             </div>
 
             {/* Concept Detail Modal */}
-            {selectedConcept && (
+            {selectedConcept && !showChat && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
@@ -262,7 +338,7 @@ export default function ScienceClient({ concepts, progress, userId }: Props) {
                                 </div>
                             )}
 
-                            {/* What We Don&apos;t Know */}
+                            {/* What We Don't Know */}
                             {selectedConcept.what_we_dont_know && (
                                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
                                     <h3 className="font-bold text-gray-800 mb-2">What We Don&apos;t Know</h3>
@@ -328,7 +404,7 @@ export default function ScienceClient({ concepts, progress, userId }: Props) {
                                 const res = await fetch('/api/textbooks/suggest', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ suggestion })
+                                    body: JSON.stringify({ suggestion, type: 'concept' })
                                 });
 
                                 if (res.ok) {
@@ -366,7 +442,7 @@ export default function ScienceClient({ concepts, progress, userId }: Props) {
                 <TextbookChat
                     userId={userId}
                     title={selectedConcept.title}
-                    context={`Science Concept: ${selectedConcept.title} (${selectedConcept.branch}). Why it matters: "${selectedConcept.why_it_matters}". What we observe: "${JSON.stringify(selectedConcept.what_we_observe)}". What models say: "${selectedConcept.what_models_say}".`}
+                    context={`Science Concept: ${selectedConcept.title} (${selectedConcept.branch}). Why it matters: "${selectedConcept.why_it_matters}". What we observe: "${JSON.stringify(selectedConcept.what_we_observe)}". What models say: "${selectedConcept.what_models_say}". What we don't know: "${selectedConcept.what_we_dont_know}".`}
                     onClose={() => setShowChat(false)}
                 />
             )}
