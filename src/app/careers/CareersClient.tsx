@@ -269,17 +269,6 @@ export default function CareersClient({ profile, skills, topics, portfolio, asse
                             </div>
                         </div>
 
-                        <div className="card-glass p-8 bg-[var(--forest)] text-white shadow-2xl relative overflow-hidden group">
-                            <div className="absolute -right-16 -bottom-16 w-48 h-48 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all duration-1000" />
-                            <h3 className="text-lg font-bold serif mb-4">The Architect's Creed</h3>
-                            <p className="text-xs leading-relaxed opacity-80 mb-6 font-medium font-serif italic">
-                                "We refuse the generic. We reject the placeholder life. You were designed for a restoration that only you can spearhead."
-                            </p>
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#76946a]">
-                                <Shield className="w-4 h-4" />
-                                Anti-Generic Verified
-                            </div>
-                        </div>
                     </div>
 
                     {/* Right Column: The Singular Rest restorative Blueprint */}
