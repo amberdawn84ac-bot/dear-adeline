@@ -55,7 +55,8 @@
       "Bash(pnpm add:*)",
       "Bash(CI=true npx jest:*)",
       "Bash(./node_modules/.bin/jest:*)",
-      "Bash(node node_modules/jest/bin/jest.js:*)"
+      "Bash(node node_modules/jest/bin/jest.js:*)",
+      "Bash(git diff:*)"
     ]
   }
 }

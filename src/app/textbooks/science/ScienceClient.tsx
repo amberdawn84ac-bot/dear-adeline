@@ -291,83 +291,76 @@ export default function ScienceClient({ concepts, progress, userId }: Props) {
             {/* Concept Detail Modal */}
             {selectedConcept && !showChat && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
-                            <div>
-                                <span className="text-xs font-bold uppercase tracking-wider text-[var(--sage)]">
-                                    {BRANCHES.find(b => b.id === selectedConcept.branch)?.name || selectedConcept.branch}
-                                </span>
-                                <h2 className="text-xl font-bold text-[var(--forest)]">{selectedConcept.title}</h2>
-                            </div>
+                    <div className="bg-[var(--cream)] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        {/* Header */}
+                        <div className="sticky top-0 bg-[var(--forest)] text-white p-6 rounded-t-2xl">
                             <button
                                 onClick={() => setSelectedConcept(null)}
-                                className="p-2 hover:bg-gray-100 rounded-lg"
+                                className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-lg transition-colors"
                             >
                                 <X className="w-5 h-5" />
                             </button>
+                            <span className="text-xs font-medium uppercase tracking-wider text-white/70">
+                                {BRANCHES.find(b => b.id === selectedConcept.branch)?.name || selectedConcept.branch}
+                            </span>
+                            <h2 className="text-2xl font-bold font-serif mt-1">{selectedConcept.title}</h2>
+                            <p className="text-white/90 mt-3 leading-relaxed">
+                                {selectedConcept.why_it_matters}
+                            </p>
                         </div>
 
-                        <div className="p-6 space-y-6">
-                            {/* Why It Matters */}
-                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                                <h3 className="font-bold text-amber-800 mb-2">Why This Matters</h3>
-                                <p className="text-amber-900/80 text-sm">
-                                    {selectedConcept.why_it_matters}
-                                </p>
-                            </div>
-
-                            {/* What We Observe */}
+                        <div className="p-6 space-y-5">
+                            {/* Observations as natural list */}
                             {selectedConcept.what_we_observe && selectedConcept.what_we_observe.length > 0 && (
-                                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                                    <h3 className="font-bold text-blue-800 mb-2">What We Observe</h3>
-                                    <ul className="text-blue-900/80 text-sm space-y-1">
+                                <div>
+                                    <p className="text-[var(--charcoal)] leading-relaxed">
                                         {selectedConcept.what_we_observe.map((obs: any, i: number) => (
-                                            <li key={i}>• {typeof obs === 'string' ? obs : obs.text}</li>
+                                            <span key={i}>
+                                                {typeof obs === 'string' ? obs : obs.text}
+                                                {i < selectedConcept.what_we_observe.length - 1 && ' '}
+                                            </span>
                                         ))}
-                                    </ul>
-                                </div>
-                            )}
-
-                            {/* What Models Describe */}
-                            {selectedConcept.what_models_say && (
-                                <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-                                    <h3 className="font-bold text-purple-800 mb-2">What Models Describe</h3>
-                                    <p className="text-purple-900/80 text-sm italic">
-                                        {selectedConcept.what_models_say}
                                     </p>
                                 </div>
                             )}
 
-                            {/* What We Don't Know */}
+                            {/* Models explanation - conversational */}
+                            {selectedConcept.what_models_say && (
+                                <p className="text-[var(--charcoal-light)] leading-relaxed border-l-4 border-[var(--sage)] pl-4">
+                                    {selectedConcept.what_models_say}
+                                </p>
+                            )}
+
+                            {/* Open questions - inviting curiosity */}
                             {selectedConcept.what_we_dont_know && (
-                                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                                    <h3 className="font-bold text-gray-800 mb-2">What We Don&apos;t Know</h3>
-                                    <p className="text-gray-700 text-sm">
-                                        {selectedConcept.what_we_dont_know}
+                                <div className="bg-white rounded-xl p-4 border border-[var(--cream-dark)]">
+                                    <p className="text-[var(--charcoal)] text-sm flex items-start gap-2">
+                                        <HelpCircle className="w-5 h-5 text-[var(--ochre)] flex-shrink-0 mt-0.5" />
+                                        <span className="leading-relaxed">{selectedConcept.what_we_dont_know}</span>
                                     </p>
                                 </div>
                             )}
 
                             {/* Action Buttons */}
-                            <div className="flex gap-3">
+                            <div className="flex gap-3 pt-2">
                                 <button
-                                    className="flex-1 flex items-center justify-center gap-2 bg-[var(--sage)] text-white py-3 rounded-xl hover:brightness-110 transition-all"
+                                    className="flex-1 flex items-center justify-center gap-2 bg-[var(--sage)] text-white py-3 rounded-xl hover:brightness-110 transition-all font-medium"
                                 >
                                     <BookOpen className="w-5 h-5" />
-                                    Learn
+                                    Learn More
                                 </button>
                                 <button
                                     onClick={() => setShowChat(true)}
-                                    className="flex-1 flex items-center justify-center gap-2 bg-[var(--forest)] text-white py-3 rounded-xl hover:brightness-110 transition-all"
+                                    className="flex-1 flex items-center justify-center gap-2 bg-[var(--forest)] text-white py-3 rounded-xl hover:brightness-110 transition-all font-medium"
                                 >
                                     <MessageCircle className="w-5 h-5" />
                                     Ask Adeline
                                 </button>
                                 <button
-                                    className="flex-1 flex items-center justify-center gap-2 bg-[var(--ochre)] text-white py-3 rounded-xl hover:brightness-110 transition-all"
+                                    className="flex-1 flex items-center justify-center gap-2 bg-[var(--ochre)] text-white py-3 rounded-xl hover:brightness-110 transition-all font-medium"
                                 >
                                     <Target className="w-5 h-5" />
-                                    Quiz
+                                    Quiz Me
                                 </button>
                             </div>
                         </div>
