@@ -15,12 +15,14 @@ interface TextbookChatProps {
     context: string; // The "context" to prime the AI with (e.g. event description, sources)
     onClose: () => void;
     studentName?: string;
+    initialPrompt?: string | null; // Optional initial prompt to send automatically
 }
 
-export default function TextbookChat({ userId, title, context, onClose, studentName }: TextbookChatProps) {
+export default function TextbookChat({ userId, title, context, onClose, studentName, initialPrompt }: TextbookChatProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [hasSentInitial, setHasSentInitial] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -31,21 +33,27 @@ export default function TextbookChat({ userId, title, context, onClose, studentN
         scrollToBottom();
     }, [messages]);
 
-    const handleSendMessage = async () => {
-        if (!input.trim() || isLoading) return;
+    // Auto-send initial prompt if provided
+    useEffect(() => {
+        if (initialPrompt && !hasSentInitial) {
+            setHasSentInitial(true);
+            setInput(initialPrompt);
+            // Small delay to ensure state is set, then trigger send
+            setTimeout(() => {
+                sendMessageWithContent(initialPrompt);
+            }, 100);
+        }
+    }, [initialPrompt, hasSentInitial]);
 
-        const userMsg: Message = { role: 'user', content: input };
+    const sendMessageWithContent = async (content: string) => {
+        if (!content.trim() || isLoading) return;
+
+        const userMsg: Message = { role: 'user', content };
         setMessages(prev => [...prev, userMsg]);
         setInput('');
         setIsLoading(true);
 
         try {
-            // We construct a special prompt that includes the context
-            // We send the FULL history to the chat API, but the very first message
-            // or the system prompt needs to know about the context.
-            // Since /api/chat is generic, we can prepend a system-like user message if the history is empty,
-            // OR we can just add the context to the current message if it's the first one.
-
             // Approach: If it's the first message, prepend context.
             let messagesToSend = [...messages, userMsg];
 
@@ -55,7 +63,7 @@ export default function TextbookChat({ userId, title, context, onClose, studentN
                 messagesToSend = [
                     {
                         role: 'user',
-                        content: `(System Context: Student is asking about "${title}". \nDetails: ${context}. \nStudent Name: ${studentName || 'Student'}). \n\n${input}`
+                        content: `(System Context: Student is asking about "${title}". \nDetails: ${context}. \nStudent Name: ${studentName || 'Student'}). \n\n${content}`
                     }
                 ];
             }
@@ -66,11 +74,7 @@ export default function TextbookChat({ userId, title, context, onClose, studentN
                 body: JSON.stringify({
                     messages: messagesToSend,
                     userId,
-                    studentInfo: { name: studentName }, // Minimal info needed
-                    // we don't pass conversationId so it doesn't pollute the main history?
-                    // actually we probably SHOULD save it, but for now let's keep it ephemeral 
-                    // or let /api/chat generate a new one. 
-                    // If we don't pass conversationId, it creates a new one each time.
+                    studentInfo: { name: studentName },
                 })
             });
 
@@ -92,6 +96,10 @@ export default function TextbookChat({ userId, title, context, onClose, studentN
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleSendMessage = async () => {
+        await sendMessageWithContent(input);
     };
 
     return (

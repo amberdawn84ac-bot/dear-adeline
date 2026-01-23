@@ -79,9 +79,21 @@ export default function CareersClient({ profile, skills, topics, portfolio, asse
             return;
         }
 
-        // Assessment is complete, fetch blueprint
+        // Assessment is complete, check for saved blueprint first
         const fetchCareers = async () => {
             try {
+                // First, check if we have a saved blueprint
+                const savedRes = await fetch('/api/careers', { method: 'GET' });
+                if (savedRes.ok) {
+                    const savedData = await savedRes.json();
+                    if (savedData.blueprint) {
+                        setBlueprint(savedData.blueprint);
+                        setLoading(false);
+                        return;
+                    }
+                }
+
+                // No saved blueprint, generate a new one
                 const res = await fetch('/api/careers', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

@@ -1,221 +1,265 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { X, Mic, MicOff } from 'lucide-react';
-
-// Audio encoding helper
-const createBlob = (data: Float32Array): { data: string; mimeType: string } => {
-    const l = data.length;
-    const int16 = new Int16Array(l);
-    for (let i = 0; i < l; i++) {
-        int16[i] = data[i] * 32768;
-    }
-    let binary = '';
-    const bytes = new Uint8Array(int16.buffer);
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]);
-    }
-    return {
-        data: btoa(binary),
-        mimeType: 'audio/pcm;rate=16000',
-    };
-};
-
-// Audio decoding helper
-const decodeAudioData = async (
-    base64: string,
-    ctx: AudioContext
-): Promise<AudioBuffer> => {
-    const binaryString = atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-    const dataInt16 = new Int16Array(bytes.buffer);
-    const frameCount = dataInt16.length;
-    const buffer = ctx.createBuffer(1, frameCount, 24000);
-    const channelData = buffer.getChannelData(0);
-    for (let i = 0; i < frameCount; i++) {
-        channelData[i] = dataInt16[i] / 32768.0;
-    }
-    return buffer;
-};
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { X, Mic, MicOff, Volume2 } from 'lucide-react';
 
 interface VoiceSessionProps {
     onClose: () => void;
     studentName?: string;
+    userId?: string;
 }
 
-export function VoiceSession({ onClose, studentName }: VoiceSessionProps) {
-    const [isConnected, setIsConnected] = useState(false);
+// TypeScript declarations for Web Speech API
+interface SpeechRecognitionEvent extends Event {
+    results: SpeechRecognitionResultList;
+    resultIndex: number;
+}
+
+interface SpeechRecognitionResultList {
+    length: number;
+    item(index: number): SpeechRecognitionResult;
+    [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+    isFinal: boolean;
+    length: number;
+    item(index: number): SpeechRecognitionAlternative;
+    [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+    transcript: string;
+    confidence: number;
+}
+
+interface SpeechRecognition extends EventTarget {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    onresult: ((event: SpeechRecognitionEvent) => void) | null;
+    onerror: ((event: Event & { error: string }) => void) | null;
+    onend: (() => void) | null;
+    onstart: (() => void) | null;
+    start(): void;
+    stop(): void;
+    abort(): void;
+}
+
+declare global {
+    interface Window {
+        SpeechRecognition: new () => SpeechRecognition;
+        webkitSpeechRecognition: new () => SpeechRecognition;
+    }
+}
+
+export function VoiceSession({ onClose, studentName, userId }: VoiceSessionProps) {
+    const [isListening, setIsListening] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
     const [transcription, setTranscription] = useState('');
+    const [response, setResponse] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [conversationHistory, setConversationHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
 
-    const audioContextRef = useRef<AudioContext | null>(null);
-    const inputContextRef = useRef<AudioContext | null>(null);
-    const nextStartTimeRef = useRef<number>(0);
-    const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
-    const sessionRef = useRef<any>(null);
+    const recognitionRef = useRef<SpeechRecognition | null>(null);
+    const synthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-    const ADELINE_VOICE_INSTRUCTION = `You are Adeline, a wise grandmother mentor for ${studentName || 'this student'}.
+    // Check for browser support
+    const isSpeechRecognitionSupported = typeof window !== 'undefined' &&
+        ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+    const isSpeechSynthesisSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
-CORE PRINCIPLES:
-- Student-initiated learning: Ask what they want to build, solve, or understand
-- Mastery over time: Focus on deep understanding
-- Real-world usefulness: Prefer practical projects
-- Biblical worldview: See God's design in everything
-- Truth-based, family-friendly
+    // Initialize speech recognition
+    useEffect(() => {
+        if (!isSpeechRecognitionSupported) {
+            setError('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+            return;
+        }
 
-VOICE CONVERSATION STYLE:
-- Warm but discerning, like a wise grandmother
-- Use rural metaphors (planting, harvesting, weather)
-- Keep responses conversational but substantive
-- Ask clarifying questions to understand their mission
-- Guide them to discover answers, don't just give them
+        const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognitionRef.current = new SpeechRecognitionAPI();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = 'en-US';
 
-THE 8 LEARNING TRACKS:
-1) God's Creation & Science
-2) Health/Naturopathy  
-3) Food Systems
-4) Government/Economics
-5) Justice
-6) Discipleship
-7) History
-8) English/Literature
+        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
 
-When a student shares a learning goal, help them:
-1. Clarify the mission
-2. Define what "done" looks like
-3. Break it into manageable steps
-4. Identify skills they'll earn
-5. Encourage evidence capture (photos, reflections)`;
-
-    const startSession = async () => {
-        setError(null);
-        try {
-            // Dynamic import to avoid SSR issues
-            const { GoogleGenAI, Modality } = await import('@google/genai');
-
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-            inputContextRef.current = new AudioContext({ sampleRate: 16000 });
-            audioContextRef.current = new AudioContext({ sampleRate: 24000 });
-
-            const ai = new GoogleGenAI({
-                apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY || ''
-            });
-
-            const sessionPromise = ai.live.connect({
-                model: 'gemini-2.5-flash-native-audio-preview-09-2025',
-                callbacks: {
-                    onopen: () => {
-                        setIsConnected(true);
-
-                        if (!inputContextRef.current) return;
-                        const source = inputContextRef.current.createMediaStreamSource(stream);
-                        const scriptProcessor = inputContextRef.current.createScriptProcessor(4096, 1, 1);
-
-                        scriptProcessor.onaudioprocess = (e) => {
-                            const inputData = e.inputBuffer.getChannelData(0);
-                            const pcmBlob = createBlob(inputData);
-                            sessionPromise.then(session => {
-                                session.sendRealtimeInput({ media: pcmBlob });
-                            });
-                        };
-
-                        source.connect(scriptProcessor);
-                        scriptProcessor.connect(inputContextRef.current.destination);
-                    },
-                    onmessage: async (message: any) => {
-                        // Handle transcription
-                        if (message.serverContent?.outputTranscription) {
-                            setTranscription(prev => prev + message.serverContent!.outputTranscription!.text);
-                        }
-
-                        // Handle audio output
-                        const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
-                        if (base64Audio && audioContextRef.current) {
-                            setIsSpeaking(true);
-                            const ctx = audioContextRef.current;
-                            nextStartTimeRef.current = Math.max(nextStartTimeRef.current, ctx.currentTime);
-
-                            const audioBuffer = await decodeAudioData(base64Audio, ctx);
-                            const source = ctx.createBufferSource();
-                            source.buffer = audioBuffer;
-                            source.connect(ctx.destination);
-
-                            source.addEventListener('ended', () => {
-                                sourcesRef.current.delete(source);
-                                if (sourcesRef.current.size === 0) setIsSpeaking(false);
-                            });
-
-                            source.start(nextStartTimeRef.current);
-                            nextStartTimeRef.current += audioBuffer.duration;
-                            sourcesRef.current.add(source);
-                        }
-
-                        // Handle interruption
-                        if (message.serverContent?.interrupted) {
-                            sourcesRef.current.forEach(src => src.stop());
-                            sourcesRef.current.clear();
-                            nextStartTimeRef.current = 0;
-                            setIsSpeaking(false);
-                        }
-
-                        // Clear transcription on turn complete
-                        if (message.serverContent?.turnComplete) {
-                            setTranscription('');
-                        }
-                    },
-                    onclose: () => {
-                        setIsConnected(false);
-                        setIsSpeaking(false);
-                    },
-                    onerror: (e: any) => {
-                        console.error(e);
-                        setError("Connection error occurred.");
-                        setIsConnected(false);
-                    }
-                },
-                config: {
-                    responseModalities: [Modality.AUDIO],
-                    speechConfig: {
-                        voiceConfig: {
-                            prebuiltVoiceConfig: {
-                                voiceName: 'Autonoe' // Warm, seasoned grandmother voice - late 70s matriarch
-                            }
-                        }
-                    },
-                    systemInstruction: ADELINE_VOICE_INSTRUCTION,
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript;
+                } else {
+                    interimTranscript += transcript;
                 }
+            }
+
+            setTranscription(finalTranscript || interimTranscript);
+
+            if (finalTranscript) {
+                handleUserSpeech(finalTranscript);
+            }
+        };
+
+        recognitionRef.current.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            if (event.error === 'no-speech') {
+                setError('No speech detected. Please try again.');
+            } else if (event.error === 'not-allowed') {
+                setError('Microphone access denied. Please enable microphone permissions.');
+            } else {
+                setError(`Speech recognition error: ${event.error}`);
+            }
+            setIsListening(false);
+        };
+
+        recognitionRef.current.onend = () => {
+            setIsListening(false);
+        };
+
+        return () => {
+            if (recognitionRef.current) {
+                recognitionRef.current.abort();
+            }
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
+        };
+    }, [isSpeechRecognitionSupported]);
+
+    // Send transcribed text to AI and get response
+    const handleUserSpeech = useCallback(async (text: string) => {
+        if (!text.trim()) return;
+
+        setIsProcessing(true);
+        setError(null);
+
+        const newHistory = [...conversationHistory, { role: 'user' as const, content: text }];
+        setConversationHistory(newHistory);
+
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: newHistory,
+                    userId: userId,
+                    studentInfo: { name: studentName },
+                    mode: 'voice', // Hint to keep responses concise
+                }),
             });
 
-            sessionRef.current = sessionPromise;
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.userMessage || 'Failed to get response');
+            }
+
+            const data = await res.json();
+            const aiResponse = data.content;
+
+            setResponse(aiResponse);
+            setConversationHistory(prev => [...prev, { role: 'assistant', content: aiResponse }]);
+
+            // Speak the response
+            speakResponse(aiResponse);
 
         } catch (err) {
-            console.error(err);
-            setError("Failed to access microphone or connect. Make sure you have a Google API key set.");
+            console.error('Chat error:', err);
+            setError(err instanceof Error ? err.message : 'Failed to get response from Adeline');
+        } finally {
+            setIsProcessing(false);
+        }
+    }, [conversationHistory, userId, studentName]);
+
+    // Use browser speech synthesis to speak the response
+    const speakResponse = (text: string) => {
+        if (!isSpeechSynthesisSupported) {
+            console.warn('Speech synthesis not supported');
+            return;
+        }
+
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
+
+        // Clean up the text (remove HTML tags, etc.)
+        const cleanText = text
+            .replace(/<[^>]*>/g, '') // Remove HTML tags
+            .replace(/\*\*/g, '')    // Remove markdown bold
+            .replace(/\*/g, '')      // Remove markdown italic
+            .substring(0, 1000);     // Limit length for TTS
+
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        synthRef.current = utterance;
+
+        // Try to find a warm female voice
+        const voices = window.speechSynthesis.getVoices();
+        const preferredVoice = voices.find(v =>
+            v.name.includes('Samantha') ||
+            v.name.includes('Karen') ||
+            v.name.includes('Victoria') ||
+            (v.lang === 'en-US' && v.name.toLowerCase().includes('female'))
+        ) || voices.find(v => v.lang === 'en-US') || voices[0];
+
+        if (preferredVoice) {
+            utterance.voice = preferredVoice;
+        }
+
+        utterance.rate = 0.95; // Slightly slower for clarity
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        utterance.onstart = () => setIsSpeaking(true);
+        utterance.onend = () => {
+            setIsSpeaking(false);
+            setTranscription('');
+        };
+        utterance.onerror = () => setIsSpeaking(false);
+
+        window.speechSynthesis.speak(utterance);
+    };
+
+    // Start listening
+    const startListening = () => {
+        if (!recognitionRef.current) return;
+
+        // Stop any ongoing speech
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+        setIsSpeaking(false);
+
+        setError(null);
+        setTranscription('');
+        setResponse('');
+
+        try {
+            recognitionRef.current.start();
+            setIsListening(true);
+        } catch (err) {
+            console.error('Failed to start recognition:', err);
+            setError('Failed to start listening. Please try again.');
         }
     };
 
-    const stopSession = () => {
-        inputContextRef.current?.close();
-        audioContextRef.current?.close();
-        sourcesRef.current.forEach(src => src.stop());
-        sourcesRef.current.clear();
-        setIsConnected(false);
-        setIsSpeaking(false);
-        setTranscription('');
+    // Stop listening
+    const stopListening = () => {
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+        }
+        setIsListening(false);
     };
 
-    useEffect(() => {
-        return () => {
-            stopSession();
-        };
-    }, []);
+    // Stop speaking
+    const stopSpeaking = () => {
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+        setIsSpeaking(false);
+    };
+
+    const isActive = isListening || isSpeaking || isProcessing;
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -224,7 +268,12 @@ When a student shares a learning goal, help them:
                 <div className="p-6 border-b border-[var(--cream-dark)] flex items-center justify-between">
                     <div>
                         <h2 className="text-2xl font-bold text-[var(--forest)] serif">Voice Session with Adeline</h2>
-                        <p className="text-sm text-[var(--charcoal-light)] mt-1">Speak naturally. Adeline is listening.</p>
+                        <p className="text-sm text-[var(--charcoal-light)] mt-1">
+                            {isListening ? 'Listening... speak now' :
+                             isSpeaking ? 'Adeline is responding' :
+                             isProcessing ? 'Thinking...' :
+                             'Press the button and speak'}
+                        </p>
                     </div>
                     <button
                         onClick={onClose}
@@ -236,37 +285,61 @@ When a student shares a learning goal, help them:
 
                 {/* Voice Visualizer */}
                 <div className="p-12 flex flex-col items-center justify-center space-y-8">
-                    <div className={`relative flex items-center justify-center w-64 h-64 rounded-full transition-all duration-700 ${isSpeaking ? 'bg-[var(--sage-light)] scale-105 shadow-2xl' : 'bg-[var(--cream)] border-2 border-[var(--cream-dark)]'
-                        }`}>
+                    <div className={`relative flex items-center justify-center w-64 h-64 rounded-full transition-all duration-700 ${
+                        isSpeaking ? 'bg-[var(--sage-light)] scale-105 shadow-2xl' :
+                        isListening ? 'bg-[var(--ochre-light)] scale-105 shadow-2xl' :
+                        isProcessing ? 'bg-[var(--cream)] animate-pulse' :
+                        'bg-[var(--cream)] border-2 border-[var(--cream-dark)]'
+                    }`}>
                         {/* Pulse animations */}
-                        <div className={`absolute inset-0 rounded-full border-2 border-[var(--sage)] transition-all duration-1000 ${isSpeaking ? 'animate-ping opacity-20' : 'opacity-0'
-                            }`}></div>
-                        <div className={`absolute inset-4 rounded-full border border-[var(--sage-dark)] transition-all duration-1000 ${isSpeaking ? 'animate-pulse' : 'opacity-0'
-                            }`}></div>
+                        <div className={`absolute inset-0 rounded-full border-2 transition-all duration-1000 ${
+                            isListening ? 'border-[var(--ochre)] animate-ping opacity-20' :
+                            isSpeaking ? 'border-[var(--sage)] animate-ping opacity-20' :
+                            'opacity-0'
+                        }`}></div>
+                        <div className={`absolute inset-4 rounded-full border transition-all duration-1000 ${
+                            isListening ? 'border-[var(--ochre-dark)] animate-pulse' :
+                            isSpeaking ? 'border-[var(--sage-dark)] animate-pulse' :
+                            'opacity-0'
+                        }`}></div>
 
-                        {/* Microphone icon */}
+                        {/* Icon */}
                         <div className="z-10 text-center">
-                            {isConnected ? (
-                                isSpeaking ? (
-                                    <Mic className="w-20 h-20 text-[var(--sage-dark)] animate-pulse" />
-                                ) : (
-                                    <Mic className="w-20 h-20 text-[var(--charcoal-light)]" />
-                                )
+                            {isSpeaking ? (
+                                <Volume2 className="w-20 h-20 text-[var(--sage-dark)] animate-pulse" />
+                            ) : isListening ? (
+                                <Mic className="w-20 h-20 text-[var(--ochre-dark)] animate-pulse" />
+                            ) : isProcessing ? (
+                                <div className="w-20 h-20 flex items-center justify-center">
+                                    <div className="w-12 h-12 border-4 border-[var(--forest)] border-t-transparent rounded-full animate-spin" />
+                                </div>
                             ) : (
                                 <MicOff className="w-20 h-20 text-[var(--charcoal-light)] opacity-30" />
                             )}
                             <p className="text-xs font-bold uppercase tracking-widest text-[var(--charcoal-light)] mt-4">
-                                {isSpeaking ? 'Adeline is speaking' : isConnected ? 'Listening...' : 'Ready'}
+                                {isSpeaking ? 'Adeline is speaking' :
+                                 isListening ? 'Listening...' :
+                                 isProcessing ? 'Thinking...' :
+                                 'Ready'}
                             </p>
                         </div>
                     </div>
 
-                    {/* Transcription */}
-                    {transcription && (
+                    {/* Transcription / Response */}
+                    {(transcription || response) && (
                         <div className="w-full max-w-lg bg-[var(--cream)] p-6 rounded-2xl border border-[var(--cream-dark)]">
-                            <p className="text-sm text-[var(--charcoal)] italic font-serif leading-relaxed">
-                                {transcription}
-                            </p>
+                            {transcription && (
+                                <p className="text-sm text-[var(--charcoal)] mb-3">
+                                    <span className="font-bold text-[var(--ochre)]">You: </span>
+                                    {transcription}
+                                </p>
+                            )}
+                            {response && !isProcessing && (
+                                <p className="text-sm text-[var(--charcoal)] italic font-serif leading-relaxed">
+                                    <span className="font-bold text-[var(--forest)] not-italic">Adeline: </span>
+                                    {response.substring(0, 300)}{response.length > 300 ? '...' : ''}
+                                </p>
+                            )}
                         </div>
                     )}
 
@@ -277,26 +350,64 @@ When a student shares a learning goal, help them:
                         </div>
                     )}
 
-                    {/* Status message */}
-                    {isConnected && !error && (
-                        <p className="text-sm text-[var(--sage-dark)] animate-pulse">
-                            {isSpeaking ? "Adeline is thinking and responding..." : "Speak whenever you're ready"}
-                        </p>
+                    {/* Browser support warning */}
+                    {!isSpeechRecognitionSupported && (
+                        <div className="w-full max-w-lg bg-amber-50 border border-amber-200 p-4 rounded-xl">
+                            <p className="text-sm text-amber-700">
+                                Voice recognition requires Chrome, Edge, or Safari. Please use a supported browser.
+                            </p>
+                        </div>
                     )}
                 </div>
 
                 {/* Controls */}
-                <div className="p-6 border-t border-[var(--cream-dark)] flex justify-center">
-                    <button
-                        onClick={isConnected ? stopSession : startSession}
-                        className={`px-8 py-4 rounded-2xl font-bold transition-all shadow-lg ${isConnected
-                            ? 'bg-red-50 text-red-600 border-2 border-red-200 hover:bg-red-100'
-                            : 'bg-[var(--forest)] text-white hover:brightness-110'
+                <div className="p-6 border-t border-[var(--cream-dark)] flex justify-center gap-4">
+                    {isSpeaking ? (
+                        <button
+                            onClick={stopSpeaking}
+                            className="px-8 py-4 rounded-2xl font-bold transition-all shadow-lg bg-red-50 text-red-600 border-2 border-red-200 hover:bg-red-100"
+                        >
+                            Stop Adeline
+                        </button>
+                    ) : isListening ? (
+                        <button
+                            onClick={stopListening}
+                            className="px-8 py-4 rounded-2xl font-bold transition-all shadow-lg bg-[var(--ochre)] text-white hover:brightness-110"
+                        >
+                            Done Speaking
+                        </button>
+                    ) : (
+                        <button
+                            onClick={startListening}
+                            disabled={isProcessing || !isSpeechRecognitionSupported}
+                            className={`px-8 py-4 rounded-2xl font-bold transition-all shadow-lg ${
+                                isProcessing || !isSpeechRecognitionSupported
+                                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                    : 'bg-[var(--forest)] text-white hover:brightness-110'
                             }`}
-                    >
-                        {isConnected ? 'End Voice Session' : 'Start Voice Session'}
-                    </button>
+                        >
+                            {isProcessing ? 'Processing...' : 'Start Talking'}
+                        </button>
+                    )}
                 </div>
+
+                {/* Conversation History */}
+                {conversationHistory.length > 0 && (
+                    <div className="px-6 pb-6">
+                        <details className="text-sm">
+                            <summary className="cursor-pointer text-[var(--charcoal-light)] hover:text-[var(--forest)]">
+                                View conversation history ({conversationHistory.length} messages)
+                            </summary>
+                            <div className="mt-3 max-h-48 overflow-y-auto space-y-2 bg-[var(--cream)] p-4 rounded-xl">
+                                {conversationHistory.map((msg, i) => (
+                                    <p key={i} className={`text-xs ${msg.role === 'user' ? 'text-[var(--ochre-dark)]' : 'text-[var(--forest)]'}`}>
+                                        <strong>{msg.role === 'user' ? 'You' : 'Adeline'}:</strong> {msg.content.substring(0, 150)}{msg.content.length > 150 ? '...' : ''}
+                                    </p>
+                                ))}
+                            </div>
+                        </details>
+                    </div>
+                )}
             </div>
         </div>
     );

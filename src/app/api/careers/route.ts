@@ -29,6 +29,37 @@ interface Assessment {
     dream_legacy: string;
 }
 
+// GET: Retrieve saved blueprint if it exists
+export async function GET() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data: assessment, error } = await supabase
+        .from('career_assessments')
+        .select('blueprint, blueprint_generated_at, is_complete')
+        .eq('student_id', user.id)
+        .single();
+
+    if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching blueprint:', error);
+        return NextResponse.json({ error: 'Failed to fetch blueprint' }, { status: 500 });
+    }
+
+    if (!assessment || !assessment.blueprint) {
+        return NextResponse.json({ blueprint: null });
+    }
+
+    return NextResponse.json({
+        blueprint: assessment.blueprint,
+        generatedAt: assessment.blueprint_generated_at,
+        isComplete: assessment.is_complete
+    });
+}
+
 export async function POST(req: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -108,6 +139,20 @@ Tone: "A life-mentor speaking a singular, powerful vision of the child's purpose
         const cleanedJson = jsonMatch ? jsonMatch[0] : content;
 
         const data = JSON.parse(cleanedJson);
+
+        // Save the blueprint to the database
+        const { error: saveError } = await supabase
+            .from('career_assessments')
+            .update({
+                blueprint: data,
+                blueprint_generated_at: new Date().toISOString()
+            })
+            .eq('student_id', user.id);
+
+        if (saveError) {
+            console.error('Error saving blueprint:', saveError);
+            // Still return the blueprint even if save fails
+        }
 
         return NextResponse.json(data);
     } catch (error: unknown) {

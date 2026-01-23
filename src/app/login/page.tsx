@@ -12,11 +12,31 @@ import {
     ArrowRight,
     AlertCircle,
     Loader2,
-    Shield
+    Shield,
+    MessageCircle,
+    FormInput
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import ConversationalLogin from '@/components/ConversationalLogin';
 
 export default function LoginPage() {
+    const [useConversational, setUseConversational] = useState(true);
+
+    // If using conversational login, render that component
+    if (useConversational) {
+        return (
+            <div className="relative">
+                <ConversationalLogin />
+                <button
+                    onClick={() => setUseConversational(false)}
+                    className="fixed bottom-4 right-4 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg text-sm text-[var(--charcoal-light)] hover:bg-white transition-all flex items-center gap-2"
+                >
+                    <FormInput className="w-4 h-4" />
+                    Use traditional form
+                </button>
+            </div>
+        );
+    }
     const router = useRouter();
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
@@ -370,6 +390,14 @@ export default function LoginPage() {
                         {' '}and{' '}
                         <Link href="/privacy" className="text-[var(--sage-dark)] hover:underline">Privacy Policy</Link>
                     </p>
+
+                    <button
+                        onClick={() => setUseConversational(true)}
+                        className="mt-4 w-full py-3 rounded-xl border-2 border-[var(--sage-light)] text-[var(--sage-dark)] font-medium text-sm hover:bg-[var(--sage-light)] transition-all flex items-center justify-center gap-2"
+                    >
+                        <MessageCircle className="w-4 h-4" />
+                        Chat with Adeline instead
+                    </button>
                 </div>
             </div>
         </div>

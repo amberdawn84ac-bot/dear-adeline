@@ -200,6 +200,7 @@ export default function DashboardClient({
     const [loading, setLoading] = useState(false);
     const [opportunities, setOpportunities] = useState<any[]>([]);
     const [aiSummary, setAiSummary] = useState<string | null>(null);
+    const [saveWarning, setSaveWarning] = useState<string | null>(null);
 
     useEffect(() => {
         // Only show onboarding if explicitly requested via URL parameter (set during signup)
@@ -364,13 +365,25 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                 }),
             });
 
-            if (!response.ok) throw new Error(`Error: ${response.status}`);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.userMessage || `Error: ${response.status}`);
+            }
 
             const data = await response.json();
 
             // Store AI data in state
             if (data.summary) setAiSummary(data.summary);
             if (data.opportunities) setOpportunities(data.opportunities);
+
+            // Show warning if conversation failed to save
+            if (data.persistError) {
+                setSaveWarning(data.persistError);
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => setSaveWarning(null), 5000);
+            } else {
+                setSaveWarning(null);
+            }
 
             if (data.conversationId && data.conversationId !== currentChatId) {
                 setCurrentChatId(data.conversationId);
@@ -391,13 +404,19 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
 
             setMessages((prev) => [...prev, assistantMessage]);
 
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Chat error:', error);
+
+            // Use the error message from the API if available
+            const errorMessage = error instanceof Error
+                ? error.message
+                : "I'm having trouble connecting right now. Please try again.";
+
             setMessages((prev) => [
                 ...prev,
                 {
                     role: 'assistant',
-                    content: "I'm having trouble connecting right now.",
+                    content: errorMessage,
                     timestamp: new Date(),
                 },
             ]);
@@ -651,6 +670,20 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Save Warning Banner */}
+                            {saveWarning && (
+                                <div className="mx-4 mt-2 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-amber-700 text-sm">
+                                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                                    <span>{saveWarning}</span>
+                                    <button
+                                        onClick={() => setSaveWarning(null)}
+                                        className="ml-auto p-1 hover:bg-amber-100 rounded"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
 
                             <div className="flex-1 p-4 space-y-4 overflow-y-auto max-h-[70vh]">
                                 {messages.map((m, i) => {
@@ -1060,6 +1093,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                 <VoiceSession
                     onClose={() => setShowVoiceSession(false)}
                     studentName={profile?.display_name || undefined}
+                    userId={currentViewingUserId}
                 />
             )}
 

@@ -34,11 +34,14 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     // Upsert (insert or update if exists)
+    // Clear blueprint when assessment changes to force regeneration
     const { data: assessment, error } = await supabase
         .from('career_assessments')
         .upsert({
             student_id: user.id,
             ...body,
+            blueprint: null,
+            blueprint_generated_at: null,
             updated_at: new Date().toISOString(),
         })
         .select()

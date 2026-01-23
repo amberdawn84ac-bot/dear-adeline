@@ -436,7 +436,7 @@ FORMATTING RULES:
         console.log('💾 Persisting conversation...');
 
         // Persist conversation with same ID to maintain sidebar continuity
-        const { activeConversationId, newTitle } = await persistConversation(
+        const { activeConversationId, newTitle, error: persistError } = await persistConversation(
             conversationId,
             userPrompt,
             finalResponseText,
@@ -445,12 +445,17 @@ FORMATTING RULES:
             supabase
         );
 
+        if (persistError) {
+            console.warn('⚠️ Persistence warning:', persistError);
+        }
+
         console.log('✅ Chat complete!');
 
         return NextResponse.json({
             content: finalResponseText,
             conversationId: activeConversationId,
-            title: newTitle
+            title: newTitle,
+            persistError, // Include so frontend can show a warning toast
         });
 
     } catch (error: unknown) {
@@ -461,8 +466,20 @@ FORMATTING RULES:
         }
 
         const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+
+        // Provide user-friendly error messages
+        let userMessage = "I'm having trouble connecting. Please try again.";
+        if (errorMessage.includes('API key')) {
+            userMessage = "There's a configuration issue. Please contact support.";
+        } else if (errorMessage.includes('quota') || errorMessage.includes('rate limit')) {
+            userMessage = "We're experiencing high demand. Please wait a moment and try again.";
+        } else if (errorMessage.includes('model')) {
+            userMessage = "The AI service is temporarily unavailable. Please try again shortly.";
+        }
+
         return NextResponse.json({
             error: 'Chat processing failed',
+            userMessage,
             details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
         }, { status: 500 });
     }

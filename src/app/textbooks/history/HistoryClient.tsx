@@ -53,9 +53,17 @@ export default function HistoryClient({ events, progress, userId }: Props) {
     const [selectedEvent, setSelectedEvent] = useState<TextbookEvent | null>(null);
     const [showChat, setShowChat] = useState(false);
     const [showSuggestForm, setShowSuggestForm] = useState(false);
+    const [chatInitialPrompt, setChatInitialPrompt] = useState<string | null>(null);
     const timelineRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
+
+    // Open chat with a pre-filled challenge prompt
+    const handleTakeChallenge = () => {
+        if (!selectedEvent) return;
+        setChatInitialPrompt(`Give me a challenge about "${selectedEvent.title}" (${selectedEvent.date_display}). Ask me questions that require critical thinking about primary sources vs mainstream narratives.`);
+        setShowChat(true);
+    };
 
     const getProgressForEvent = (eventId: string) => {
         return progress.find(p => p.item_id === eventId);
@@ -333,13 +341,17 @@ export default function HistoryClient({ events, progress, userId }: Props) {
                             {/* Action Buttons */}
                             <div className="flex gap-3">
                                 <button
-                                    onClick={() => setShowChat(true)}
+                                    onClick={() => {
+                                        setChatInitialPrompt(null);
+                                        setShowChat(true);
+                                    }}
                                     className="flex-1 flex items-center justify-center gap-2 bg-[var(--forest)] text-white py-3 rounded-xl hover:brightness-110 transition-all"
                                 >
                                     <MessageCircle className="w-5 h-5" />
                                     Ask Adeline
                                 </button>
                                 <button
+                                    onClick={handleTakeChallenge}
                                     className="flex-1 flex items-center justify-center gap-2 bg-[var(--ochre)] text-white py-3 rounded-xl hover:brightness-110 transition-all"
                                 >
                                     <Target className="w-5 h-5" />
@@ -415,7 +427,11 @@ export default function HistoryClient({ events, progress, userId }: Props) {
                     userId={userId}
                     title={selectedEvent.title}
                     context={`Historical Event: ${selectedEvent.title} (${selectedEvent.date_display}, ${selectedEvent.era} era). Mainstream narrative: "${selectedEvent.mainstream_narrative}". Primary sources say: "${selectedEvent.primary_sources}".`}
-                    onClose={() => setShowChat(false)}
+                    onClose={() => {
+                        setShowChat(false);
+                        setChatInitialPrompt(null);
+                    }}
+                    initialPrompt={chatInitialPrompt}
                 />
             )}
         </div>

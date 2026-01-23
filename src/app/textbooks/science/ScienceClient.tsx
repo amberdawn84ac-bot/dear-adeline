@@ -68,7 +68,28 @@ export default function ScienceClient({ concepts, progress, userId }: Props) {
     const [selectedConcept, setSelectedConcept] = useState<TextbookConcept | null>(null);
     const [showChat, setShowChat] = useState(false);
     const [showSuggestForm, setShowSuggestForm] = useState(false);
+    const [showLearnModal, setShowLearnModal] = useState(false);
+    const [chatInitialPrompt, setChatInitialPrompt] = useState<string | null>(null);
     const [expandedBranches, setExpandedBranches] = useState<Set<string>>(new Set(BRANCHES.map(b => b.id)));
+
+    // Open chat with a pre-filled quiz prompt
+    const handleQuizMe = () => {
+        if (!selectedConcept) return;
+        setChatInitialPrompt(`Create a 3-question quiz to test my understanding of "${selectedConcept.title}". Make it challenging but fair, and explain the answers after I respond.`);
+        setShowChat(true);
+    };
+
+    // Open the learn more content
+    const handleLearnMore = () => {
+        if (!selectedConcept) return;
+        if (selectedConcept.learn_content) {
+            setShowLearnModal(true);
+        } else {
+            // If no learn_content, open chat with a learning request
+            setChatInitialPrompt(`Teach me more about "${selectedConcept.title}". I want to understand the key concepts deeply.`);
+            setShowChat(true);
+        }
+    };
 
     const getProgressForConcept = (conceptId: string) => {
         return progress.find(p => p.item_id === conceptId);
@@ -344,19 +365,24 @@ export default function ScienceClient({ concepts, progress, userId }: Props) {
                             {/* Action Buttons */}
                             <div className="flex gap-3 pt-2">
                                 <button
+                                    onClick={handleLearnMore}
                                     className="flex-1 flex items-center justify-center gap-2 bg-[var(--sage)] text-white py-3 rounded-xl hover:brightness-110 transition-all font-medium"
                                 >
                                     <BookOpen className="w-5 h-5" />
                                     Learn More
                                 </button>
                                 <button
-                                    onClick={() => setShowChat(true)}
+                                    onClick={() => {
+                                        setChatInitialPrompt(null);
+                                        setShowChat(true);
+                                    }}
                                     className="flex-1 flex items-center justify-center gap-2 bg-[var(--forest)] text-white py-3 rounded-xl hover:brightness-110 transition-all font-medium"
                                 >
                                     <MessageCircle className="w-5 h-5" />
                                     Ask Adeline
                                 </button>
                                 <button
+                                    onClick={handleQuizMe}
                                     className="flex-1 flex items-center justify-center gap-2 bg-[var(--ochre)] text-white py-3 rounded-xl hover:brightness-110 transition-all font-medium"
                                 >
                                     <Target className="w-5 h-5" />
@@ -430,13 +456,59 @@ export default function ScienceClient({ concepts, progress, userId }: Props) {
                 </div>
             )}
 
+            {/* Learn More Modal */}
+            {showLearnModal && selectedConcept && selectedConcept.learn_content && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+                        <div className="sticky top-0 bg-[var(--sage)] text-white p-6 rounded-t-2xl">
+                            <button
+                                onClick={() => setShowLearnModal(false)}
+                                className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-lg transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                            <span className="text-xs font-medium uppercase tracking-wider text-white/70">
+                                Learn More
+                            </span>
+                            <h2 className="text-2xl font-bold font-serif mt-1">{selectedConcept.title}</h2>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-[var(--charcoal)] leading-relaxed whitespace-pre-wrap">
+                                {selectedConcept.learn_content}
+                            </p>
+                        </div>
+                        <div className="p-4 border-t border-gray-100 flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowLearnModal(false);
+                                    handleQuizMe();
+                                }}
+                                className="px-4 py-2 bg-[var(--ochre)] text-white rounded-xl hover:brightness-110 transition-all font-medium"
+                            >
+                                Quiz Me on This
+                            </button>
+                            <button
+                                onClick={() => setShowLearnModal(false)}
+                                className="px-4 py-2 bg-[var(--forest)] text-white rounded-xl hover:brightness-110 transition-all font-medium"
+                            >
+                                Got It!
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Chat Panel */}
             {showChat && selectedConcept && (
                 <TextbookChat
                     userId={userId}
                     title={selectedConcept.title}
                     context={`Science Concept: ${selectedConcept.title} (${selectedConcept.branch}). Why it matters: "${selectedConcept.why_it_matters}". What we observe: "${JSON.stringify(selectedConcept.what_we_observe)}". What models say: "${selectedConcept.what_models_say}". What we don't know: "${selectedConcept.what_we_dont_know}".`}
-                    onClose={() => setShowChat(false)}
+                    onClose={() => {
+                        setShowChat(false);
+                        setChatInitialPrompt(null);
+                    }}
+                    initialPrompt={chatInitialPrompt}
                 />
             )}
         </div>

@@ -93,12 +93,17 @@ export async function POST(req: Request) {
                 .maybeSingle();
 
             if (!existing) {
+                // Map type to valid values (grant, contest, scholarship, contract, residency)
+                const validTypes = ['grant', 'contest', 'scholarship', 'contract', 'residency'];
+                const normalizedType = (item.type || '').toLowerCase();
+                const mappedType = validTypes.find(t => normalizedType.includes(t)) || 'contest';
+
                 const { data: saved, error } = await supabase
                     .from('opportunities')
                     .insert({
                         title: item.title,
                         description: item.description,
-                        type: item.type || 'opportunity',
+                        type: mappedType,
                         organization: item.organization,
                         location: item.location || 'Online',
                         deadline: item.deadline || null,
