@@ -60,6 +60,8 @@ import MessageContent from '@/components/MessageContent';
 import DailyManna from '@/components/DailyManna';
 import AdelineSketchnote from '@/components/AdelineSketchnote';
 import StandardsProgressWidget from '@/components/StandardsProgressWidget';
+import { CompetencyView } from '@/components/CompetencyView';
+import { PlacementReportView } from '@/components/PlacementReportView';
 
 // Moved from DashboardClient to prevent re-declaration on every render
 const dailyScriptures = [
@@ -1000,6 +1002,16 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                     ))}
                                     {studentSkills.length === 0 && <p className="text-xs text-slate-400 italic">No skills yet!</p>}
                                 </div>
+                            </div>
+
+                            {/* 8. Real-World Competencies */}
+                            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
+                                <CompetencyView userId={currentViewingUserId} />
+                            </div>
+
+                            {/* 9. Placement Report */}
+                            <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--cream-dark)]">
+                                <PlacementReportView userId={currentViewingUserId} />
                             </div>
                         </div>
                     </div>

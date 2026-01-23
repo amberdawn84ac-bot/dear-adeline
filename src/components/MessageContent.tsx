@@ -4,6 +4,7 @@ import React from 'react';
 import { Gamepad2, Sparkles, Target } from 'lucide-react';
 import { formatTrack } from '@/types/learning';
 import { GameRenderer } from './GameRenderer';
+import { StudentGameRenderer } from './StudentGameRenderer';
 import MermaidDiagram from './MermaidDiagram';
 import StorybookPage from './StorybookPage';
 
@@ -94,6 +95,35 @@ function MessageContentComponent({ content }: MessageContentProps) {
                                 type={gameData.type as 'quiz' | 'matching' | 'wordsearch' | 'fillinblank' | 'truefalse'}
                                 content={gameData.content as Record<string, unknown>}
                                 onComplete={() => console.log('Game completed!')}
+                            />
+                        </div>
+
+                        {afterGame && <div className="mt-4" dangerouslySetInnerHTML={{ __html: afterGame }} />}
+                    </>
+                );
+            }
+        }
+
+        // Parse <STUDENTGAME> tags for student-designed games
+        const studentGameMatch = content.match(/<STUDENTGAME>([\s\S]*?)<\/STUDENTGAME>/);
+        if (studentGameMatch) {
+            const manifest = safeJSONParse(studentGameMatch[1]);
+
+            if (manifest) {
+                const beforeGame = content.substring(0, studentGameMatch.index);
+                const afterGame = content.substring((studentGameMatch.index || 0) + studentGameMatch[0].length);
+
+                return (
+                    <>
+                        {beforeGame && <div className="mb-4" dangerouslySetInnerHTML={{ __html: beforeGame }} />}
+
+                        <div className="my-4">
+                            <StudentGameRenderer
+                                gameId={manifest.gameId || 'student-game'}
+                                manifest={manifest}
+                                onComplete={(score, timeSpent) => {
+                                    console.log('Student game completed!', { score, timeSpent });
+                                }}
                             />
                         </div>
 
