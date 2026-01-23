@@ -35,6 +35,7 @@ export default function ConversationalLogin() {
     const [error, setError] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const hasInitialized = useRef(false);
 
     // User data collected through conversation
     const [userData, setUserData] = useState({
@@ -66,16 +67,21 @@ export default function ConversationalLogin() {
         }
     }, [step]);
 
-    // Initial greeting
+    // Initial greeting - only run once even in StrictMode
     useEffect(() => {
-        const timer = setTimeout(() => {
+        // Prevent double execution in React StrictMode (development)
+        if (hasInitialized.current) return;
+        hasInitialized.current = true;
+
+        const timer1 = setTimeout(() => {
             addAdelineMessage("Hi there! I'm Adeline, your learning companion. I'm so excited to meet you!");
             setTimeout(() => {
                 addAdelineMessage("Let's get you set up. What's your email address?");
                 setStep('email');
             }, 1500);
         }, 500);
-        return () => clearTimeout(timer);
+
+        return () => clearTimeout(timer1);
     }, []);
 
     const addAdelineMessage = (content: string) => {

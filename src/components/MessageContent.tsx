@@ -107,9 +107,25 @@ function MessageContentComponent({ content }: MessageContentProps) {
         // Parse <STUDENTGAME> tags for student-designed games
         const studentGameMatch = content.match(/<STUDENTGAME>([\s\S]*?)<\/STUDENTGAME>/);
         if (studentGameMatch) {
-            const manifest = safeJSONParse(studentGameMatch[1]);
+            const parsedManifest = safeJSONParse(studentGameMatch[1]);
 
-            if (manifest) {
+            // Type guard to ensure manifest has required GameManifest structure
+            if (parsedManifest &&
+                typeof parsedManifest === 'object' &&
+                'gameId' in parsedManifest &&
+                'type' in parsedManifest &&
+                'assets' in parsedManifest &&
+                'mechanics' in parsedManifest &&
+                'pedagogy' in parsedManifest) {
+
+                const manifest = parsedManifest as {
+                    gameId: string;
+                    type: 'matching' | 'sorting' | 'labeling' | 'quiz' | 'memory' | 'path' | 'fill_blank';
+                    assets: { backgroundImage?: string; elements: Array<Record<string, unknown>> };
+                    mechanics: { winCondition: string; lives?: number; timer?: boolean; timerSeconds?: number };
+                    pedagogy: { skillId?: string; difficulty: 'easy' | 'medium' | 'hard' };
+                };
+
                 const beforeGame = content.substring(0, studentGameMatch.index);
                 const afterGame = content.substring((studentGameMatch.index || 0) + studentGameMatch[0].length);
 
@@ -119,7 +135,7 @@ function MessageContentComponent({ content }: MessageContentProps) {
 
                         <div className="my-4">
                             <StudentGameRenderer
-                                gameId={(manifest.gameId as string) || 'student-game'}
+                                gameId={manifest.gameId || 'student-game'}
                                 manifest={manifest}
                                 onComplete={(score, timeSpent) => {
                                     console.log('Student game completed!', { score, timeSpent });
