@@ -11,7 +11,7 @@ export const startChat = async (
 ) => {
 
     const model = genAI.getGenerativeModel({
-        model: modelName || "gemini-1.5-flash", // Use provided model or default to flash
+        model: modelName || "gemini-2.0-flash", // Use provided model or default to flash
         systemInstruction,
         tools
     });
