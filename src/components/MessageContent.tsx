@@ -119,7 +119,7 @@ function MessageContentComponent({ content }: MessageContentProps) {
 
                         <div className="my-4">
                             <StudentGameRenderer
-                                gameId={manifest.gameId || 'student-game'}
+                                gameId={(manifest.gameId as string) || 'student-game'}
                                 manifest={manifest}
                                 onComplete={(score, timeSpent) => {
                                     console.log('Student game completed!', { score, timeSpent });
