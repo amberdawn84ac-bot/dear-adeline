@@ -52,7 +52,6 @@ import { TypingGame } from '@/components/TypingGame';
 import { CodingGame } from '@/components/CodingGame';
 import { DigitalWorksheet } from '@/components/DigitalWorksheet';
 import { CodeWorkspace } from '@/components/CodeWorkspace';
-import { OnboardingModal } from '@/components/OnboardingModal';
 import { VoiceSession } from '@/components/VoiceSession';
 import { CameraInput } from '@/components/CameraInput';
 import { GoalsWidget } from '@/components/GoalsWidget';
@@ -198,23 +197,10 @@ export default function DashboardClient({
     const router = useRouter();
     const [messages, setMessages] = useState<Message[]>([]);
     const [isClient, setIsClient] = useState(false);
-    const [showOnboarding, setShowOnboarding] = useState(false);
     const [loading, setLoading] = useState(false);
     const [opportunities, setOpportunities] = useState<any[]>([]);
     const [aiSummary, setAiSummary] = useState<string | null>(null);
     const [saveWarning, setSaveWarning] = useState<string | null>(null);
-
-    useEffect(() => {
-        // Only show onboarding if explicitly requested via URL parameter (set during signup)
-        if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search);
-            const shouldOnboard = params.get('onboarding') === 'true';
-
-            if (shouldOnboard) {
-                setShowOnboarding(true);
-            }
-        }
-    }, []);
 
     useEffect(() => {
         setIsClient(true);
@@ -630,21 +616,6 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
 
                 <div className="flex-1 p-4 lg:p-6">
                     <div className="grid grid-cols-12 gap-6">
-                        {/* Onboarding Flow */}
-                        {showOnboarding && (
-                            <OnboardingModal
-                                userId={currentViewingUserId} // Use currentViewingUserId
-                                onComplete={() => {
-                                    setShowOnboarding(false);
-                                    // Remove the onboarding parameter from URL
-                                    const url = new URL(window.location.href);
-                                    url.searchParams.delete('onboarding');
-                                    window.history.replaceState({}, '', url);
-                                    router.refresh();
-                                }}
-                            />
-                        )}
-
                         {/* Daily Manna - Truth Engine */}
                         <div className="col-span-12">
                             <DailyManna />

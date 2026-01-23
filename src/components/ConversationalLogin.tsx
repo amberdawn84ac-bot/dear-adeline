@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Sparkles, Send, Eye, EyeOff, Loader2, ChevronDown } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
-type Step = 'greeting' | 'email' | 'password' | 'name' | 'state' | 'role' | 'grade' | 'creating';
+type Step = 'greeting' | 'email' | 'password' | 'name' | 'role' | 'grade' | 'city' | 'state' | 'placement' | 'creating' | 'complete';
 
 interface Message {
     role: 'adeline' | 'user';
@@ -42,10 +42,13 @@ export default function ConversationalLogin() {
         password: '',
         name: '',
         state: '',
+        city: '',
         role: '' as 'student' | 'parent' | 'teacher' | '',
         grade: '',
         isReturning: false,
-        existingName: ''
+        existingName: '',
+        assessmentId: null as string | null,
+        placementComplete: false
     });
 
     const scrollToBottom = () => {
@@ -106,6 +109,12 @@ export default function ConversationalLogin() {
                 break;
             case 'grade':
                 handleGradeStep(value);
+                break;
+            case 'city':
+                handleCityStep(value);
+                break;
+            case 'placement':
+                await handlePlacementResponse(value);
                 break;
         }
     };
@@ -244,14 +253,105 @@ export default function ConversationalLogin() {
 
         addUserMessage(`Grade ${normalizedGrade}`);
         setUserData(prev => ({ ...prev, grade: normalizedGrade }));
-        createAccount('student', normalizedGrade);
+        addAdelineMessage(`Great! Which city do you live in?`);
+        setTimeout(() => {
+            addAdelineMessage(`(I use this to find local opportunities and news for you)`);
+        }, 800);
+        setStep('city');
+    };
+
+    const handleCityStep = (city: string) => {
+        if (city.trim().length < 2) {
+            setError("Please enter your city name");
+            return;
+        }
+
+        addUserMessage(city);
+        setUserData(prev => ({ ...prev, city }));
+        addAdelineMessage(`${city} - nice! And which state is that in?`);
+        setStep('state');
     };
 
     const handleStateSelect = (state: string) => {
         setUserData(prev => ({ ...prev, state }));
         addUserMessage(state);
-        addAdelineMessage(`${state} - great! Are you a student, parent, or teacher?`);
-        setStep('role');
+        addAdelineMessage(`Perfect! Now let's have a quick chat so I know where to start teaching you.`);
+        setTimeout(() => {
+            addAdelineMessage(`This isn't a test - just say "I don't know" if you're not sure!`);
+            setTimeout(() => {
+                startPlacementAssessment();
+            }, 1500);
+        }, 1000);
+    };
+
+    const startPlacementAssessment = async () => {
+        setStep('placement');
+        setLoading(true);
+
+        try {
+            const response = await fetch('/api/placement/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: 'temp', // Account not created yet
+                    grade: userData.grade,
+                    state: userData.state
+                })
+            });
+
+            const data = await response.json();
+            setUserData(prev => ({ ...prev, assessmentId: data.assessmentId }));
+
+            // First assessment question appears as Adeline message
+            addAdelineMessage(data.firstQuestion);
+
+        } catch (error) {
+            console.error('Error starting placement:', error);
+            setError("Having trouble starting the assessment. Let me try again...");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handlePlacementResponse = async (response: string) => {
+        addUserMessage(response);
+        setLoading(true);
+
+        try {
+            const result = await fetch('/api/placement/continue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    assessmentId: userData.assessmentId,
+                    response
+                })
+            });
+
+            const data = await result.json();
+
+            if (data.complete) {
+                // Assessment done!
+                addAdelineMessage(data.completionMessage || "Great job! I have a good sense of where you're at.");
+                setUserData(prev => ({ ...prev, placementComplete: true }));
+
+                setTimeout(() => {
+                    addAdelineMessage("Perfect! Let me set up your account now...");
+                    setTimeout(() => {
+                        createAccount('student');
+                    }, 1000);
+                }, 2000);
+
+            } else {
+                // Next question
+                addAdelineMessage(data.nextQuestion);
+            }
+
+        } catch (error) {
+            console.error('Error in placement:', error);
+            setError("Sorry, I lost track. Could you say that again?");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const createAccount = async (role: 'student' | 'parent' | 'teacher', grade?: string) => {
@@ -267,12 +367,13 @@ export default function ConversationalLogin() {
                 email: userData.email,
                 password: userData.password,
                 options: {
-                    emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard${role === 'student' ? '?onboarding=true' : ''}`,
+                    emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
                     data: {
                         role: role === 'parent' ? 'student' : role, // Parents use student view
                         display_name: userData.name,
-                        grade_level: grade || null,
-                        state_standards: userData.state || null
+                        grade_level: userData.grade || grade || null,
+                        state_standards: userData.state || null,
+                        city: userData.city || null
                     }
                 }
             });
@@ -280,9 +381,10 @@ export default function ConversationalLogin() {
             if (error) throw error;
 
             if (signupData?.user && signupData?.session) {
+                setStep('complete');
                 addAdelineMessage(`Welcome to Dear Adeline, ${userData.name}! Taking you to your dashboard...`);
                 setTimeout(() => {
-                    if (role === 'student') router.push('/dashboard?onboarding=true');
+                    if (role === 'student') router.push('/dashboard');
                     else if (role === 'teacher') router.push('/dashboard/teacher');
                     else router.push('/dashboard');
                 }, 1500);
@@ -297,7 +399,7 @@ export default function ConversationalLogin() {
     };
 
     const renderInput = () => {
-        if (step === 'greeting' || step === 'creating') {
+        if (step === 'greeting' || step === 'creating' || step === 'complete') {
             return null;
         }
 
@@ -372,7 +474,10 @@ export default function ConversationalLogin() {
                             placeholder={
                                 step === 'email' ? 'your@email.com' :
                                 step === 'password' ? 'Enter password...' :
-                                step === 'name' ? 'Your name...' : 'Type here...'
+                                step === 'name' ? 'Your name...' :
+                                step === 'city' ? 'e.g., Tulsa' :
+                                step === 'placement' ? 'Type your answer...' :
+                                'Type here...'
                             }
                             className="w-full px-4 py-3 bg-[var(--cream)] border-2 border-transparent rounded-xl focus:bg-white focus:border-[var(--forest)] outline-none transition-all"
                             disabled={loading}
