@@ -25,6 +25,8 @@ const US_STATES = [
 
 const GRADES = ['K', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 
+const LOGIN_SESSION_KEY = 'conversational-login-active';
+
 export default function ConversationalLogin() {
     const router = useRouter();
     const [step, setStep] = useState<Step>('greeting');
@@ -36,6 +38,8 @@ export default function ConversationalLogin() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const hasInitialized = useRef(false);
+    const greetingTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const emailPromptTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // User data collected through conversation
     const [userData, setUserData] = useState({
@@ -69,19 +73,31 @@ export default function ConversationalLogin() {
 
     // Initial greeting - only run once even in StrictMode
     useEffect(() => {
-        console.log('[ConversationalLogin] Component mounted', { hasInitialized: hasInitialized.current });
+        console.log('[ConversationalLogin] Component mounted');
 
-        // Prevent double execution in React StrictMode (development)
-        if (hasInitialized.current) {
-            console.log('[ConversationalLogin] Already initialized, skipping greeting');
+        // Check if already in an active login session - prevent duplicate flows
+        const sessionActive = sessionStorage.getItem(LOGIN_SESSION_KEY);
+        if (sessionActive) {
+            console.log('[ConversationalLogin] Session already active, skipping greeting');
+            // Still show greeting if there's no messages, but don't add new ones
+            if (messages.length === 0) {
+                addAdelineMessage("Hi there! I'm Adeline, your learning companion. I'm so excited to meet you!");
+                emailPromptTimerRef.current = setTimeout(() => {
+                    addAdelineMessage("Let's get you set up. What's your email address?");
+                    setStep('email');
+                }, 1500);
+            }
             return;
         }
+
+        // Mark session as active
+        sessionStorage.setItem(LOGIN_SESSION_KEY, 'true');
         hasInitialized.current = true;
 
         const timer1 = setTimeout(() => {
             console.log('[ConversationalLogin] Starting initial greeting');
             addAdelineMessage("Hi there! I'm Adeline, your learning companion. I'm so excited to meet you!");
-            setTimeout(() => {
+            greetingTimerRef.current = setTimeout(() => {
                 addAdelineMessage("Let's get you set up. What's your email address?");
                 setStep('email');
             }, 1500);
@@ -90,8 +106,19 @@ export default function ConversationalLogin() {
         return () => {
             console.log('[ConversationalLogin] Cleanup called');
             clearTimeout(timer1);
+            if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
+            if (emailPromptTimerRef.current) clearTimeout(emailPromptTimerRef.current);
+            // Don't clear session here - let completion handler do it
         };
     }, []);
+
+    // Clear session on completion
+    useEffect(() => {
+        if (step === 'complete') {
+            sessionStorage.removeItem(LOGIN_SESSION_KEY);
+            console.log('[ConversationalLogin] Session cleared - onboarding complete');
+        }
+    }, [step]);
 
     const addAdelineMessage = (content: string) => {
         setMessages(prev => [...prev, { role: 'adeline', content }]);
