@@ -69,11 +69,17 @@ export default function ConversationalLogin() {
 
     // Initial greeting - only run once even in StrictMode
     useEffect(() => {
+        console.log('[ConversationalLogin] Component mounted', { hasInitialized: hasInitialized.current });
+
         // Prevent double execution in React StrictMode (development)
-        if (hasInitialized.current) return;
+        if (hasInitialized.current) {
+            console.log('[ConversationalLogin] Already initialized, skipping greeting');
+            return;
+        }
         hasInitialized.current = true;
 
         const timer1 = setTimeout(() => {
+            console.log('[ConversationalLogin] Starting initial greeting');
             addAdelineMessage("Hi there! I'm Adeline, your learning companion. I'm so excited to meet you!");
             setTimeout(() => {
                 addAdelineMessage("Let's get you set up. What's your email address?");
@@ -81,7 +87,10 @@ export default function ConversationalLogin() {
             }, 1500);
         }, 500);
 
-        return () => clearTimeout(timer1);
+        return () => {
+            console.log('[ConversationalLogin] Cleanup called');
+            clearTimeout(timer1);
+        };
     }, []);
 
     const addAdelineMessage = (content: string) => {
@@ -247,6 +256,8 @@ export default function ConversationalLogin() {
     };
 
     const handleGradeStep = (grade: string) => {
+        console.log('[ConversationalLogin] handleGradeStep called with:', grade);
+
         // Extract grade number/letter
         const gradeMatch = grade.match(/(\d+|k|kindergarten)/i);
         let normalizedGrade = gradeMatch ? gradeMatch[1].toUpperCase() : '';
@@ -259,6 +270,7 @@ export default function ConversationalLogin() {
 
         addUserMessage(`Grade ${normalizedGrade}`);
         setUserData(prev => ({ ...prev, grade: normalizedGrade }));
+        console.log('[ConversationalLogin] Moving to city step');
         addAdelineMessage(`Great! Which city do you live in?`);
         setTimeout(() => {
             addAdelineMessage(`(I use this to find local opportunities and news for you)`);
