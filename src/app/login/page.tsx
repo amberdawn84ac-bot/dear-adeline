@@ -22,18 +22,12 @@ import ConversationalLogin from '@/components/ConversationalLogin';
 export default function LoginPage() {
     const [useConversational, setUseConversational] = useState(true);
 
-    // If using conversational login, render that component
+    // If using conversational login, render that component (REQUIRED for new students)
     if (useConversational) {
         return (
             <div className="relative">
                 <ConversationalLogin />
-                <button
-                    onClick={() => setUseConversational(false)}
-                    className="fixed bottom-4 right-4 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg text-sm text-[var(--charcoal-light)] hover:bg-white transition-all flex items-center gap-2"
-                >
-                    <FormInput className="w-4 h-4" />
-                    Use traditional form
-                </button>
+                {/* Removed traditional form toggle - conversational is required for proper onboarding */}
             </div>
         );
     }
@@ -100,7 +94,7 @@ export default function LoginPage() {
                     email,
                     password,
                     options: {
-                        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard${role === 'student' ? '?onboarding=true' : ''}`,
+                        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
                         data: {
                             role: role
                         }
@@ -110,10 +104,9 @@ export default function LoginPage() {
                 if (error) throw error;
 
                 // If email confirmation is disabled (dev mode), user is immediately logged in
-                // Redirect students directly to onboarding
                 if (signupData?.user && signupData?.session) {
                     if (role === 'student') {
-                        router.push('/dashboard?onboarding=true');
+                        router.push('/dashboard');
                     } else if (role === 'teacher') {
                         router.push('/dashboard/teacher');
                     }
