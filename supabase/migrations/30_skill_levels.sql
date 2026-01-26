@@ -5,7 +5,7 @@
 -- SKILL LEVELS TABLE
 -- ============================================
 create table public.skill_levels (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   student_id uuid references public.profiles(id) on delete cascade not null,
   skill_id uuid references public.skills(id) on delete cascade not null,
   level text check (level in ('not_introduced', 'needs_instruction', 'competent', 'mastered')) default 'not_introduced',

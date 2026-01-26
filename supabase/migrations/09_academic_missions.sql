@@ -3,7 +3,7 @@
 -- with Oklahoma standards alignment and 8 Tracks categorization
 
 CREATE TABLE IF NOT EXISTS academic_missions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT,

@@ -1,5 +1,5 @@
 create table if not exists public.daily_truths (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   topic text not null, -- 'Biblical', 'History', 'Science'
   title text not null,
   content text not null,

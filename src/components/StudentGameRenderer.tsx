@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { CheckCircle2, X, Trophy, RotateCcw, Timer } from 'lucide-react';
 
-interface GameManifest {
+export interface GameManifest {
   gameId: string;
   type: 'matching' | 'sorting' | 'labeling' | 'quiz' | 'memory' | 'path' | 'fill_blank';
   assets: {
@@ -22,7 +22,7 @@ interface GameManifest {
   };
 }
 
-interface GameElement {
+export interface GameElement {
   id: string;
   type: 'text' | 'image' | 'hotspot';
   content: string;
@@ -222,10 +222,10 @@ function MatchingGame({
             onClick={() => handleSelect(item, 'left')}
             disabled={selections.has(item.id)}
             className={`w-full p-4 rounded-lg border-2 text-left transition-all ${selections.has(item.id)
-                ? 'bg-green-100 border-green-400 cursor-default'
-                : selectedLeft === item.id
-                  ? 'bg-blue-100 border-blue-400'
-                  : 'bg-white border-gray-300 hover:border-gray-400'
+              ? 'bg-green-100 border-green-400 cursor-default'
+              : selectedLeft === item.id
+                ? 'bg-blue-100 border-blue-400'
+                : 'bg-white border-gray-300 hover:border-gray-400'
               }`}
           >
             {item.content}
@@ -239,10 +239,10 @@ function MatchingGame({
             onClick={() => handleSelect(item, 'right')}
             disabled={selections.has(item.id)}
             className={`w-full p-4 rounded-lg border-2 text-left transition-all ${selections.has(item.id)
-                ? 'bg-green-100 border-green-400 cursor-default'
-                : selectedRight === item.id
-                  ? 'bg-blue-100 border-blue-400'
-                  : 'bg-white border-gray-300 hover:border-gray-400'
+              ? 'bg-green-100 border-green-400 cursor-default'
+              : selectedRight === item.id
+                ? 'bg-blue-100 border-blue-400'
+                : 'bg-white border-gray-300 hover:border-gray-400'
               }`}
           >
             {item.content}
@@ -349,8 +349,8 @@ function LabelingGame({
             onClick={() => handleClick(element)}
             disabled={selections.has(element.id)}
             className={`absolute w-12 h-12 rounded-full border-4 transition-all ${selections.has(element.id)
-                ? 'bg-green-500 border-green-600 cursor-default'
-                : 'bg-blue-500 border-blue-600 hover:bg-blue-600 animate-pulse'
+              ? 'bg-green-500 border-green-600 cursor-default'
+              : 'bg-blue-500 border-blue-600 hover:bg-blue-600 animate-pulse'
               }`}
             style={{
               left: `${element.position?.x || 0}%`,

@@ -5,7 +5,7 @@
 -- STUDENT GAMES TABLE
 -- ============================================
 create table public.student_games (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   student_id uuid references public.profiles(id) on delete cascade not null,
   title text not null,
   description text,
@@ -24,7 +24,7 @@ create table public.student_games (
 -- GAME PLAY SESSIONS (track learning through gameplay)
 -- ============================================
 create table public.game_sessions (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   game_id uuid references public.student_games(id) on delete cascade not null,
   player_id uuid references public.profiles(id) on delete cascade not null,
   score int,

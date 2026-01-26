@@ -8,10 +8,13 @@ import { persistConversation } from '@/lib/services/persistenceService';
 import { startChat, continueChat } from '@/lib/services/chatService';
 import { autoFormatSketchnote } from '@/lib/sketchnoteUtils';
 import { LibraryService } from '@/lib/services/libraryService';
+import { PhilosophyService } from '@/lib/services/philosophyService';
+import { PDFService } from '@/lib/services/pdfService';
 import { ModelRouter } from '@/lib/services/modelRouter';
 import { AdaptiveDifficultyService } from '@/lib/services/adaptiveDifficultyService';
 import { DailyPlanService } from '@/lib/services/dailyPlanService';
 import { SkillGraphService } from '@/lib/services/skillGraphService';
+import { CitationService } from '@/lib/services/citationService';
 
 const apiKey = process.env.GOOGLE_API_KEY;
 const supabase = createClient(
@@ -100,7 +103,34 @@ export async function POST(req: Request) {
         const similarMemories = await retrieveSimilarMemories(userPrompt, userId, supabase);
         const libraryContext = await LibraryService.search(userPrompt, supabase);
 
+        // Retrieve teaching philosophy (Adeline's soul)
+        const { formatted: philosophyContext } = await PhilosophyService.getPhilosophyForConversation(
+            userPrompt,
+            supabase
+        );
+        console.log(`🌱 Philosophy context loaded: ${philosophyContext ? 'yes' : 'no'}`);
+
+        // Also search unified knowledge base (PDFs, articles, etc.)
+        const knowledgeResults = await PDFService.searchKnowledge(userPrompt, supabase, {
+            threshold: 0.7,
+            maxResults: 5
+        });
+        const knowledgeContext = knowledgeResults ? PDFService.formatForPrompt(knowledgeResults) : '';
+        if (knowledgeContext) {
+            console.log(`📖 Knowledge base: Found ${knowledgeResults?.length || 0} relevant chunks`);
+        }
+
         let systemInstruction = generateSystemPrompt(studentInfo, similarMemories, lastMessage);
+
+        // Inject philosophy FIRST - this is Adeline's core identity
+        if (philosophyContext) {
+            systemInstruction = philosophyContext + '\n' + systemInstruction;
+        }
+
+        // Inject knowledge base context
+        if (knowledgeContext) {
+            systemInstruction += '\n' + knowledgeContext;
+        }
 
         // Inject Investigation Mode context if routed to Grok
         if (route.model === 'grok') {
@@ -447,6 +477,24 @@ FORMATTING RULES:
 
         if (persistError) {
             console.warn('⚠️ Persistence warning:', persistError);
+        }
+
+        // Record citations for parent/teacher visibility (silent, non-blocking)
+        if (knowledgeResults && knowledgeResults.length > 0) {
+            CitationService.recordCitation(
+                userId,
+                {
+                    conversationId: activeConversationId,
+                    subject: subject,
+                    sources: knowledgeResults.map((r: { id: string; source_title?: string; source_type?: string }) => ({
+                        id: r.id,
+                        type: r.source_type || 'knowledge',
+                        title: r.source_title || 'Unknown Source'
+                    })),
+                    queryText: userPrompt.substring(0, 200) // Truncate for privacy
+                },
+                supabase
+            ).catch(err => console.warn('[Citations] Recording failed:', err));
         }
 
         console.log('✅ Chat complete!');

@@ -56,7 +56,15 @@
       "Bash(CI=true npx jest:*)",
       "Bash(./node_modules/.bin/jest:*)",
       "Bash(node node_modules/jest/bin/jest.js:*)",
-      "Bash(git diff:*)"
+      "Bash(git diff:*)",
+      "Bash(pnpm run build:*)",
+      "Bash(source ~/.nvm/nvm.sh)",
+      "Bash(nvm use:*)",
+      "Bash(node --version)",
+      "Bash(export NVM_DIR=\"$HOME/.nvm\")",
+      "Bash([ -s \"$NVM_DIR/nvm.sh\" ])",
+      "Bash(. \"$NVM_DIR/nvm.sh\")",
+      "Bash(npx next lint:*)"
     ]
   }
 }

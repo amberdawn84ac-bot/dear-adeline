@@ -1,5 +1,5 @@
 create table public.opportunities (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   title text not null,
   description text,
   type text not null,

@@ -6,7 +6,7 @@
 -- ============================================
 -- Stores official state standard codes with metadata
 create table public.state_standards (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
 
   -- Standard Identification
   standard_code text not null,           -- e.g., "OK.MATH.8.A.1.3" or "CCSS.MATH.8.NS.A.1"
@@ -40,7 +40,7 @@ create index idx_state_standards_grade on public.state_standards(grade_level);
 -- ============================================
 -- Stores granular sub-skills within each standard
 create table public.learning_components (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
 
   -- Link to parent standard
   standard_id uuid references public.state_standards(id) on delete cascade,
@@ -63,7 +63,7 @@ create index idx_learning_components_standard on public.learning_components(stan
 -- ============================================
 -- Maps Dear Adeline skills to state standards
 create table public.skill_standard_mappings (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
 
   skill_id uuid references public.skills(id) on delete cascade not null,
   standard_id uuid references public.state_standards(id) on delete cascade not null,
@@ -86,7 +86,7 @@ create index idx_skill_standard_mappings_standard on public.skill_standard_mappi
 -- ============================================
 -- Tracks which standards each student has demonstrated
 create table public.student_standards_progress (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
 
   student_id uuid references public.profiles(id) on delete cascade not null,
   standard_id uuid references public.state_standards(id) on delete cascade not null,

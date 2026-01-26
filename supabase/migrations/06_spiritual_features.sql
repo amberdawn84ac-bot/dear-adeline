@@ -1,6 +1,6 @@
 -- Spiritual Growth Journal Tables
 CREATE TABLE IF NOT EXISTS spiritual_journal_entries (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     student_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     title TEXT,
     content TEXT NOT NULL,
@@ -25,7 +25,7 @@ CREATE POLICY "Students can manage own journal entries"
 
 -- Wisdom in Action Tables
 CREATE TABLE IF NOT EXISTS wisdom_scenarios (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     age_group TEXT NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS wisdom_scenarios (
 );
 
 CREATE TABLE IF NOT EXISTS wisdom_responses (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     student_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     scenario_id UUID NOT NULL REFERENCES wisdom_scenarios(id),
     chosen_option INTEGER NOT NULL,

@@ -5,7 +5,7 @@
 -- COMPETENCIES TABLE
 -- ============================================
 create table public.competencies (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   name text not null,
   description text,
   category text not null, -- math, science, writing, practical, etc.
@@ -18,7 +18,7 @@ create table public.competencies (
 -- COMPETENCY-SKILLS MAPPING
 -- ============================================
 create table public.competency_skills_map (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   competency_id uuid references public.competencies(id) on delete cascade not null,
   skill_id uuid references public.skills(id) on delete cascade not null,
   weight decimal(3,2) default 1.0 check (weight >= 0 and weight <= 1), -- How much this skill contributes (0.0-1.0)
@@ -30,7 +30,7 @@ create table public.competency_skills_map (
 -- STUDENT COMPETENCIES
 -- ============================================
 create table public.student_competencies (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   student_id uuid references public.profiles(id) on delete cascade not null,
   competency_id uuid references public.competencies(id) on delete cascade not null,
   status text check (status in ('not_started', 'developing', 'competent', 'advanced')) default 'not_started',

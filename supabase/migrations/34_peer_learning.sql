@@ -5,7 +5,7 @@
 -- LEARNING PODS (Groups for collaboration)
 -- ============================================
 create table public.learning_pods (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   name text not null,
   description text,
   teacher_id uuid references public.profiles(id) on delete set null,
@@ -18,7 +18,7 @@ create table public.learning_pods (
 -- POD MEMBERSHIP
 -- ============================================
 create table public.pod_members (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   pod_id uuid references public.learning_pods(id) on delete cascade not null,
   student_id uuid references public.profiles(id) on delete cascade not null,
   role text check (role in ('member', 'mentor')) default 'member',
@@ -30,7 +30,7 @@ create table public.pod_members (
 -- MENTORSHIP LOGS (Track mentoring hours)
 -- ============================================
 create table public.mentorship_logs (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   mentor_id uuid references public.profiles(id) on delete cascade not null,
   student_id uuid references public.profiles(id) on delete cascade not null,
   pod_id uuid references public.learning_pods(id) on delete set null,
@@ -46,7 +46,7 @@ create table public.mentorship_logs (
 -- PEER REVIEWS
 -- ============================================
 create table public.peer_reviews (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   reviewer_id uuid references public.profiles(id) on delete cascade not null,
   portfolio_item_id uuid references public.portfolio_items(id) on delete cascade not null,
   feedback text not null,

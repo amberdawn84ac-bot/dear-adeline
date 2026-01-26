@@ -1,4 +1,6 @@
 import { sanitizeForPrompt } from '@/lib/sanitize';
+// Philosophy injection is handled in the chat API route, not here
+// See: PhilosophyService.getPhilosophyForConversation() in chat/route.ts
 
 const SYSTEM_PROMPT = `
 === WHO YOU ARE ===
@@ -153,31 +155,31 @@ For every message:
 `;
 
 interface StudentInfo {
-    name?: string;
-    gradeLevel?: string | number;
-    skills?: any[];
-    graduationProgress?: any[];
-    learningGaps?: Array<{
-        skill_area: string;
-        severity: string;
-        suggested_activities: { title: string; description: string }[];
-    }>;
+  name?: string;
+  gradeLevel?: string | number;
+  skills?: any[];
+  graduationProgress?: any[];
+  learningGaps?: Array<{
+    skill_area: string;
+    severity: string;
+    suggested_activities: { title: string; description: string }[];
+  }>;
 }
 
 interface Memory {
-    content: string;
+  content: string;
 }
 
 export const generateSystemPrompt = (
-    studentInfo: StudentInfo | null,
-    similarMemories: Memory[] | null,
-    lastMessage: { content: string }
+  studentInfo: StudentInfo | null,
+  similarMemories: Memory[] | null,
+  lastMessage: { content: string }
 ): string => {
-    let systemPrompt = SYSTEM_PROMPT;
+  let systemPrompt = SYSTEM_PROMPT;
 
-    if (lastMessage?.content?.startsWith('Deep Dive Study:')) {
-        const passage = lastMessage.content.replace('Deep Dive Study:', '').trim();
-        systemPrompt += `
+  if (lastMessage?.content?.startsWith('Deep Dive Study:')) {
+    const passage = lastMessage.content.replace('Deep Dive Study:', '').trim();
+    systemPrompt += `
     ### DEEP DIVE SCRIPTURE RULES
     - Focus ONLY on the following passage: "${passage}".
     - Immediately show the original Hebrew or Greek text.
@@ -188,12 +190,12 @@ export const generateSystemPrompt = (
     - ABSOLUTELY NO theatrical asides like *nods*, *smiles*, *leans in* - these are FORBIDDEN.
     - Write like a real educator, not a roleplay character.
     `;
-    }
+  }
 
-    const grade = studentInfo?.gradeLevel ?? '10';
-    const age = typeof grade === 'number' ? grade : parseInt(grade.toString().replace(/\D/g, '')) || 10;
+  const grade = studentInfo?.gradeLevel ?? '10';
+  const age = typeof grade === 'number' ? grade : parseInt(grade.toString().replace(/\D/g, '')) || 10;
 
-    systemPrompt += `
+  systemPrompt += `
 You are Adeline, a joyful learning guide for CHILDREN.
 
 Student age: ${age}
@@ -254,22 +256,22 @@ Use typography and colors to bring learning to life:
 - Make it look like a storybook, not a boring textbook!
 `;
 
-    let studentContext = '';
-    if (studentInfo) {
-        interface GraduationProgress {
-            track: string;
-            earned: number;
-            required: number;
-        }
-        const saneName = sanitizeForPrompt(studentInfo.name || 'Student');
-        const saneGrade = sanitizeForPrompt(String(studentInfo.gradeLevel) || 'NOT SET');
-        const saneSkills = sanitizeForPrompt(studentInfo.skills?.map((s: any) => s.skill?.name || s).join(', ') || 'NONE');
-        const saneLearningGaps = studentInfo.learningGaps?.map(gap =>
-            `  * ${sanitizeForPrompt(gap.skill_area)} (Severity: ${sanitizeForPrompt(gap.severity)}): ${sanitizeForPrompt(gap.suggested_activities?.map(a => a.title).join(', ') || 'No specific activities suggested yet.')}`
-        ).join('\n') || '  * No identified learning gaps.';
+  let studentContext = '';
+  if (studentInfo) {
+    interface GraduationProgress {
+      track: string;
+      earned: number;
+      required: number;
+    }
+    const saneName = sanitizeForPrompt(studentInfo.name || 'Student');
+    const saneGrade = sanitizeForPrompt(String(studentInfo.gradeLevel) || 'NOT SET');
+    const saneSkills = sanitizeForPrompt(studentInfo.skills?.map((s: any) => s.skill?.name || s).join(', ') || 'NONE');
+    const saneLearningGaps = studentInfo.learningGaps?.map(gap =>
+      `  * ${sanitizeForPrompt(gap.skill_area)} (Severity: ${sanitizeForPrompt(gap.severity)}): ${sanitizeForPrompt(gap.suggested_activities?.map(a => a.title).join(', ') || 'No specific activities suggested yet.')}`
+    ).join('\n') || '  * No identified learning gaps.';
 
 
-        studentContext = `
+    studentContext = `
 Current Student:
 - Name: ${saneName}
 - Grade Level: ${saneGrade}
@@ -280,24 +282,24 @@ ${saneLearningGaps}
 
 💡 PRO - TIP: Adeline, be proactive! If learning gaps are identified, weave in activities or suggestions to address those specific gaps, integrating them into their interests or current projects.
 `;
-    }
+  }
 
-    if (studentContext) {
-        systemPrompt += `\n\n${studentContext}`;
-    }
+  if (studentContext) {
+    systemPrompt += `\n\n${studentContext}`;
+  }
 
-    if (similarMemories && similarMemories.length > 0) {
-        systemPrompt += `\n\n### RECALLED MEMORIES (Use these if relevant):\n` +
-            similarMemories.map((m: any) => `- ${m.content}`).join('\n');
-    }
+  if (similarMemories && similarMemories.length > 0) {
+    systemPrompt += `\n\n### RECALLED MEMORIES (Use these if relevant):\n` +
+      similarMemories.map((m: any) => `- ${m.content}`).join('\n');
+  }
 
-    return systemPrompt;
+  return systemPrompt;
 };
 
 export function generateLessonPrompt(interests: string[], age: number = 10): string {
-    const interestsString = interests.join(', ');
+  const interestsString = interests.join(', ');
 
-    return `
+  return `
     You are Adeline, an expert personalized educator. 
     Create a fun, hands-on lesson plan for a student aged roughly ${age} who is interested in: ${interestsString}.
     

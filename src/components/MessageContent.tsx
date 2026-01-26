@@ -4,7 +4,7 @@ import React from 'react';
 import { Gamepad2, Sparkles, Target } from 'lucide-react';
 import { formatTrack } from '@/types/learning';
 import { GameRenderer } from './GameRenderer';
-import { StudentGameRenderer } from './StudentGameRenderer';
+import { StudentGameRenderer, GameManifest } from './StudentGameRenderer';
 import MermaidDiagram from './MermaidDiagram';
 import StorybookPage from './StorybookPage';
 
@@ -118,13 +118,8 @@ function MessageContentComponent({ content }: MessageContentProps) {
                 'mechanics' in parsedManifest &&
                 'pedagogy' in parsedManifest) {
 
-                const manifest = parsedManifest as {
-                    gameId: string;
-                    type: 'matching' | 'sorting' | 'labeling' | 'quiz' | 'memory' | 'path' | 'fill_blank';
-                    assets: { backgroundImage?: string; elements: Array<Record<string, unknown>> };
-                    mechanics: { winCondition: string; lives?: number; timer?: boolean; timerSeconds?: number };
-                    pedagogy: { skillId?: string; difficulty: 'easy' | 'medium' | 'hard' };
-                };
+                // Cast to GameManifest - the type guard above ensures the structure is valid
+                const manifest = parsedManifest as unknown as GameManifest;
 
                 const beforeGame = content.substring(0, studentGameMatch.index);
                 const afterGame = content.substring((studentGameMatch.index || 0) + studentGameMatch[0].length);

@@ -2,7 +2,7 @@
 -- Stores AI-generated lessons tailored to student interests
 
 CREATE TABLE IF NOT EXISTS personalized_lessons (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   
   -- Lesson Content

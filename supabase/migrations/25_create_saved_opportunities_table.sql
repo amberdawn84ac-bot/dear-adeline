@@ -1,5 +1,5 @@
 create table public.saved_opportunities (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   user_id uuid references public.profiles(id) on delete cascade not null,
   opportunity_id uuid references public.opportunities(id) on delete cascade not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,

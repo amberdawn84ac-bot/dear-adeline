@@ -25,7 +25,26 @@ const US_STATES = [
 
 const GRADES = ['K', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 
-const LOGIN_SESSION_KEY = 'conversational-login-active';
+// Keys for session storage - store full state to survive remounts
+const LOGIN_STATE_KEY = 'adeline-login-state';
+
+interface PersistedLoginState {
+    step: Step;
+    messages: Message[];
+    userData: {
+        email: string;
+        password: string;
+        name: string;
+        state: string;
+        city: string;
+        role: 'student' | 'parent' | 'teacher' | '';
+        grade: string;
+        isReturning: boolean;
+        existingName: string;
+        assessmentId: string | null;
+        placementComplete: boolean;
+    };
+}
 
 export default function ConversationalLogin() {
     const router = useRouter();
@@ -37,9 +56,7 @@ export default function ConversationalLogin() {
     const [error, setError] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-    const hasInitialized = useRef(false);
     const greetingTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const emailPromptTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // User data collected through conversation
     const [userData, setUserData] = useState({
@@ -71,35 +88,58 @@ export default function ConversationalLogin() {
         }
     }, [step]);
 
+    // Initialization tracking - foolproof against StrictMode double-mount
+    const initStateRef = useRef<'idle' | 'initializing' | 'ready'>('idle');
+
+    // Persist state to sessionStorage whenever it changes (after initialization)
+    useEffect(() => {
+        if (initStateRef.current !== 'ready') return;
+        if (step === 'greeting' || step === 'complete') return;
+
+        const stateToSave: PersistedLoginState = {
+            step,
+            messages,
+            userData
+        };
+        sessionStorage.setItem(LOGIN_STATE_KEY, JSON.stringify(stateToSave));
+        console.log('[ConversationalLogin] State persisted:', step);
+    }, [step, messages, userData]);
+
     // Initial greeting - only run once even in StrictMode
     useEffect(() => {
-        console.log('[ConversationalLogin] Component mounted');
-
-        // Check if already in an active login session - prevent duplicate flows
-        const sessionActive = sessionStorage.getItem(LOGIN_SESSION_KEY);
-        if (sessionActive) {
-            console.log('[ConversationalLogin] Session already active, skipping greeting');
-            // Still show greeting if there's no messages, but don't add new ones
-            if (messages.length === 0) {
-                addAdelineMessage("Hi there! I'm Adeline, your learning companion. I'm so excited to meet you!");
-                emailPromptTimerRef.current = setTimeout(() => {
-                    addAdelineMessage("Let's get you set up. What's your email address?");
-                    setStep('email');
-                }, 1500);
-            }
+        // Prevent double initialization
+        if (initStateRef.current !== 'idle') {
+            console.log('[ConversationalLogin] Already initialized, skipping');
             return;
         }
+        initStateRef.current = 'initializing';
+        console.log('[ConversationalLogin] Component mounted, checking for saved state');
 
-        // Mark session as active
-        sessionStorage.setItem(LOGIN_SESSION_KEY, 'true');
-        hasInitialized.current = true;
+        // Try to restore saved state first
+        const savedState = sessionStorage.getItem(LOGIN_STATE_KEY);
+        if (savedState) {
+            try {
+                const parsed: PersistedLoginState = JSON.parse(savedState);
+                console.log('[ConversationalLogin] Restoring saved state:', parsed.step);
+                setStep(parsed.step);
+                setMessages(parsed.messages);
+                setUserData(parsed.userData);
+                initStateRef.current = 'ready';
+                return;
+            } catch (e) {
+                console.error('[ConversationalLogin] Failed to parse saved state:', e);
+                sessionStorage.removeItem(LOGIN_STATE_KEY);
+            }
+        }
 
+        // Fresh start - add greeting messages
+        console.log('[ConversationalLogin] Starting fresh conversation');
         const timer1 = setTimeout(() => {
-            console.log('[ConversationalLogin] Starting initial greeting');
             addAdelineMessage("Hi there! I'm Adeline, your learning companion. I'm so excited to meet you!");
             greetingTimerRef.current = setTimeout(() => {
                 addAdelineMessage("Let's get you set up. What's your email address?");
                 setStep('email');
+                initStateRef.current = 'ready';
             }, 1500);
         }, 500);
 
@@ -107,15 +147,13 @@ export default function ConversationalLogin() {
             console.log('[ConversationalLogin] Cleanup called');
             clearTimeout(timer1);
             if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
-            if (emailPromptTimerRef.current) clearTimeout(emailPromptTimerRef.current);
-            // Don't clear session here - let completion handler do it
         };
     }, []);
 
     // Clear session on completion
     useEffect(() => {
         if (step === 'complete') {
-            sessionStorage.removeItem(LOGIN_SESSION_KEY);
+            sessionStorage.removeItem(LOGIN_STATE_KEY);
             console.log('[ConversationalLogin] Session cleared - onboarding complete');
         }
     }, [step]);
@@ -408,13 +446,16 @@ export default function ConversationalLogin() {
         const supabase = createClient();
 
         try {
+            // Parents should have 'teacher' role to access parent/teacher dashboard
+            const dbRole = role === 'parent' ? 'teacher' : role;
+
             const { data: signupData, error } = await supabase.auth.signUp({
                 email: userData.email,
                 password: userData.password,
                 options: {
                     emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
                     data: {
-                        role: role === 'parent' ? 'student' : role, // Parents use student view
+                        role: dbRole,
                         display_name: userData.name,
                         grade_level: userData.grade || grade || null,
                         state_standards: userData.state || null,
@@ -429,9 +470,9 @@ export default function ConversationalLogin() {
                 setStep('complete');
                 addAdelineMessage(`Welcome to Dear Adeline, ${userData.name}! Taking you to your dashboard...`);
                 setTimeout(() => {
-                    if (role === 'student') router.push('/dashboard');
-                    else if (role === 'teacher') router.push('/dashboard/teacher');
-                    else router.push('/dashboard');
+                    // Students go to main dashboard, teachers/parents go to teacher dashboard
+                    if (dbRole === 'student') router.push('/dashboard');
+                    else router.push('/dashboard/teacher');
                 }, 1500);
             } else {
                 addAdelineMessage("Almost there! Check your email for a confirmation link, then come back to start learning!");
@@ -518,11 +559,11 @@ export default function ConversationalLogin() {
                             onChange={(e) => setInput(e.target.value)}
                             placeholder={
                                 step === 'email' ? 'your@email.com' :
-                                step === 'password' ? 'Enter password...' :
-                                step === 'name' ? 'Your name...' :
-                                step === 'city' ? 'e.g., Tulsa' :
-                                step === 'placement' ? 'Type your answer...' :
-                                'Type here...'
+                                    step === 'password' ? 'Enter password...' :
+                                        step === 'name' ? 'Your name...' :
+                                            step === 'city' ? 'e.g., Tulsa' :
+                                                step === 'placement' ? 'Type your answer...' :
+                                                    'Type here...'
                             }
                             className="w-full px-4 py-3 bg-[var(--cream)] border-2 border-transparent rounded-xl focus:bg-white focus:border-[var(--forest)] outline-none transition-all"
                             disabled={loading}
@@ -574,11 +615,10 @@ export default function ConversationalLogin() {
                                 key={i}
                                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                             >
-                                <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                                    msg.role === 'user'
-                                        ? 'bg-[var(--forest)] text-white rounded-br-none'
-                                        : 'bg-white text-[var(--charcoal)] shadow-sm border border-[var(--cream-dark)] rounded-bl-none'
-                                }`}>
+                                <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${msg.role === 'user'
+                                    ? 'bg-[var(--forest)] text-white rounded-br-none'
+                                    : 'bg-white text-[var(--charcoal)] shadow-sm border border-[var(--cream-dark)] rounded-bl-none'
+                                    }`}>
                                     {msg.role === 'adeline' && (
                                         <div className="flex items-center gap-2 mb-1">
                                             <Sparkles className="w-3 h-3 text-[var(--sage)]" />

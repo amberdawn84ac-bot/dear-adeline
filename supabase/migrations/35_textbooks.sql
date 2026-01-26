@@ -5,7 +5,7 @@
 
 -- History Events Table
 CREATE TABLE IF NOT EXISTS public.textbook_events (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     date_display TEXT NOT NULL,
     era TEXT NOT NULL CHECK (era IN ('creation', 'ancient', 'classical', 'medieval', 'reformation', 'modern', 'current')),
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS public.textbook_events (
 
 -- Science Concepts Table
 CREATE TABLE IF NOT EXISTS public.textbook_concepts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     branch TEXT NOT NULL,
     prerequisite_ids UUID[] DEFAULT '{}',
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS public.textbook_concepts (
 
 -- Student Progress Table
 CREATE TABLE IF NOT EXISTS public.student_textbook_progress (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     student_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
     item_id UUID NOT NULL,
     item_type TEXT NOT NULL CHECK (item_type IN ('event', 'concept')),
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS public.student_textbook_progress (
 
 -- Student Suggestions Table (for kids to suggest new content)
 CREATE TABLE IF NOT EXISTS public.textbook_suggestions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     student_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
     suggestion_type TEXT NOT NULL CHECK (suggestion_type IN ('event', 'concept')),
     title TEXT NOT NULL,

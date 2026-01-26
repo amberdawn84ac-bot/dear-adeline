@@ -1,7 +1,7 @@
 -- Student Opportunities: Tracks student's saved/applied opportunities
 
 CREATE TABLE IF NOT EXISTS student_opportunities (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     student_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
     opportunity_id UUID REFERENCES opportunities(id) ON DELETE CASCADE NOT NULL,
     

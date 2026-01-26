@@ -2,7 +2,7 @@
 -- Stores diagnostic assessments and results for tracking student progress
 
 CREATE TABLE IF NOT EXISTS diagnostic_results (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   
   -- Assessment Data
