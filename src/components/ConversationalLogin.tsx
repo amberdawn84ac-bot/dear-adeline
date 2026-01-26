@@ -10,7 +10,7 @@ interface Message {
     content: string;
 }
 
-type Step = 'greeting' | 'email' | 'password' | 'name' | 'role' | 'confirm_signup' | 'complete';
+type Step = 'greeting' | 'email' | 'password' | 'name' | 'role' | 'confirm_signup' | 'complete' | 'signup_password';
 
 export default function ConversationalLogin() {
     const router = useRouter();
@@ -101,45 +101,79 @@ export default function ConversationalLogin() {
                     return;
                 }
                 setEmail(value);
-                addAdelineMessage("Perfect! And what's your password?");
-                setStep('password');
+
+                // New logic: Check if email exists
+                setLoading(true);
+                try {
+                    const res = await fetch('/api/auth/check-email', {
+                        method: 'POST',
+                        body: JSON.stringify({ email: value })
+                    });
+                    const data = await res.json();
+
+                    if (data.exists) {
+                        // User exists -> Ask password
+                        addAdelineMessage(`Welcome back, ${data.displayName || 'friend'}! What's your password?`);
+                        setStep('password');
+                    } else {
+                        // New user -> Ask role directly
+                        addAdelineMessage("I don't see an account for that email yet. Are you a Student or a Teacher/Parent?");
+                        setStep('role');
+                    }
+                } catch (err) {
+                    // Fallback if check fails
+                    addAdelineMessage("Thanks! And what's your password?");
+                    setStep('password');
+                } finally {
+                    setLoading(false);
+                }
                 break;
 
             case 'password':
                 setPassword(value);
-                // improvements: check if password is strong enough only if signing up? 
-                // For now, let's try to login first.
+                // If we are at the 'password' step, it means the email check determined an existing user.
+                // So, we attempt to log them in.
                 await attemptLogin(email, value);
                 break;
 
             case 'name':
                 setName(value);
-                addAdelineMessage(`Nice to meet you, ${value}! Are you a student or a teacher?`);
-                setStep('role');
+                // Now we have everything for signup (email, password, role, name)
+                completeSignup(role, value);
                 break;
 
             case 'role':
                 const lowerVal = value.toLowerCase();
-                if (lowerVal.includes('teacher')) {
-                    setRole('teacher');
-                    completeSignup('teacher', name);
-                } else if (lowerVal.includes('student')) {
-                    setRole('student');
-                    completeSignup('student', name);
+                let selectedRole: 'student' | 'teacher' | null = null;
+
+                if (lowerVal.includes('teacher') || lowerVal.includes('parent')) selectedRole = 'teacher';
+                else if (lowerVal.includes('student')) selectedRole = 'student';
+
+                if (selectedRole) {
+                    setRole(selectedRole);
+                    addAdelineMessage("Got it! Now, let's pick a secret password for your account.");
+                    setStep('signup_password'); // Distinction for signup password
                 } else {
-                    addAdelineMessage("I didn't catch that. Please type 'student' or 'teacher'.");
+                    addAdelineMessage("I didn't quite catch that. Are you a Student or a Teacher/Parent?");
                 }
                 break;
 
+            case 'signup_password':
+                setPassword(value);
+                addAdelineMessage("Secret safe with me! Finally, what should I call you?");
+                setStep('name');
+                break;
+
             case 'confirm_signup':
+                // This path is now deprecated with the new email check flow.
+                // However, if somehow reached, we'll guide them to the new flow.
                 if (value.toLowerCase().startsWith('y')) {
-                    addAdelineMessage("Wonderful! What should I call you?");
-                    setStep('name');
+                    addAdelineMessage("Wonderful! Are you a Student or a Teacher/Parent?");
+                    setStep('role');
                 } else {
-                    addAdelineMessage("Okay, no problem. Let's start over. What's your email address?");
+                    addAdelineMessage("Okay. What's your email address?");
                     setStep('email');
                     setEmail('');
-                    setPassword('');
                 }
                 break;
         }
@@ -153,22 +187,14 @@ export default function ConversationalLogin() {
             });
 
             if (error) {
-                // Failed login - assume might be new user or wrong password
-                // But to be helpful/conversational, let's ask if they want to create account
-                // if it looks like "Invalid login credentials", it could be either.
-
-                if (error.message.includes('Invalid login')) {
-                    addAdelineMessage("I couldn't find an account with that password. Are you new here? (Yes/No)");
-                    setStep('confirm_signup');
-                } else {
-                    addAdelineMessage(`I encountered an error: ${error.message}. Let's try your email again.`);
-                    setStep('email');
-                }
+                // Failed login - now we know the email exists, so it's a password issue.
+                addAdelineMessage("That password didn't seem to work. Do you want to try again or reset it?");
+                // For now, just allow retry. Could add a "reset password" flow here.
                 return;
             }
 
             if (data.user) {
-                addAdelineMessage("Welcome back! Taking you to your dashboard...");
+                addAdelineMessage("Perfect! Taking you to your dashboard...");
                 setStep('complete');
 
                 // Check role
@@ -239,8 +265,8 @@ export default function ConversationalLogin() {
                 {messages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[85%] rounded-2xl px-6 py-4 shadow-sm text-lg ${msg.role === 'user'
-                                ? 'bg-[var(--forest)] text-white rounded-br-none'
-                                : 'bg-white text-[var(--charcoal)] border border-[var(--cream-dark)] rounded-bl-none'
+                            ? 'bg-[var(--forest)] text-white rounded-br-none'
+                            : 'bg-white text-[var(--charcoal)] border border-[var(--cream-dark)] rounded-bl-none'
                             }`}>
                             {msg.role === 'adeline' && (
                                 <div className="flex items-center gap-2 mb-2 opacity-50">

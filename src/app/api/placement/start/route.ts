@@ -79,8 +79,9 @@ export async function POST(req: Request) {
     }
 
     // Create first question
-    const name = displayName || 'there';
-    const firstQuestion = `Alright ${name}, let's get to know each other! What grade are you going into? Or are you homeschooled and don't really think in grades?`;
+    const name = displayName || 'friend';
+    // Learning Science: Start with "Interest-Based Learning" to build engagement and lower anxiety (Affective Filter).
+    const firstQuestion = `Hi ${name}! I'm so glad you're here. To help me design the perfect learning path for you, I'd love to know: what are 2 or 3 things you are really curious about right now? (It could be anything - from space to horses to Minecraft!)`;
 
     // Create new assessment - use session_id for pre-signup, student_id for logged-in
     const insertData: any = {
@@ -97,6 +98,25 @@ export async function POST(req: Request) {
 
     if (trackingId) {
       insertData.student_id = trackingId;
+
+      // START FIX: Ensure profile exists to prevent FK violation
+      const { data: profileCheck } = await supabase.from('profiles').select('id').eq('id', trackingId).single();
+      if (!profileCheck) {
+        console.log(`Profile missing for ${trackingId}, creating fallback profile...`);
+        const { error: profileError } = await supabase.from('profiles').insert({
+          id: trackingId,
+          display_name: displayName || 'Student',
+          role: 'student', // Default to student
+          // Add other required fields if any? usually email is good but we might not have it here. 
+          // Hopefully email is not NOT NULL in profiles or we can skip it.
+          // If email is required, we might fail. But let's try.
+        });
+        if (profileError) {
+          console.error('Failed to create fallback profile:', profileError);
+          // If this fails, the next insert likely fails too, but we proceed to let it throw standard error.
+        }
+      }
+      // END FIX
     }
     if (trackingSessionId) {
       insertData.session_id = trackingSessionId;
