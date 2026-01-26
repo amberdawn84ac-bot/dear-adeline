@@ -438,6 +438,53 @@ export const handleToolCalls = async (
                     }
                 });
             }
+        } else if (call.name === 'create_project') {
+            const args = call.args as any;
+            console.log(`[Adeline Projects]: Creating project "${args.title}" in journal...`);
+
+            try {
+                const { data: entry, error } = await supabase
+                    .from('spiritual_journal_entries')
+                    .insert({
+                        student_id: userId,
+                        title: `Project: ${args.title}`,
+                        content: `${args.description}\n\n${args.manifest}`,
+                        tags: [...(args.tags || []), 'project', 'plan'],
+                        mood: 'excited' // Default mood for starting a project
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                toolParts.push({
+                    functionResponse: {
+                        name: 'create_project',
+                        response: {
+                            name: 'create_project',
+                            content: {
+                                status: 'project created',
+                                entryId: entry.id,
+                                message: `I've saved the plan for "${args.title}" in your journal!`
+                            }
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error("Project Creation Error:", e);
+                toolParts.push({
+                    functionResponse: {
+                        name: 'create_project',
+                        response: {
+                            name: 'create_project',
+                            content: {
+                                status: 'failed to create project',
+                                error: String(e)
+                            }
+                        }
+                    }
+                });
+            }
         } else if (call.name === 'share_sketchnote') {
             const args = call.args as { topic: string; subject?: string; addToJournal?: string };
             console.log(`[Adeline Sketchnotes]: Searching for "${args.topic}"...`);

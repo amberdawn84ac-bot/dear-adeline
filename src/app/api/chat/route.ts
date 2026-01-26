@@ -134,13 +134,32 @@ export async function POST(req: Request) {
 
         // Inject Investigation Mode context if routed to Grok
         if (route.model === 'grok') {
-            systemInstruction += `\n\n=== INVESTIGATION MODE ===
-\nINVESTIGATION PROTOCOL:
-- Follow the money. Question everything. Expose conflicts of interest.
-- Question mainstream narratives - look for corporate funding and influence.
-- Be direct and unfiltered. Real truth over polite consensus.
+            systemInstruction += `\n\n=== INVESTIGATION MODE (CRITICAL PEDAGOGY) ===
+\nPROTOCOL (Inquiry-Based Learning):
+1. QUESTION AUTHORITY: "Who funded this study?" "Who benefits from this narrative?"
+2. FOLLOW THE MONEY: Reveal corporate influences on policy and science.
+3. HISTORICAL CONTEXT: Connect modern events to historical precedents (e.g. Rockefeller medicine).
+4. SOCRATIC METHOD: Don't just give answers. Ask: "Why do you think they would say that?"
+5. BE DIRECT: Prioritize hard truths over polite consensus.
+
+STYLE: Investigative journalist meets critical theorist.
 `;
             console.log('🕵️ Injected Investigation Mode prompt');
+        }
+
+        // Inject Deep Research context if routed to GPT-4
+        if (route.model === 'gpt4') {
+            systemInstruction += `\n\n=== DEEP RESEARCH MODE (ACADEMIC ANALYSIS) ===
+\nPROTOCOL (Bloom's Taxonomy - Analysis & Evaluation):
+1. MULTI-PERSPECTIVE ANALYSIS: Examine the topic from economic, historical, and scientific angles.
+2. SYSTEMATIC REVIEW: Synthesize information like a literature review.
+3. SCAFFOLDING: Break down complex concepts into constituent parts.
+4. CITATION-HEAVY: Refer to specific historical events, documents, or logic chains.
+5. STRUCTURED OUTPUT: Use clear headings, bullet points, and logical flow.
+
+STYLE: Academic researcher meets patient mentor.
+`;
+            console.log('🧠 Injected Deep Research Mode prompt');
         }
 
         // Inject library context (truth documents) if found
@@ -178,6 +197,50 @@ Track progress by using the log_activity tool with relevant skills after the stu
             } catch (e) {
                 console.warn('Could not fetch standards for chat context:', e);
             }
+        }
+
+        // Inject learning path context for personalized, interest-driven teaching
+        try {
+            const { LearningPathService } = await import('@/lib/services/learningPathService');
+            const learningPath = await LearningPathService.getPath(userId, supabase);
+
+            if (learningPath && learningPath.interests.length > 0) {
+                // Get next focus suggestion
+                const nextFocus = await LearningPathService.suggestNextFocus(userId, supabase);
+                const summary = await LearningPathService.getPathSummary(userId, supabase);
+
+                // Get interest-specific teaching approaches
+                const interestMappings = await LearningPathService.getInterestMappings(
+                    learningPath.interests,
+                    supabase
+                );
+
+                systemInstruction += `\n\n=== PERSONALIZED LEARNING PATH ===
+
+Student Interests: ${learningPath.interests.join(', ')}
+Current Focus: ${learningPath.currentFocusArea || 'Not yet set'}
+Progress: ${summary?.completed || 0}/${summary?.totalStandards || 0} standards (${summary?.percentComplete || 0}%)
+Learning Pace: ${learningPath.pace}
+
+TEACHING APPROACHES FOR THIS STUDENT'S INTERESTS:
+${interestMappings.map(m => `- ${m.interest.toUpperCase()} → ${m.subject}: ${m.approachDescription}
+  Example: ${m.exampleActivity}`).join('\n')}
+
+${nextFocus ? `NEXT PRIORITY: ${nextFocus.standardCode} (${nextFocus.subject})
+"${nextFocus.statementText}"
+Suggested approach: ${nextFocus.suggestedApproach}
+${nextFocus.interestConnection ? `Connect to: ${nextFocus.interestConnection}` : ''}` : ''}
+
+ADAPTATION TRIGGERS - Call update_learning_path when:
+1. Student mentions a NEW interest ("I love cooking" → add to interests)
+2. Student CHOOSES between options you offer (record their preference)
+3. You learn NEW INFO about them (learning style, pace preference)
+4. Student explicitly requests to focus on something specific
+`;
+                console.log(`🎯 Injected learning path context (${learningPath.interests.length} interests)`);
+            }
+        } catch (e) {
+            console.warn('Could not fetch learning path for chat context:', e);
         }
 
         // Check for skill prerequisites and inject gap warnings
@@ -378,6 +441,51 @@ FORMATTING RULES:
                             addToJournal: { type: SchemaType.STRING, description: "Whether to add to student's journal (true/false)" }
                         },
                         required: ["topic"]
+                    }
+                },
+                {
+                    name: "update_learning_path",
+                    description: "Update the student's learning path adaptation. Call this when: 1) Student expresses a new interest, 2) Student makes a choice between options you offered, 3) You learn new info about them (pace, style), 4) Milestone is completed.",
+                    parameters: {
+                        type: SchemaType.OBJECT,
+                        properties: {
+                            action: {
+                                type: SchemaType.STRING,
+                                enum: ["add_interests", "complete_milestone", "record_choice", "new_info"],
+                                description: "Type of update to perform"
+                            },
+                            interests: {
+                                type: SchemaType.ARRAY,
+                                items: { type: SchemaType.STRING },
+                                description: "List of new interests to add (for add_interests action)"
+                            },
+                            milestone_id: { type: SchemaType.STRING, description: "ID of completed milestone (for complete_milestone action)" },
+                            engagement_score: { type: SchemaType.NUMBER, description: "1-10 score of engagement (for complete_milestone)" },
+                            choice: { type: SchemaType.STRING, description: "The choice the student made (for record_choice)" },
+                            new_info: { type: SchemaType.STRING, description: "The new information learned (for new_info)" }
+                        },
+                        required: ["action"]
+                    }
+                },
+                {
+                    name: "create_project",
+                    description: "Create a new learning project in the student's journal. Use this when the student wants to start a big activity (e.g. 'Build a Garden'). Co-design the project first, then save the full plan here.",
+                    parameters: {
+                        type: SchemaType.OBJECT,
+                        properties: {
+                            title: { type: SchemaType.STRING, description: "Title of the project (e.g. 'Vegetable Garden')" },
+                            description: { type: SchemaType.STRING, description: "Brief description of the goal" },
+                            manifest: {
+                                type: SchemaType.STRING,
+                                description: "Markdown-formatted project plan including: Materials, Step-by-Step Instructions, Learning Goals, and Standards."
+                            },
+                            tags: {
+                                type: SchemaType.ARRAY,
+                                items: { type: SchemaType.STRING },
+                                description: "Tags for the project. MUST include 'project' and 'active'."
+                            }
+                        },
+                        required: ["title", "description", "manifest"]
                     }
                 }
             ]

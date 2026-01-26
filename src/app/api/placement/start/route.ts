@@ -8,23 +8,34 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { userId } = await req.json();
+    const { userId, sessionId, displayName, grade, state } = await req.json();
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID required' }, { status: 400 });
+    // Support both userId (logged-in users) and sessionId (pre-signup users)
+    const trackingId = userId && userId !== 'temp' ? userId : null;
+    const trackingSessionId = sessionId || null;
+
+    if (!trackingId && !trackingSessionId) {
+      return NextResponse.json({ error: 'User ID or Session ID required' }, { status: 400 });
     }
 
-    // Check if student already has a completed assessment
-    const { data: existingAssessment } = await supabase
+    // Build query based on what we have
+    let existingQuery = supabase
       .from('placement_assessments')
-      .select('id, status, completed_at')
-      .eq('student_id', userId)
+      .select('id, status, completed_at, current_subject, responses');
+
+    if (trackingId) {
+      existingQuery = existingQuery.eq('student_id', trackingId);
+    } else if (trackingSessionId) {
+      existingQuery = existingQuery.eq('session_id', trackingSessionId);
+    }
+
+    // Check if there's an existing completed assessment (within 30 days)
+    const { data: existingAssessment } = await existingQuery
       .eq('status', 'completed')
       .order('completed_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    // If they have a recent completed assessment (within 30 days), return it
     if (existingAssessment) {
       const completedDate = new Date(existingAssessment.completed_at);
       const daysSince = (Date.now() - completedDate.getTime()) / (1000 * 60 * 60 * 24);
@@ -39,14 +50,21 @@ export async function POST(req: Request) {
     }
 
     // Check for in-progress assessment
-    const { data: inProgressAssessment } = await supabase
+    let inProgressQuery = supabase
       .from('placement_assessments')
-      .select('id, current_subject, responses')
-      .eq('student_id', userId)
+      .select('id, current_subject, responses');
+
+    if (trackingId) {
+      inProgressQuery = inProgressQuery.eq('student_id', trackingId);
+    } else if (trackingSessionId) {
+      inProgressQuery = inProgressQuery.eq('session_id', trackingSessionId);
+    }
+
+    const { data: inProgressAssessment } = await inProgressQuery
       .eq('status', 'in_progress')
       .order('started_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (inProgressAssessment) {
       // Resume existing assessment
@@ -60,37 +78,39 @@ export async function POST(req: Request) {
       });
     }
 
-    // Get student info for personalized greeting
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', userId)
-      .single();
+    // Create first question
+    const name = displayName || 'there';
+    const firstQuestion = `Alright ${name}, let's get to know each other! What grade are you going into? Or are you homeschooled and don't really think in grades?`;
 
-    const displayName = profile?.display_name || 'there';
-    const firstQuestion = `Hi ${displayName}! I'm Adeline. Before we dive into anything, I want to get to know you a little.\n\nWhat grade are you going into? Or are you homeschooled and don't really think in grades?`;
+    // Create new assessment - use session_id for pre-signup, student_id for logged-in
+    const insertData: any = {
+      current_subject: 'introduction',
+      status: 'in_progress',
+      responses: {
+        "0": {
+          question: firstQuestion,
+          answer: null,
+          timestamp: new Date().toISOString()
+        }
+      }
+    };
 
-    // Create new assessment
+    if (trackingId) {
+      insertData.student_id = trackingId;
+    }
+    if (trackingSessionId) {
+      insertData.session_id = trackingSessionId;
+    }
+
     const { data: newAssessment, error } = await supabase
       .from('placement_assessments')
-      .insert({
-        student_id: userId,
-        current_subject: 'introduction',
-        status: 'in_progress',
-        responses: {
-          "0": {
-            question: firstQuestion,
-            answer: null,
-            timestamp: new Date().toISOString()
-          }
-        }
-      })
+      .insert(insertData)
       .select()
       .single();
 
     if (error) {
       console.error('Error creating placement assessment:', error);
-      return NextResponse.json({ error: 'Failed to create assessment' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to create assessment', details: error.message }, { status: 500 });
     }
 
     return NextResponse.json({

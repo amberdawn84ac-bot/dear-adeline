@@ -376,13 +376,20 @@ export default function ConversationalLogin() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userId: 'temp', // Account not created yet
+                    sessionId: userData.email, // Use email as session ID for pre-signup tracking
+                    displayName: userData.name,
                     grade: userData.grade,
                     state: userData.state
                 })
             });
 
             const data = await response.json();
+
+            if (data.error) {
+                console.error('Placement API error:', data.error, data.details);
+                throw new Error(data.error);
+            }
+
             setUserData(prev => ({ ...prev, assessmentId: data.assessmentId }));
 
             // First assessment question appears as Adeline message

@@ -15,7 +15,8 @@ describe('Server Config', () => {
 
   it('should throw an error if GOOGLE_AI_API_KEY is not set', () => {
     delete process.env.GOOGLE_AI_API_KEY;
-    expect(() => getGoogleAIAPIKey()).toThrow('Missing GOOGLE_AI_API_KEY environment variable');
+    delete process.env.GOOGLE_API_KEY; // Ensure both are gone
+    expect(() => getGoogleAIAPIKey()).toThrow(/Missing GOOGLE_AI_API_KEY or GOOGLE_API_KEY environment variable/);
   });
 
   it('should return the API key if it is set', () => {

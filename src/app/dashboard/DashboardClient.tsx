@@ -42,6 +42,7 @@ import {
     ArrowRight,
     BarChart3,
     Camera,
+    Map,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -310,7 +311,7 @@ export default function DashboardClient({
         }
     };
 
-const handleSendMessage = async (textOverride?: string, imageData?: string) => {
+    const handleSendMessage = async (textOverride?: string, imageData?: string) => {
         const messageText = textOverride || input.trim();
         if ((!messageText && !imageData) || isTyping) return;
 
@@ -460,17 +461,17 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                                 <select
                                     id="student-select"
                                     value={selectedStudent?.id || ''}
-                             onChange={(e) => {
-  const newStudentId = e.target.value;
+                                    onChange={(e) => {
+                                        const newStudentId = e.target.value;
 
-  if (!newStudentId) {
-    router.push('/dashboard');
-  } else {
-    router.push(`/dashboard?studentId=${newStudentId}`);
-  }
+                                        if (!newStudentId) {
+                                            router.push('/dashboard');
+                                        } else {
+                                            router.push(`/dashboard?studentId=${newStudentId}`);
+                                        }
 
-  router.refresh();
-}}
+                                        router.refresh();
+                                    }}
                                     className="w-full p-2 text-sm border border-gray-300 rounded-lg bg-white"
                                 >
                                     {students.map((s) => (
@@ -483,7 +484,7 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                         )}
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--dusty-rose)] to-[var(--terracotta)] flex items-center justify-center text-white font-semibold shadow-sm">
-{(selectedStudent?.display_name ?? profile?.display_name)?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "?"}
+                                {(selectedStudent?.display_name ?? profile?.display_name)?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "?"}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="font-medium truncate">{selectedStudent?.display_name ?? profile?.display_name ?? 'Student'}</p>
@@ -544,6 +545,10 @@ const handleSendMessage = async (textOverride?: string, imageData?: string) => {
                         <Link href="/careers" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/careers' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
                             <Rocket className="w-4 h-4" />
                             <span className="text-sm">Career Discovery</span>
+                        </Link>
+                        <Link href="/learning-path" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/learning-path' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
+                            <Map className="w-4 h-4" />
+                            <span className="text-sm">Learning Path</span>
                         </Link>
                         <Link href="/tracker" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/tracker' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
                             <GraduationCap className="w-4 h-4" />

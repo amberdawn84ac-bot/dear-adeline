@@ -41,13 +41,17 @@ export default function JournalClient() {
     const [mood, setMood] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
+    const [filter, setFilter] = useState<'all' | 'projects'>('all');
+
     useEffect(() => {
         loadEntries();
-    }, []);
+    }, [filter]);
 
     const loadEntries = async () => {
         try {
-            const response = await fetch('/api/journal/list');
+            setLoading(true);
+            const query = filter === 'projects' ? '?tag=project' : '';
+            const response = await fetch(`/api/journal/list${query}`);
             const data = await response.json();
             setEntries(data.entries || []);
         } catch (error) {
@@ -139,8 +143,8 @@ export default function JournalClient() {
                                         key={key}
                                         onClick={() => setMood(mood === key ? null : key)}
                                         className={`p-3 rounded-xl transition-all ${mood === key
-                                                ? `${bg} ${color} scale-110`
-                                                : 'bg-[var(--cream)] text-[var(--charcoal-light)] hover:scale-105'
+                                            ? `${bg} ${color} scale-110`
+                                            : 'bg-[var(--cream)] text-[var(--charcoal-light)] hover:scale-105'
                                             }`}
                                     >
                                         <Icon className="w-5 h-5" />
@@ -194,6 +198,28 @@ export default function JournalClient() {
                     </div>
                 </div>
 
+                {/* Filters */}
+                <div className="flex gap-2 mb-8">
+                    <button
+                        onClick={() => setFilter('all')}
+                        className={`px-6 py-2 rounded-full font-bold transition-all ${filter === 'all'
+                            ? 'bg-[var(--forest)] text-white shadow-lg scale-105'
+                            : 'bg-white text-[var(--charcoal-light)] hover:bg-[var(--cream)]'
+                            }`}
+                    >
+                        All Entries
+                    </button>
+                    <button
+                        onClick={() => setFilter('projects')}
+                        className={`px-6 py-2 rounded-full font-bold transition-all ${filter === 'projects'
+                            ? 'bg-[var(--forest)] text-white shadow-lg scale-105'
+                            : 'bg-white text-[var(--charcoal-light)] hover:bg-[var(--cream)]'
+                            }`}
+                    >
+                        Projects
+                    </button>
+                </div>
+
                 {/* Entries */}
                 {loading ? (
                     <div className="text-center py-20">
@@ -205,17 +231,23 @@ export default function JournalClient() {
                             <Sparkles className="w-12 h-12 text-[var(--sage)]" />
                         </div>
                         <div>
-                            <h3 className="text-2xl font-bold serif text-[var(--forest)] mb-2">Start Your Journey</h3>
+                            <h3 className="text-2xl font-bold serif text-[var(--forest)] mb-2">
+                                {filter === 'projects' ? 'No Active Projects' : 'Start Your Journey'}
+                            </h3>
                             <p className="text-[var(--charcoal-light)] mb-6">
-                                Your journal is a sacred space for your thoughts, prayers, and reflections.
+                                {filter === 'projects'
+                                    ? 'Ask Adeline to help you plan a project!'
+                                    : 'Your journal is a sacred space for your thoughts, prayers, and reflections.'}
                             </p>
-                            <button
-                                onClick={() => setShowEditor(true)}
-                                className="px-8 py-4 bg-[var(--burgundy)] text-white rounded-2xl font-bold inline-flex items-center gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all"
-                            >
-                                <Plus className="w-5 h-5" />
-                                Write Your First Entry
-                            </button>
+                            {filter !== 'projects' && (
+                                <button
+                                    onClick={() => setShowEditor(true)}
+                                    className="px-8 py-4 bg-[var(--burgundy)] text-white rounded-2xl font-bold inline-flex items-center gap-3 shadow-xl hover:scale-105 active:scale-95 transition-all"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                    Write Your First Entry
+                                </button>
+                            )}
                         </div>
                     </div>
                 ) : (
@@ -233,7 +265,12 @@ export default function JournalClient() {
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex-1">
                                             {entry.title && (
-                                                <h3 className="text-xl font-bold serif text-[var(--forest)] mb-2">
+                                                <h3 className="text-xl font-bold serif text-[var(--forest)] mb-2 flex items-center gap-2">
+                                                    {entry.tags?.includes('project') && (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                                            Project
+                                                        </span>
+                                                    )}
                                                     {entry.title}
                                                 </h3>
                                             )}
@@ -250,9 +287,9 @@ export default function JournalClient() {
                                             </div>
                                         </div>
                                     </div>
-                                    <p className="text-[var(--charcoal)] leading-relaxed font-serif line-clamp-4">
+                                    <div className="text-[var(--charcoal)] leading-relaxed font-serif line-clamp-4 whitespace-pre-wrap">
                                         {entry.content}
-                                    </p>
+                                    </div>
                                 </div>
                             );
                         })}

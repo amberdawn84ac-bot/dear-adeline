@@ -23,7 +23,7 @@ interface DailyPlan {
     priority: 'low' | 'medium' | 'high' | 'critical';
     target_requirement_id: string;
     estimated_credits: number;
-    target_standards?: Array<{code: string; text: string}>;
+    target_standards?: Array<{ code: string; text: string }>;
 }
 
 export class DailyPlanService {
@@ -118,7 +118,7 @@ export class DailyPlanService {
             };
             const standardsSubject = subjectMapping[targetSubject.category] || targetSubject.category;
 
-            let targetStandards: Array<{code: string; text: string}> = [];
+            let targetStandards: Array<{ code: string; text: string }> = [];
             try {
                 const unmetStandards = await StandardsService.getUnmetStandards(
                     studentId,
@@ -137,12 +137,92 @@ export class DailyPlanService {
                 console.warn('Could not fetch standards for daily plan:', e);
             }
 
-            // Generate plan content based on the subject
-            const plan = this.generatePlanContent(
+            // Initialize plan variable
+            let plan: Partial<DailyPlan> & { difficulty?: string } = {};
+            let activeProjectFound = false;
+
+            // Check for active projects in Journal (last 7 days)
+            try {
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+                const { data: projects } = await supabase
+                    .from('spiritual_journal_entries')
+                    .select('*')
+                    .eq('student_id', studentId)
+                    .contains('tags', ['project', 'active']) // Look for active projects
+                    .gte('created_at', oneWeekAgo.toISOString())
+                    .limit(1);
+
+                if (projects && projects.length > 0) {
+                    const activeProject = projects[0];
+                    console.log(`🚧 Found active project: ${activeProject.title}`);
+
+                    // Override the plan to focus on the project
+                    activeProjectFound = true;
+                    plan = {
+                        priority: 'high',
+                        topic: `${activeProject.title}`,
+                        description: `Continue working on your project! Check your Journal for the plan details.`,
+                        activities: [{
+                            type: 'project_work',
+                            title: `Work on ${activeProject.title}`,
+                            duration: 45,
+                            description: 'Follow the steps in your project plan (see Journal).'
+                        }]
+                    };
+                }
+            } catch (e) {
+                console.warn('Could not check for active projects:', e);
+            }
+
+            // Generate plan content based on the subject (fallback/supplementary)
+            const generatedContent = this.generatePlanContent(
                 targetSubject,
                 gradeLevel,
                 targetStandards
             );
+
+            // Merge project focus with generated content if no project was found
+            if (!activeProjectFound) {
+                plan = { ...generatedContent };
+            } else {
+                // If we found a project, we still want some structure from the generated content
+                // but we keep the project as the main focus
+                plan.subject = generatedContent.subject; // Keep the subject needed for graduation
+                plan.learning_objectives = [
+                    ...generatedContent.learning_objectives,
+                    'Apply skills in a real-world project',
+                    'Practice self-organized learning'
+                ];
+                plan.reason = `This project counts toward your ${generatedContent.subject} credits!`;
+                plan.target_requirement_id = generatedContent.target_requirement_id;
+                plan.estimated_credits = 0.02; // Project work is worth more credits
+                plan.target_standards = generatedContent.target_standards; // Keep standards if possible
+            }
+
+            // Check for due flashcards (SRS)
+            try {
+                const { SpacedRepetitionService } = await import('./spacedRepetitionService');
+                const srsStats = await SpacedRepetitionService.getStats(studentId, supabase);
+
+                if (srsStats.dueToday > 0) {
+                    console.log(`🧠 SRS: ${srsStats.dueToday} cards due. Adding review activity.`);
+
+                    // Add review activity to the beginning of the plan
+                    if (!plan.activities) plan.activities = [];
+                    plan.activities.unshift({
+                        type: 'review',
+                        title: `Daily Memory Review (${srsStats.dueToday} cards)`,
+                        duration: Math.min(15, Math.ceil(srsStats.dueToday * 1.5)), // ~1.5 mins per card, max 15 mins
+                        description: 'Review your flashcards to strengthen your memory.'
+                    });
+
+                    if (plan.description) plan.description += ` Plus, you have ${srsStats.dueToday} flashcards to review!`;
+                }
+            } catch (e) {
+                console.warn('Could not fetch SRS stats for daily plan:', e);
+            }
 
             // Save to database
             const today = new Date().toISOString().split('T')[0];
@@ -158,7 +238,7 @@ export class DailyPlanService {
 
             if (error) {
                 console.error('Error saving daily plan:', error);
-                return plan;
+                return plan as DailyPlan;
             }
 
             return savedPlan;
@@ -219,7 +299,7 @@ export class DailyPlanService {
     private static generatePlanContent(
         requirement: GraduationRequirement & { creditsNeeded: number; priority: string },
         gradeLevel: string,
-        targetStandards: Array<{code: string; text: string}> = []
+        targetStandards: Array<{ code: string; text: string }> = []
     ): Omit<DailyPlan, 'plan_date' | 'student_id'> {
         const subject = requirement.category;
 
