@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
@@ -9,7 +9,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
         }
 
-        const supabase = await createClient();
+        // Use Service Role Key to bypass RLS for existence check
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
 
         // Check if email exists in profiles
         const { data: profile, error } = await supabase
