@@ -171,10 +171,12 @@ export class PDFService {
      */
     static async extractText(pdfBuffer: Buffer): Promise<string> {
         try {
-            // Dynamic import to avoid issues in client-side code
-            const pdfParse = (await import('pdf-parse')).default;
-            const data = await pdfParse(pdfBuffer);
-            return data.text;
+            // pdf-parse v2 uses PDFParse class with data option
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { PDFParse } = await import('pdf-parse') as any;
+            const parser = new PDFParse({ data: pdfBuffer, verbosity: 0 });
+            const result = await parser.getText();
+            return result.text || '';
         } catch (error) {
             console.error('[PDF] Text extraction failed:', error);
             throw new Error('Failed to extract text from PDF');

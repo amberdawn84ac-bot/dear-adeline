@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { PDFService } from '@/lib/services/pdfService';
 
-export const config = {
-    api: {
-        bodyParser: false, // Required for file uploads
-    },
-};
+// Note: In Next.js App Router, formData() is natively supported - no config needed
 
 /**
  * POST /api/admin/upload-document
