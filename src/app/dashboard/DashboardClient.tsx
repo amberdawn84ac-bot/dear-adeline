@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -258,10 +258,36 @@ export default function DashboardClient({
         scrollToBottom();
     }, [messages]);
 
-    const totalRequiredCredits = allRequirements.reduce((sum, req) => sum + req.required_credits, 0);
-    const totalEarnedCredits = graduationProgress.reduce((sum, prog) => sum + prog.credits_earned, 0);
-    const overallProgress = totalRequiredCredits > 0 ? (totalEarnedCredits / totalRequiredCredits) * 100 : 0;
+    // ⚡ Bolt: Memoize expensive calculations to prevent re-computation on every render.
+    // These values only need to be recalculated when their dependencies change,
+    // not every time the component re-renders due to state changes (e.g., typing in the chat).
+    const totalRequiredCredits = useMemo(() => {
+        return allRequirements.reduce((sum, req) => sum + req.required_credits, 0);
+    }, [allRequirements]);
 
+    const totalEarnedCredits = useMemo(() => {
+        return graduationProgress.reduce((sum, prog) => sum + prog.credits_earned, 0);
+    }, [graduationProgress]);
+
+    const overallProgress = useMemo(() => {
+        return totalRequiredCredits > 0 ? (totalEarnedCredits / totalRequiredCredits) * 100 : 0;
+    }, [totalEarnedCredits, totalRequiredCredits]);
+
+    const trackConfig: Record<string, { icon: any; color: string; badgeColor: string }> = {
+        "God's Creation & Science": { icon: FlaskConical, color: 'text-[var(--forest)]', badgeColor: 'bg-[var(--forest)]/10 text-[var(--forest)] border-[var(--forest)]/20' },
+        "Health/Naturopathy": { icon: Heart, color: 'text-[var(--dusty-rose)]', badgeColor: 'bg-[var(--dusty-rose)]/10 text-[var(--dusty-rose)] border-[var(--dusty-rose)]/20' },
+        "Food Systems": { icon: Leaf, color: 'text-[var(--ochre)]', badgeColor: 'bg-[var(--ochre)]/10 text-[var(--ochre)] border-[var(--ochre)]/20' },
+        "Government/Economics": { icon: BarChart3, color: 'text-[var(--forest-light)]', badgeColor: 'bg-[var(--forest-light)]/10 text-[var(--forest-light)] border-[var(--forest-light)]/20' },
+        "Justice": { icon: Scale, color: 'text-[var(--ochre-light)]', badgeColor: 'bg-[var(--ochre-light)]/10 text-[var(--ochre-light)] border-[var(--ochre-light)]/20' },
+        "Discipleship": { icon: Sparkles, color: 'text-[var(--burgundy)]', badgeColor: 'bg-[var(--burgundy)]/5 text-[var(--burgundy)] border-[var(--burgundy)]/10' },
+        "History": { icon: Globe, color: 'text-[var(--burgundy)]', badgeColor: 'bg-[var(--burgundy)]/5 text-[var(--burgundy)] border-[var(--burgundy)]/10' },
+        "English/Lit": { icon: BookOpen, color: 'text-[var(--ochre)]', badgeColor: 'bg-[var(--ochre)]/10 text-[var(--ochre)] border-[var(--ochre)]/20' },
+        "Math": { icon: Calculator, color: 'text-[var(--charcoal)]', badgeColor: 'bg-[var(--charcoal)]/5 text-[var(--charcoal)] border-[var(--charcoal)]/10' },
+    };
+
+    const earnedBadges = useMemo(() => {
+        return graduationProgress.filter(p => p.credits_earned >= 0.5); // Example threshold for a badge
+    }, [graduationProgress]);
     const earnedBadges = graduationProgress.filter(p => p.credits_earned >= 0.5); // Example threshold for a badge
 
     const speakText = (text: string) => {
