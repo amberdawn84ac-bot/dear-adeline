@@ -71,6 +71,25 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: dbError.message }, { status: 500 });
         }
 
+        // 4.5. Log to Credit Ledger (Life Translated into Credits)
+        // We log a small credit amount for every verified activity
+        const creditAmount = 0.05;
+        const { error: ledgerError } = await supabase.from('credit_ledger').insert({
+            student_id: targetStudentId,
+            amount: creditAmount,
+            credit_category: aiAnalysis.skills[0] || 'General',
+            source_type: 'life_experience',
+            source_details: {
+                activity_log_id: log.id,
+                description: caption,
+                translation: aiAnalysis,
+                skills: aiAnalysis.skills
+            },
+            verification_status: 'verified' // Auto-verified by AI
+        });
+
+        if (ledgerError) console.error('Error logging to credit ledger:', ledgerError);
+
         // 5. Map Activity to State Standards (optional, can be enabled via feature flag)
         let standardsProgress = [];
         if (profile?.state_standards && profile?.grade_level && log?.id) {

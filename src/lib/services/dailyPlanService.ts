@@ -424,6 +424,28 @@ ${standardsSection}
     }
 
     /**
+     * Allow students to update their own plan (Self-Organization)
+     */
+    static async updatePlan(
+        planId: string,
+        updates: Partial<DailyPlan>,
+        supabase: SupabaseClient
+    ) {
+        const { error } = await supabase
+            .from('daily_plans')
+            .update({
+                ...updates,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', planId);
+
+        if (error) {
+            console.error('Error updating daily plan:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Mark a plan as started
      */
     static async startPlan(planId: string, supabase: SupabaseClient) {

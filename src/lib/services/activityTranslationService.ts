@@ -91,6 +91,48 @@ export class ActivityTranslationService {
     }
   }
 
+  /**
+   * Translate and log an activity to the credit ledger
+   */
+  static async translateAndLog(
+    studentId: string,
+    activityDescription: string,
+    sourceType: 'life_experience' | 'project' | 'course' | 'daily_plan',
+    supabase: any // Using any to avoid circular dependency issues if SupabaseClient type isn't readily available, but standard is SupabaseClient
+  ): Promise<{ translation: ActivityTranslation, ledgerId?: string }> {
+    try {
+      // 1. Get student context if needed (optional)
+      const { data: profile } = await supabase.from('profiles').select('grade_level').eq('id', studentId).single();
+
+      // 2. Translate
+      const translation = await this.translate(activityDescription, profile?.grade_level);
+
+      // 3. Log to Ledger
+      // Default to a micro-credit for life experiences
+      const amount = 0.05;
+
+      const { data: ledger, error } = await supabase.from('credit_ledger').insert({
+        student_id: studentId,
+        amount: amount,
+        credit_category: translation.skills[0] || 'General',
+        source_type: sourceType,
+        source_details: {
+          description: activityDescription,
+          translation: translation,
+          skills: translation.skills
+        },
+        verification_status: 'verified' // Auto-verified for now to delight users
+      }).select().single();
+
+      if (error) console.error("Error logging to ledger:", error);
+
+      return { translation, ledgerId: ledger?.id };
+    } catch (error) {
+      console.error("Error in translateAndLog:", error);
+      throw error;
+    }
+  }
+
   private static detectSkillsFromDescription(description: string): string[] {
     const lowerDesc = description.toLowerCase();
     const detectedSkills: string[] = [];

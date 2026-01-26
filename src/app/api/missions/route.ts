@@ -22,7 +22,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { topic, conversation_context, suggested_track } = body;
+        const { topic, conversation_context, suggested_track, is_student_initiated, deadline, proposal_data } = body;
 
         if (!topic) {
             return NextResponse.json(
@@ -51,11 +51,16 @@ export async function POST(request: Request) {
         ];
 
         // Generate the mission using AI
+        // If student initiated, we treat the topic as their proposal
+        const context = is_student_initiated
+            ? `Student Proposal: ${topic}. Context: ${conversation_context || 'None'}. Please structure this student idea into a formal project.`
+            : conversation_context || '';
+
         const missionData = await generateStructuredLesson(
             topic,
             profile?.grade_level || '9',
             interests,
-            conversation_context || '',
+            context,
             suggested_track
         );
 
@@ -67,6 +72,10 @@ export async function POST(request: Request) {
                 ...missionData,
                 status: 'proposed',
                 progress_percentage: 0,
+                is_student_initiated: is_student_initiated || false,
+                student_proposal_data: proposal_data || {},
+                deadline: deadline || null,
+                submission_status: is_student_initiated ? 'submitted' : 'draft', // Submitted for approval if student initiated
             })
             .select()
             .single();

@@ -1,6 +1,8 @@
-'use client';
-
+import { ProjectProposalModal } from '@/components/ProjectProposalModal';
 import { useState, useRef, useEffect } from 'react';
+// import { useToast } from '@/components/ui/use-toast'; // Commenting out until we find it
+
+// ... existing imports ...
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -202,6 +204,8 @@ export default function DashboardClient({
     const [opportunities, setOpportunities] = useState<any[]>([]);
     const [aiSummary, setAiSummary] = useState<string | null>(null);
     const [saveWarning, setSaveWarning] = useState<string | null>(null);
+    // const { toast } = useToast();
+    const toast = (props: any) => console.log('Toast:', props); // Mock toast for now
 
     useEffect(() => {
         setIsClient(true);
@@ -241,6 +245,9 @@ export default function DashboardClient({
     const [showSimpleActivityModal, setShowSimpleActivityModal] = useState(false);
     const [simpleActivityInput, setSimpleActivityInput] = useState('');
     const [textbooksExpanded, setTextbooksExpanded] = useState(false);
+
+    // ... inside DashboardClient function ...
+    const [showProjectModal, setShowProjectModal] = useState(false);
 
     // Sketchnotes disabled - always use MessageContent for proper rendering
     const shouldUseSketchnote = (content: string): boolean => {
@@ -774,6 +781,15 @@ export default function DashboardClient({
                                     />
                                     <button
                                         type="button"
+                                        onClick={() => setShowProjectModal(true)}
+                                        className="bg-indigo-600 text-white px-3 py-2.5 rounded-xl hover:brightness-110 transition-all shadow-sm flex items-center gap-2"
+                                        title="Propose a new project"
+                                    >
+                                        <Sparkles className="w-5 h-5" />
+                                        <span className="text-sm font-medium hidden sm:inline">New Project</span>
+                                    </button>
+                                    <button
+                                        type="button"
                                         onClick={() => setShowSimpleActivityModal(true)}
                                         className="bg-[var(--ochre)] text-white px-3 py-2.5 rounded-xl hover:brightness-110 transition-all shadow-sm flex items-center gap-2"
                                         title="Log an activity for academic credit"
@@ -1154,6 +1170,16 @@ export default function DashboardClient({
                     </div>
                 </div>
             )}
+            {/* Project Proposal Modal */}
+            <ProjectProposalModal
+                isOpen={showProjectModal}
+                onClose={() => setShowProjectModal(false)}
+                studentId={user.id}
+                onProjectCreated={() => {
+                    router.refresh();
+                    toast({ title: "Success", description: "Project submitted for approval!" });
+                }}
+            />
         </div>
     );
 }
