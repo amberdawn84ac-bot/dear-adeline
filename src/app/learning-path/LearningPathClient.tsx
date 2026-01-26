@@ -32,6 +32,7 @@ export default function LearningPathClient({
     const [path, setPath] = useState<LearningPath | null>(initialPath);
     const [summary, setSummary] = useState(initialSummary);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     // Setup state
     const [selectedState, setSelectedState] = useState(profile.state_standards || 'Oklahoma');
@@ -41,6 +42,7 @@ export default function LearningPathClient({
 
     const handleGeneratePath = async () => {
         setLoading(true);
+        setError(null);
         try {
             const res = await fetch('/api/learning-path', {
                 method: 'POST',
@@ -57,9 +59,12 @@ export default function LearningPathClient({
                 setPath(data.path);
                 setSummary(data.summary);
                 router.refresh();
+            } else {
+                setError(data.error || 'Failed to generate path');
             }
         } catch (error) {
             console.error('Failed to generate path', error);
+            setError('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -168,6 +173,12 @@ export default function LearningPathClient({
                                 ))}
                             </div>
                         </div>
+
+                        {error && (
+                            <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100">
+                                {error}
+                            </div>
+                        )}
 
                         <button
                             onClick={handleGeneratePath}

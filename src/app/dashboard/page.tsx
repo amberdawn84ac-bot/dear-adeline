@@ -38,9 +38,23 @@ export default async function DashboardPage() {
         }
     }
 
-    // Redirect admin to admin dashboard
     if (profile?.role === 'admin') {
         redirect('/dashboard/admin');
+    }
+
+    // Redirect to onboarding if student hasn't completed assessment
+    if (!profile?.role || profile.role === 'student') {
+        const { data: assessment } = await supabase
+            .from('placement_assessments')
+            .select('status')
+            .eq('student_id', user.id)
+            .eq('status', 'completed')
+            .limit(1)
+            .maybeSingle();
+
+        if (!assessment) {
+            redirect('/onboarding');
+        }
     }
 
     let currentUserId = user.id;

@@ -17,20 +17,9 @@ import {
     FormInput
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import ConversationalLogin from '@/components/ConversationalLogin';
+
 
 export default function LoginPage() {
-    const [useConversational, setUseConversational] = useState(true);
-
-    // If using conversational login, render that component (REQUIRED for new students)
-    if (useConversational) {
-        return (
-            <div className="relative">
-                <ConversationalLogin />
-                {/* Removed traditional form toggle - conversational is required for proper onboarding */}
-            </div>
-        );
-    }
     const router = useRouter();
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
@@ -106,7 +95,7 @@ export default function LoginPage() {
                 // If email confirmation is disabled (dev mode), user is immediately logged in
                 if (signupData?.user && signupData?.session) {
                     if (role === 'student') {
-                        router.push('/dashboard');
+                        router.push('/onboarding');
                     } else if (role === 'teacher') {
                         router.push('/dashboard/teacher');
                     }
@@ -383,14 +372,6 @@ export default function LoginPage() {
                         {' '}and{' '}
                         <Link href="/privacy" className="text-[var(--sage-dark)] hover:underline">Privacy Policy</Link>
                     </p>
-
-                    <button
-                        onClick={() => setUseConversational(true)}
-                        className="mt-4 w-full py-3 rounded-xl border-2 border-[var(--sage-light)] text-[var(--sage-dark)] font-medium text-sm hover:bg-[var(--sage-light)] transition-all flex items-center justify-center gap-2"
-                    >
-                        <MessageCircle className="w-4 h-4" />
-                        Chat with Adeline instead
-                    </button>
                 </div>
             </div>
         </div>
