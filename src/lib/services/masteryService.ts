@@ -3,66 +3,88 @@ import { createClient } from '@/lib/supabase/server';
 
 export interface SkillResult {
   skill: string;
-  status: 'Mastered' | 'Depth of Study' | 'New Discovery';
+  status: 'Mastered' | 'Competent' | 'Needs Instruction' | 'Not Introduced';
+  level: number; // 0-100 placeholder or mapped from status
   creditEarned: number;
 }
 
 export class MasteryService {
-  static async processSkills(studentId: string, skillNames: string[], supabaseClient?: SupabaseClient): Promise<SkillResult[]> {
+
+  /**
+   * Process skill mastery update based on performance
+   * Uses the advanced `skill_levels` table and database RPCs
+   */
+  static async processSkill(
+    studentId: string,
+    skillName: string,
+    success: boolean,
+    evidence?: any,
+    supabaseClient?: SupabaseClient
+  ): Promise<SkillResult | null> {
     const supabase = supabaseClient || await createClient();
-    const results: SkillResult[] = [];
 
-    for (const name of skillNames) {
-      // 1. Find the skill definition
-      // We perform a case-insensitive search to be robust
-      const { data: skillDef } = await supabase
-        .from('skills')
-        .select('id, credit_value')
-        .ilike('name', name)
-        .maybeSingle();
+    // 1. Find the skill ID
+    const { data: skillDef, error: skillError } = await supabase
+      .from('skills')
+      .select('id, credit_value')
+      .ilike('name', skillName)
+      .maybeSingle();
 
-      if (!skillDef) {
-        // Skill doesn't exist in DB. 
-        // In a full implementation, we might auto-create it with AI categorization.
-        // For now, we mark it as a discovery without credit.
-        results.push({ skill: name, status: 'New Discovery', creditEarned: 0 });
-        continue;
-      }
-
-      // 2. Check if student already has it
-      const { data: existing } = await supabase
-        .from('student_skills')
-        .select('id')
-        .eq('student_id', studentId)
-        .eq('skill_id', skillDef.id)
-        .maybeSingle();
-
-      if (existing) {
-        results.push({ skill: name, status: 'Depth of Study', creditEarned: 0 });
-      } else {
-        // 3. Award new mastery
-        const { error: insertError } = await supabase.from('student_skills').insert({
-          student_id: studentId,
-          skill_id: skillDef.id,
-          earned_at: new Date().toISOString(),
-          source_type: 'manual'
-        });
-
-        if (insertError) {
-            console.error(`Failed to award skill ${name}:`, insertError);
-            // If failed (e.g. race condition), treat as depth of study? 
-            // Or just error. Let's assume depth if duplicate error.
-            if (insertError.code === '23505') { // Unique violation
-                 results.push({ skill: name, status: 'Depth of Study', creditEarned: 0 });
-            } else {
-                 results.push({ skill: name, status: 'New Discovery', creditEarned: 0 }); // Fallback
-            }
-        } else {
-            results.push({ skill: name, status: 'Mastered', creditEarned: Number(skillDef.credit_value) });
-        }
-      }
+    if (skillError || !skillDef) {
+      console.warn(`[MasteryService] Skill not found: ${skillName}`);
+      return null;
     }
 
+    // 2. Call the database function to update level
+    // This handles attempts, successes, and level calculation logic in SQL
+    const { error: rpcError } = await supabase.rpc('update_skill_level', {
+      p_student_id: studentId,
+      p_skill_id: skillDef.id,
+      p_success: success,
+      p_evidence: evidence ? JSON.stringify(evidence) : null
+    });
+
+    if (rpcError) {
+      console.error('[MasteryService] RPC update failed:', rpcError);
+      return null;
+    }
+
+    // 3. Fetch the updated state to return result
+    const { data: currentLevel } = await supabase
+      .from('skill_levels')
+      .select('level')
+      .eq('student_id', studentId)
+      .eq('skill_id', skillDef.id)
+      .single();
+
+    const statusMap: Record<string, string> = {
+      'mastered': 'Mastered',
+      'competent': 'Competent',
+      'needs_instruction': 'Needs Instruction',
+      'not_introduced': 'Not Introduced'
+    };
+
+    const status = currentLevel?.level || 'not_introduced';
+    const credit = status === 'mastered' ? Number(skillDef.credit_value) : 0;
+
+    return {
+      skill: skillName,
+      status: statusMap[status] as any,
+      level: status === 'mastered' ? 100 : status === 'competent' ? 70 : 30,
+      creditEarned: credit
+    };
+  }
+
+  /**
+   * Bulk process skills (Legacy support wrapper)
+   */
+  static async processSkills(studentId: string, skillNames: string[], supabaseClient?: SupabaseClient): Promise<SkillResult[]> {
+    const results: SkillResult[] = [];
+    for (const name of skillNames) {
+      // Assume success for legacy calls ("awarding" skills usually means they did it)
+      const result = await this.processSkill(studentId, name, true, null, supabaseClient);
+      if (result) results.push(result);
+    }
     return results;
   }
 }

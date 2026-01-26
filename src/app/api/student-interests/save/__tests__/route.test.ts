@@ -25,7 +25,7 @@ describe('Student Interests API Route (Save)', () => {
         auth: {
             getUser: jest.fn(),
         },
-        from: jest.fn(() => ({
+        from: jest.fn((...args) => ({
             select: jest.fn(() => ({
                 eq: jest.fn(() => ({
                     maybeSingle: jest.fn(),
@@ -83,10 +83,10 @@ describe('Student Interests API Route (Save)', () => {
 
         expect(response.status).toBe(200);
         expect(data).toHaveProperty('success', true);
-        expect(deleteMock).toHaveBeenCalledWith('user_id', 'test_user_id');
+        expect(deleteMock).toHaveBeenCalledWith('student_id', 'test_user_id');
         expect(insertMock).toHaveBeenCalledWith([
-            { user_id: 'test_user_id', interest: 'coding' },
-            { user_id: 'test_user_id', interest: 'art' },
+            { student_id: 'test_user_id', interest: 'coding' },
+            { student_id: 'test_user_id', interest: 'art' },
         ]);
     });
 

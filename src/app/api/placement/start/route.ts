@@ -151,7 +151,7 @@ function getNextQuestionForSubject(subject: string, responses: any): string {
   // Helper function to resume an assessment
   switch (subject) {
     case 'introduction':
-      return "Let's continue. What grade are you going into?";
+      return "Let's pick up where we left off! I'd love to know what grade you're going into?";
     case 'math':
       return "Let's talk about math. What's the last math thing you remember working on?";
     case 'reading':
