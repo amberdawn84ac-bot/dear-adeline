@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Search, Bookmark, BookmarkCheck, ExternalLink, Sparkles, TrendingUp, MapPin, Globe, Users, Calendar } from 'lucide-react';
 
+import { OpportunityTracker } from '@/components/OpportunityTracker';
+
 interface Opportunity {
     id: string;
     title: string;
@@ -20,6 +22,9 @@ interface Opportunity {
     scope: 'local' | 'national' | 'international';
     age_group: string;
     category: string;
+    difficulty_level?: string;
+    estimated_time?: string;
+    learning_outcomes?: string[];
 }
 
 const CATEGORIES = [
@@ -43,10 +48,11 @@ const AGE_GROUPS = [
 ];
 
 export default function OpportunitiesPage() {
+    const [viewMode, setViewMode] = useState<'browse' | 'tracker'>('browse');
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-    const [savedIds, setSavedIds] = useState<string[]>([]);
+    const [savedOpportunities, setSavedOpportunities] = useState<any[]>([]); // Full saved objects
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [selectedScope, setSelectedScope] = useState<'all' | 'local' | 'national'>('all');
     const [selectedAgeGroup, setSelectedAgeGroup] = useState('all');
@@ -70,7 +76,7 @@ export default function OpportunitiesPage() {
         try {
             const res = await fetch('/api/opportunities/saved');
             const data = await res.json();
-            setSavedIds(data.saved?.map((s: any) => s.opportunity_id) || []);
+            setSavedOpportunities(data.saved || []);
         } catch (error) {
             console.error('Failed to load saved opportunities:', error);
         }
@@ -126,14 +132,50 @@ export default function OpportunitiesPage() {
                 body: JSON.stringify({ opportunityId })
             });
             if (res.ok) {
-                setSavedIds([...savedIds, opportunityId]);
+                const data = await res.json();
+                loadSavedOpportunities(); // Reload to get full object
+                // Optional: switch to tracker view to show improvement
+                if (confirm('Opportunity saved! Go to your Project Tracker to plan next steps?')) {
+                    setViewMode('tracker');
+                }
             }
         } catch (error) {
             console.error('Failed to save:', error);
         }
     };
 
+    const handleUpdateStatus = async (id: string, newStatus: string) => {
+        // Optimistic update
+        setSavedOpportunities(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
+        try {
+            await fetch('/api/opportunities/saved', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status: newStatus })
+            });
+        } catch (error) {
+            console.error('Failed to update status:', error);
+            loadSavedOpportunities(); // Revert on error
+        }
+    };
+
+    const handleUpdateChecklist = async (id: string, newChecklist: any[]) => {
+        // Optimistic update
+        setSavedOpportunities(prev => prev.map(s => s.id === id ? { ...s, checklist: newChecklist } : s));
+        try {
+            await fetch('/api/opportunities/saved', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, checklist: newChecklist })
+            });
+        } catch (error) {
+            console.error('Failed to update checklist:', error);
+            loadSavedOpportunities(); // Revert on error
+        }
+    };
+
     // Filter opportunities based on selections
+    const savedIds = savedOpportunities.map(s => s.opportunity_id);
     const filteredOpportunities = opportunities.filter(opp => {
         if (selectedCategory !== 'all' && opp.category !== selectedCategory) return false;
         if (selectedScope !== 'all' && opp.scope !== selectedScope) return false;
@@ -153,244 +195,295 @@ export default function OpportunitiesPage() {
         <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
             <div className="max-w-7xl mx-auto p-8">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                        Opportunities & Real-World Projects
-                    </h1>
-                    <p className="text-xl text-gray-600 max-w-3xl">
-                        Discover contests, scholarships, grants, and real-world opportunities across all subjects.
-                        Earn credits, build your portfolio, and prepare for your future.
-                    </p>
-                </div>
-
-                {/* Search Bar */}
-                <div className="bg-white rounded-2xl p-6 shadow-md mb-6">
-                    <div className="relative group mb-4">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                            type="text"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search opportunities..."
-                            className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none text-lg"
-                        />
-                    </div>
-                </div>
-
-                {/* Filters */}
-                <div className="grid md:grid-cols-3 gap-4 mb-6">
-                    {/* Scope Filter */}
-                    <div className="bg-white rounded-xl p-4 shadow-sm">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            <MapPin className="inline w-4 h-4 mr-1" />
-                            Scope
-                        </label>
-                        <div className="flex gap-2">
-                            {['all', 'local', 'national'].map(scope => (
-                                <button
-                                    key={scope}
-                                    onClick={() => setSelectedScope(scope as any)}
-                                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                        selectedScope === scope
-                                            ? 'bg-purple-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                                >
-                                    {scope === 'all' ? 'All' : scope.charAt(0).toUpperCase() + scope.slice(1)}
-                                </button>
-                            ))}
-                        </div>
+                <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                            Opportunities & Real-World Projects
+                        </h1>
+                        <p className="text-lg text-gray-600 max-w-2xl">
+                            Discover contests, scholarships, and grants. Turn them into active learning projects.
+                        </p>
                     </div>
 
-                    {/* Age Group Filter */}
-                    <div className="bg-white rounded-xl p-4 shadow-sm">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            <Users className="inline w-4 h-4 mr-1" />
-                            Age Group
-                        </label>
-                        <select
-                            value={selectedAgeGroup}
-                            onChange={(e) => setSelectedAgeGroup(e.target.value)}
-                            className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none"
+                    {/* View Switcher */}
+                    <div className="bg-white rounded-xl p-1 shadow-sm flex">
+                        <button
+                            onClick={() => setViewMode('browse')}
+                            className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${viewMode === 'browse' ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:bg-gray-50'
+                                }`}
                         >
-                            {AGE_GROUPS.map(group => (
-                                <option key={group.id} value={group.id}>{group.label}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Results Count */}
-                    <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-4 shadow-sm text-white">
-                        <div className="text-sm opacity-90 mb-1">Found</div>
-                        <div className="text-3xl font-bold">{filteredOpportunities.length}</div>
-                        <div className="text-sm opacity-90">opportunities</div>
-                    </div>
-                </div>
-
-                {/* Category Tabs */}
-                <div className="bg-white rounded-2xl p-4 shadow-md mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-bold text-gray-900">Browse by Category</h3>
-                        <span className="text-sm text-gray-500">Click category to auto-search</span>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                        {CATEGORIES.map(category => {
-                            const count = getCategoryCount(category.id);
-                            const isSearching = searchingCategory === category.id;
-
-                            return (
-                                <button
-                                    key={category.id}
-                                    onClick={() => {
-                                        setSelectedCategory(category.id);
-                                        if (category.id !== 'all' && count === 0) {
-                                            handleSearchCategory(category.id);
-                                        }
-                                    }}
-                                    disabled={isSearching}
-                                    className={`relative p-4 rounded-xl border-2 transition-all ${
-                                        selectedCategory === category.id
-                                            ? 'border-purple-600 bg-purple-50'
-                                            : 'border-gray-200 hover:border-purple-300'
-                                    } ${isSearching ? 'opacity-50' : ''}`}
-                                >
-                                    <div className="text-sm font-medium text-gray-900 mb-1">{category.name}</div>
-                                    <div className="text-xs text-gray-600">
-                                        {isSearching ? (
-                                            <span className="flex items-center gap-1">
-                                                <div className="w-3 h-3 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-                                                Searching...
-                                            </span>
-                                        ) : count === 0 ? (
-                                            <span className="text-purple-600">Click to search</span>
-                                        ) : (
-                                            <span>{count} available</span>
-                                        )}
-                                    </div>
-                                </button>
-                            );
-                        })}
+                            <Search className="w-4 h-4" />
+                            Browse
+                        </button>
+                        <button
+                            onClick={() => setViewMode('tracker')}
+                            className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 relative ${viewMode === 'tracker' ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:bg-gray-50'
+                                }`}
+                        >
+                            <TrendingUp className="w-4 h-4" />
+                            My Projects
+                            {savedOpportunities.filter(s => s.status === 'in_progress').length > 0 && (
+                                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                            )}
+                        </button>
                     </div>
                 </div>
 
-                {/* Opportunities List */}
-                {loading ? (
-                    <div className="flex items-center justify-center py-20">
-                        <div className="text-center">
-                            <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                            <p className="text-gray-600">Loading opportunities...</p>
+                {viewMode === 'tracker' ? (
+                    <OpportunityTracker
+                        savedOpportunities={savedOpportunities}
+                        onUpdateStatus={handleUpdateStatus}
+                        onUpdateChecklist={handleUpdateChecklist}
+                    />
+                ) : (
+                    <>
+                        {/* Search Bar */}
+                        <div className="bg-white rounded-2xl p-6 shadow-md mb-6">
+                            <div className="relative group mb-4">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type="text"
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    placeholder="Search opportunities..."
+                                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none text-lg"
+                                />
+                            </div>
                         </div>
-                    </div>
-                ) : filteredOpportunities.length > 0 ? (
-                    <div className="space-y-4">
-                        {filteredOpportunities.map((opp) => (
-                            <div key={opp.id} className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
-                                <div className="flex justify-between items-start gap-6">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-3 flex-wrap">
-                                            {opp.featured && (
-                                                <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                                                    Featured
-                                                </span>
-                                            )}
-                                            <span className="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1 rounded-full">
-                                                {opp.type}
-                                            </span>
-                                            {opp.scope && (
-                                                <span className={`text-xs font-medium px-3 py-1 rounded-full ${
-                                                    opp.scope === 'local' ? 'bg-blue-100 text-blue-700' :
-                                                    opp.scope === 'national' ? 'bg-green-100 text-green-700' :
-                                                    'bg-purple-100 text-purple-700'
-                                                }`}>
-                                                    {opp.scope === 'local' ? '📍 Local' : opp.scope === 'national' ? '🇺🇸 National' : '🌍 International'}
-                                                </span>
-                                            )}
-                                        </div>
 
-                                        <h4 className="text-xl font-bold text-gray-900 mb-2">
-                                            {opp.title}
-                                        </h4>
-
-                                        <p className="text-gray-600 mb-4 line-clamp-2">
-                                            {opp.description}
-                                        </p>
-
-                                        <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
-                                            {opp.organization && (
-                                                <span className="flex items-center gap-1">
-                                                    <Globe className="w-4 h-4" />
-                                                    {opp.organization}
-                                                </span>
-                                            )}
-                                            {opp.deadline && (
-                                                <span className="flex items-center gap-1">
-                                                    <Calendar className="w-4 h-4" />
-                                                    Due: {new Date(opp.deadline).toLocaleDateString()}
-                                                </span>
-                                            )}
-                                            {opp.amount && (
-                                                <span className="font-semibold text-green-600">
-                                                    💰 {opp.amount}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-col gap-2">
+                        {/* Filters */}
+                        <div className="grid md:grid-cols-3 gap-4 mb-6">
+                            {/* Scope Filter */}
+                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <MapPin className="inline w-4 h-4 mr-1" />
+                                    Scope
+                                </label>
+                                <div className="flex gap-2">
+                                    {['all', 'local', 'national'].map(scope => (
                                         <button
-                                            onClick={() => handleSave(opp.id)}
-                                            disabled={savedIds.includes(opp.id)}
-                                            className={`p-3 rounded-lg transition-colors ${
-                                                savedIds.includes(opp.id)
-                                                    ? 'bg-green-100 text-green-600'
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                            }`}
-                                            title={savedIds.includes(opp.id) ? 'Saved' : 'Save'}
+                                            key={scope}
+                                            onClick={() => setSelectedScope(scope as any)}
+                                            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedScope === scope
+                                                    ? 'bg-purple-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                }`}
                                         >
-                                            {savedIds.includes(opp.id) ? (
-                                                <BookmarkCheck className="w-5 h-5" />
-                                            ) : (
-                                                <Bookmark className="w-5 h-5" />
-                                            )}
+                                            {scope === 'all' ? 'All' : scope.charAt(0).toUpperCase() + scope.slice(1)}
                                         </button>
-                                        {opp.source_url && (
-                                            <a
-                                                href={opp.source_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="p-3 bg-purple-100 text-purple-600 hover:bg-purple-200 rounded-lg transition-colors"
-                                                title="View Details"
-                                            >
-                                                <ExternalLink className="w-5 h-5" />
-                                            </a>
-                                        )}
-                                    </div>
+                                    ))}
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="bg-white rounded-xl p-20 text-center shadow-md">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mx-auto mb-4">
-                            <Search className="w-8 h-8" />
+
+                            {/* Age Group Filter */}
+                            <div className="bg-white rounded-xl p-4 shadow-sm">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <Users className="inline w-4 h-4 mr-1" />
+                                    Age Group
+                                </label>
+                                <select
+                                    value={selectedAgeGroup}
+                                    onChange={(e) => setSelectedAgeGroup(e.target.value)}
+                                    className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none"
+                                >
+                                    {AGE_GROUPS.map(group => (
+                                        <option key={group.id} value={group.id}>{group.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Results Count */}
+                            <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-4 shadow-sm text-white">
+                                <div className="text-sm opacity-90 mb-1">Found</div>
+                                <div className="text-3xl font-bold">{filteredOpportunities.length}</div>
+                                <div className="text-sm opacity-90">opportunities</div>
+                            </div>
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                            No opportunities found
-                        </h3>
-                        <p className="text-gray-600 mb-6">
-                            Try selecting a category above to search for opportunities!
-                        </p>
-                        {selectedCategory !== 'all' && (
-                            <button
-                                onClick={() => handleSearchCategory(selectedCategory)}
-                                disabled={searchingCategory === selectedCategory}
-                                className="btn-primary"
-                            >
-                                <Sparkles className="w-5 h-5 inline mr-2" />
-                                Search {CATEGORIES.find(c => c.id === selectedCategory)?.name}
-                            </button>
+
+                        {/* Category Tabs */}
+                        <div className="bg-white rounded-2xl p-4 shadow-md mb-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-bold text-gray-900">Browse by Category</h3>
+                                <span className="text-sm text-gray-500">Click category to auto-search</span>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                                {CATEGORIES.map(category => {
+                                    const count = getCategoryCount(category.id);
+                                    const isSearching = searchingCategory === category.id;
+
+                                    return (
+                                        <button
+                                            key={category.id}
+                                            onClick={() => {
+                                                setSelectedCategory(category.id);
+                                                if (category.id !== 'all' && count === 0) {
+                                                    handleSearchCategory(category.id);
+                                                }
+                                            }}
+                                            disabled={isSearching}
+                                            className={`relative p-4 rounded-xl border-2 transition-all ${selectedCategory === category.id
+                                                    ? 'border-purple-600 bg-purple-50'
+                                                    : 'border-gray-200 hover:border-purple-300'
+                                                } ${isSearching ? 'opacity-50' : ''}`}
+                                        >
+                                            <div className="text-sm font-medium text-gray-900 mb-1">{category.name}</div>
+                                            <div className="text-xs text-gray-600">
+                                                {isSearching ? (
+                                                    <span className="flex items-center gap-1">
+                                                        <div className="w-3 h-3 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                                                        Searching...
+                                                    </span>
+                                                ) : count === 0 ? (
+                                                    <span className="text-purple-600">Click to search</span>
+                                                ) : (
+                                                    <span>{count} available</span>
+                                                )}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Opportunities List */}
+                        {loading ? (
+                            <div className="flex items-center justify-center py-20">
+                                <div className="text-center">
+                                    <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                                    <p className="text-gray-600">Loading opportunities...</p>
+                                </div>
+                            </div>
+                        ) : filteredOpportunities.length > 0 ? (
+                            <div className="space-y-4">
+                                {filteredOpportunities.map((opp) => (
+                                    <div key={opp.id} className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
+                                        <div className="flex justify-between items-start gap-6">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                                                    {opp.featured && (
+                                                        <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                                            Featured
+                                                        </span>
+                                                    )}
+                                                    <span className="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1 rounded-full">
+                                                        {opp.type}
+                                                    </span>
+                                                    {opp.scope && (
+                                                        <span className={`text-xs font-medium px-3 py-1 rounded-full ${opp.scope === 'local' ? 'bg-blue-100 text-blue-700' :
+                                                                opp.scope === 'national' ? 'bg-green-100 text-green-700' :
+                                                                    'bg-purple-100 text-purple-700'
+                                                            }`}>
+                                                            {opp.scope === 'local' ? '📍 Local' : opp.scope === 'national' ? '🇺🇸 National' : '🌍 International'}
+                                                        </span>
+                                                    )}
+                                                    {opp.difficulty_level && (
+                                                        <span className={`text-xs font-medium px-3 py-1 rounded-full bg-slate-100 text-slate-700`}>
+                                                            {opp.difficulty_level}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <h4 className="text-xl font-bold text-gray-900 mb-2">
+                                                    {opp.title}
+                                                </h4>
+
+                                                <p className="text-gray-600 mb-4 line-clamp-2">
+                                                    {opp.description}
+                                                </p>
+
+                                                {/* Learning Outcomes / Skills */}
+                                                {opp.learning_outcomes && opp.learning_outcomes.length > 0 && (
+                                                    <div className="flex flex-wrap gap-2 mb-4">
+                                                        {opp.learning_outcomes.map((outcome, idx) => (
+                                                            <span key={idx} className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded border border-purple-100">
+                                                                ✨ {outcome}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
+                                                    {opp.organization && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Globe className="w-4 h-4" />
+                                                            {opp.organization}
+                                                        </span>
+                                                    )}
+                                                    {opp.deadline && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Calendar className="w-4 h-4" />
+                                                            Due: {new Date(opp.deadline).toLocaleDateString()}
+                                                        </span>
+                                                    )}
+                                                    {opp.amount && (
+                                                        <span className="font-semibold text-green-600">
+                                                            💰 {opp.amount}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col gap-2">
+                                                <button
+                                                    onClick={() => handleSave(opp.id)}
+                                                    disabled={savedIds.includes(opp.id)}
+                                                    className={`p-3 rounded-lg transition-colors font-medium text-sm flex items-center justify-center gap-2 ${savedIds.includes(opp.id)
+                                                            ? 'bg-green-100 text-green-600 cursor-default'
+                                                            : 'bg-[var(--forest)] text-white hover:opacity-90 shadow-sm'
+                                                        }`}
+                                                >
+                                                    {savedIds.includes(opp.id) ? (
+                                                        <>
+                                                            <BookmarkCheck className="w-4 h-4" />
+                                                            Saved
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Sparkles className="w-4 h-4" />
+                                                            Start Project
+                                                        </>
+                                                    )}
+                                                </button>
+                                                {opp.source_url && (
+                                                    <a
+                                                        href={opp.source_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="p-3 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors flex items-center justify-center"
+                                                        title="View Details"
+                                                    >
+                                                        <ExternalLink className="w-5 h-5" />
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="bg-white rounded-xl p-20 text-center shadow-md">
+                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mx-auto mb-4">
+                                    <Search className="w-8 h-8" />
+                                </div>
+                                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                                    No opportunities found
+                                </h3>
+                                <p className="text-gray-600 mb-6">
+                                    Try selecting a category above to search for opportunities!
+                                </p>
+                                {selectedCategory !== 'all' && (
+                                    <button
+                                        onClick={() => handleSearchCategory(selectedCategory)}
+                                        disabled={searchingCategory === selectedCategory}
+                                        className="btn-primary"
+                                    >
+                                        <Sparkles className="w-5 h-5 inline mr-2" />
+                                        Search {CATEGORIES.find(c => c.id === selectedCategory)?.name}
+                                    </button>
+                                )}
+                            </div>
                         )}
-                    </div>
+                    </>
                 )}
             </div>
         </div>
