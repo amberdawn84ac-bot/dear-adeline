@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { Target, AlertTriangle, RefreshCw } from 'lucide-react';
 
 const TYPING_CONTENT = [
     {
@@ -62,7 +63,33 @@ export function TypingGame({ onComplete, customText, customSource, customCategor
     const [startTime, setStartTime] = useState<number | null>(null);
     const [wpm, setWpm] = useState(0);
     const [isFinished, setIsFinished] = useState(false);
+    const [missedKeys, setMissedKeys] = useState<Record<string, number>>({});
+    const [keystrokes, setKeystrokes] = useState({ total: 0, correct: 0 });
     const inputRef = useRef<HTMLTextAreaElement>(null);
+
+    const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const val = e.target.value;
+        const oldVal = input;
+
+        // Track metrics only on forward typing
+        if (val.length > oldVal.length) {
+            const charTyped = val.slice(-1);
+            const targetChar = activeContent.text[val.length - 1];
+
+            setKeystrokes(prev => ({
+                total: prev.total + 1,
+                correct: prev.correct + (charTyped === targetChar ? 1 : 0)
+            }));
+
+            if (charTyped !== targetChar && targetChar) {
+                setMissedKeys(prev => ({
+                    ...prev,
+                    [targetChar.toLowerCase()]: (prev[targetChar.toLowerCase()] || 0) + 1
+                }));
+            }
+        }
+        setInput(val);
+    };
 
     useEffect(() => {
         if (customText) {
@@ -99,6 +126,8 @@ export function TypingGame({ onComplete, customText, customSource, customCategor
         setActiveContent(TYPING_CONTENT[nextIndex]);
         setInput('');
         setIsFinished(false);
+        setMissedKeys({});
+        setKeystrokes({ total: 0, correct: 0 });
         setStartTime(null);
     };
 
@@ -138,7 +167,7 @@ export function TypingGame({ onComplete, customText, customSource, customCategor
                             ref={inputRef}
                             autoFocus
                             value={input}
-                            onChange={(e) => setInput(e.target.value)}
+                            onChange={handleInput}
                             className="w-full p-8 bg-white rounded-[2rem] border-2 border-[var(--cream-dark)] focus:border-[var(--forest)]/40 focus:outline-none font-mono text-sm shadow-sm transition-all h-32 resize-none"
                             placeholder="Begin typing the wisdom above..."
                         />
@@ -150,15 +179,49 @@ export function TypingGame({ onComplete, customText, customSource, customCategor
                     </div>
                 ) : (
                     <div className="bg-[var(--forest)] p-10 rounded-[2.5rem] text-white text-center animate-in zoom-in-95 shadow-2xl shadow-[var(--forest)]/20">
-                        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">🎯</div>
-                        <h4 className="text-5xl font-bold serif mb-2">{wpm} WPM</h4>
-                        <p className="text-xs font-bold uppercase tracking-[0.3em] opacity-80 mb-8">Excellent Precision & Pace</p>
+                        <div className="flex justify-center gap-12 mb-8">
+                            <div className="text-center">
+                                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">
+                                    <Target className="w-8 h-8" />
+                                </div>
+                                <h4 className="text-4xl font-bold serif">{wpm}</h4>
+                                <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">WPM</p>
+                            </div>
+                            <div className="text-center">
+                                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">
+                                    <span className="font-mono font-bold text-lg">
+                                        {keystrokes.total > 0 ? Math.round((keystrokes.correct / keystrokes.total) * 100) : 100}%
+                                    </span>
+                                </div>
+                                <h4 className="text-4xl font-bold serif">Accuracy</h4>
+                                <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">Precision</p>
+                            </div>
+                        </div>
+
+                        {Object.keys(missedKeys).length > 0 && (
+                            <div className="mb-8 p-4 bg-black/20 rounded-xl inline-block">
+                                <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-2 flex items-center justify-center gap-2">
+                                    <AlertTriangle className="w-3 h-3" /> Needs Practice
+                                </p>
+                                <div className="flex gap-2 justify-center">
+                                    {Object.entries(missedKeys)
+                                        .sort(([, a], [, b]) => b - a)
+                                        .slice(0, 5)
+                                        .map(([key, count]) => (
+                                            <span key={key} className="px-2 py-1 bg-red-500/30 rounded text-xs font-mono border border-red-500/20">
+                                                {key === ' ' ? 'Space' : key} <span className="opacity-50 text-[10px]">x{count}</span>
+                                            </span>
+                                        ))}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex gap-4 justify-center">
                             <button
                                 onClick={resetGame}
-                                className="bg-white text-[var(--forest)] px-10 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all"
+                                className="bg-white text-[var(--forest)] px-10 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                             >
-                                Next Lesson
+                                <RefreshCw className="w-4 h-4" /> Next Lesson
                             </button>
                         </div>
                     </div>

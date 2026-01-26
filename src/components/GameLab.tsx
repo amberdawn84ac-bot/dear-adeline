@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Play, Pause, RotateCcw, Share2, BookOpen, Sparkles, Loader2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Share2, BookOpen, Sparkles, Loader2, Brain, Save, CheckCircle } from 'lucide-react';
 import { GameProject } from '@/types/learning';
 import { formatTrack } from '@/types/learning';
 
@@ -22,6 +22,9 @@ export function GameLab({ gameProject: initialGameProject, onComplete, onShare, 
     const [showInstructions, setShowInstructions] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [showReflection, setShowReflection] = useState(false);
+    const [reflection, setReflection] = useState('');
+    const [reflectionSaved, setReflectionSaved] = useState(false);
 
     // Auto-generate game from pending topic on mount
     useEffect(() => {
@@ -185,7 +188,19 @@ export function GameLab({ gameProject: initialGameProject, onComplete, onShare, 
 
     const handleStop = () => {
         handlePause();
-        setShowInstructions(true);
+        setShowReflection(true);
+    };
+
+    const handleSaveReflection = () => {
+        // In a real app, save to DB
+        setReflectionSaved(true);
+        setTimeout(() => {
+            setShowReflection(false);
+            setReflectionSaved(false);
+            setReflection('');
+            setShowInstructions(true);
+            if (onComplete) onComplete();
+        }, 1500);
     };
 
     if (isGenerating) {
@@ -319,6 +334,66 @@ export function GameLab({ gameProject: initialGameProject, onComplete, onShare, 
                 />
             </div>
 
+            {/* Reflection Modal */}
+            {showReflection && (
+                <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-8 animate-in zoom-in-95 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-purple to-magenta" />
+
+                        {!reflectionSaved ? (
+                            <>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-12 h-12 bg-purple/10 rounded-full flex items-center justify-center text-purple">
+                                        <Brain className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-slate-800">Learning Reflection</h3>
+                                        <p className="text-slate-500 text-xs uppercase tracking-widest font-bold">Metacognition Check</p>
+                                    </div>
+                                </div>
+
+                                <p className="text-slate-600 mb-4">
+                                    Great work with the simulation! To solidify your learning, roughly describe what you discovered or what challenge you overcame:
+                                </p>
+
+                                <textarea
+                                    value={reflection}
+                                    onChange={(e) => setReflection(e.target.value)}
+                                    className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 focus:border-purple focus:outline-none min-h-[120px] mb-6 text-sm"
+                                    placeholder="I learned that..."
+                                    autoFocus
+                                />
+
+                                <div className="flex justify-end gap-3">
+                                    <button
+                                        onClick={() => setShowReflection(false)}
+                                        className="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-xl"
+                                    >
+                                        Skip
+                                    </button>
+                                    <button
+                                        onClick={handleSaveReflection}
+                                        disabled={reflection.length < 5}
+                                        className="px-6 py-2 bg-purple text-white rounded-xl font-bold hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    >
+                                        <Save className="w-4 h-4" />
+                                        Save to Journal
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="text-center py-8">
+                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto mb-4">
+                                    <CheckCircle className="w-8 h-8" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-800 mb-2">Reflection Saved!</h3>
+                                <p className="text-slate-500">Your insights have been added to your learning journey.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Controls */}
             <div className="flex gap-3">
                 <button
@@ -332,11 +407,18 @@ export function GameLab({ gameProject: initialGameProject, onComplete, onShare, 
                     )}
                 </button>
                 <button
-                    onClick={handleReset}
+                    onClick={handleStop}
                     className="flex-1 py-3 bg-white border-2 border-purple text-purple rounded-2xl font-bold hover:bg-purple/5 transition-all flex items-center justify-center gap-2"
                 >
+                    <Brain className="w-5 h-5" />
+                    Finish & Reflect
+                </button>
+                <button
+                    onClick={handleReset}
+                    className="px-4 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all"
+                    title="Reset Simulation"
+                >
                     <RotateCcw className="w-5 h-5" />
-                    Reset
                 </button>
             </div>
 

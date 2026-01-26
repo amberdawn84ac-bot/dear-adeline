@@ -26,9 +26,12 @@ const model = genAI.getGenerativeModel({
                     source_url: { type: SchemaType.STRING },
                     scope: { type: SchemaType.STRING },
                     category: { type: SchemaType.STRING },
-                    featured: { type: SchemaType.BOOLEAN }
+                    featured: { type: SchemaType.BOOLEAN },
+                    difficulty_level: { type: SchemaType.STRING, description: "One of: beginner, intermediate, advanced" },
+                    estimated_time: { type: SchemaType.STRING, description: "e.g. '10-20 hours'" },
+                    learning_outcomes: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } }
                 },
-                required: ["title", "description", "type", "organization"]
+                required: ["title", "description", "type", "organization", "difficulty_level", "learning_outcomes"]
             }
         }
     }
@@ -70,6 +73,9 @@ export async function POST(req: Request) {
         - Award amount or "N/A"
         - Official URL (must be valid)
         - Scope (local/national/international)
+        - Difficulty Level (beginner/intermediate/advanced) based on effort required
+        - Estimated Time to complete (e.g. "5 hours", "2 weeks")
+        - 3 specific Learning Outcomes (skills students will practice, e.g. "Public Speaking", "Data Analysis")
         `;
 
         const result = await model.generateContent(prompt);
@@ -116,6 +122,9 @@ export async function POST(req: Request) {
                         scope: (item.scope?.toLowerCase() as any) || scope || 'national',
                         age_group: ageGroup || 'all',
                         category: category,
+                        difficulty_level: item.difficulty_level || 'intermediate',
+                        estimated_time: item.estimated_time || 'Unknown',
+                        learning_outcomes: item.learning_outcomes || [],
                     })
                     .select()
                     .single();

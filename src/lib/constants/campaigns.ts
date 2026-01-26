@@ -8,6 +8,8 @@ export interface Campaign {
     timeline: string;
     category: 'Justice' | 'Community' | 'Growth' | 'Provision';
     icon: string;
+    learningGoals: string[];
+    skills: string[];
 }
 
 export const CAMPAIGNS: Campaign[] = [
@@ -20,7 +22,9 @@ export const CAMPAIGNS: Campaign[] = [
         resources: ['VA partnerships', 'VSO collaboration', 'Mental health providers', 'Peer mentorship'],
         timeline: 'Q1: Partnerships, Q2: Support groups, Q3-Q4: Employment component.',
         category: 'Community',
-        icon: 'Award'
+        icon: 'Award',
+        learningGoals: ['Understand veteran support systems', 'Analyze community reintegration strategies'],
+        skills: ['Empathy', 'Case Management', 'Strategic Planning']
     },
     {
         id: 'women-power-tools',
@@ -31,7 +35,9 @@ export const CAMPAIGNS: Campaign[] = [
         resources: ['Power tools', 'Workshop space', 'Certified instructors', 'Safety equipment'],
         timeline: 'Q1: Tools & Space, Q2: Pilot, Q3: Advanced modules, Q4: Apprenticeships.',
         category: 'Growth',
-        icon: 'Wrench'
+        icon: 'Wrench',
+        learningGoals: ['Master manual tool operation', 'Develop vocational training curriculum'],
+        skills: ['Construction Basics', 'Instructional Design', 'Safety Management']
     },
     {
         id: 'worker-cooperative',
@@ -42,7 +48,9 @@ export const CAMPAIGNS: Campaign[] = [
         resources: ['Initial capital', 'Legal incorporation', 'Business model', 'Governance training'],
         timeline: 'Year 1: Form & incorporate, Year 2: Launch, Year 3: Profitability.',
         category: 'Provision',
-        icon: 'Users'
+        icon: 'Users',
+        learningGoals: ['Understand cooperative business models', 'Learn democratic governance structures'],
+        skills: ['Business Administration', 'Conflict Resolution', 'Financial Literacy']
     },
     {
         id: 'community-art',
@@ -53,7 +61,9 @@ export const CAMPAIGNS: Campaign[] = [
         resources: ['Art supplies', 'Teaching artists', 'Workshop space', 'Exhibition venues'],
         timeline: 'Q1: Artists & Space, Q2: Weekly workshops, Q3: Exhibition, Q4: Evaluate.',
         category: 'Community',
-        icon: 'Palette'
+        icon: 'Palette',
+        learningGoals: ['Explore art therapy principles', 'Organize community events'],
+        skills: ['Creative Arts', 'Event Planning', 'Community Engagement']
     },
     {
         id: 'finish-high-school',
@@ -64,7 +74,9 @@ export const CAMPAIGNS: Campaign[] = [
         resources: ['Certified teachers', 'Learning platform', 'Tutoring', 'Childcare coordination'],
         timeline: 'Q1-Q2: Accreditation & Platform, Q3: Enroll cohort, Year 2: Scale.',
         category: 'Growth',
-        icon: 'GraduationCap'
+        icon: 'GraduationCap',
+        learningGoals: ['Analyze adult education methodologies', 'Support non-traditional learners'],
+        skills: ['Tutoring', 'Educational Psychology', 'Program Management']
     },
     {
         id: 'what-they-didnt-teach',
@@ -75,7 +87,9 @@ export const CAMPAIGNS: Campaign[] = [
         resources: ['Curriculum development', 'Subject matter experts', 'Workbooks', 'Online platform'],
         timeline: 'Q1: Curriculum, Q2: Pilot, Q3: Online conversion, Q4: Monthly workshops.',
         category: 'Growth',
-        icon: 'BookOpen'
+        icon: 'BookOpen',
+        learningGoals: ['Develop practical life skills curriculum', 'Facilitate youth workshops'],
+        skills: ['Curriculum Development', 'Public Speaking', 'Financial Planning']
     },
     {
         id: 'real-food',
@@ -86,6 +100,8 @@ export const CAMPAIGNS: Campaign[] = [
         resources: ['Farmer partnerships', 'Distribution system', 'Nutrition curriculum', 'Refrigeration'],
         timeline: 'Q1: Sourcing, Q2: Pilot, Q3: Cooking classes, Q4: Health outcomes.',
         category: 'Provision',
-        icon: 'Leaf'
+        icon: 'Leaf',
+        learningGoals: ['Understand food systems and supply chains', 'Promote nutritional health'],
+        skills: ['Logistics', 'Nutrition Education', 'Partnership Development']
     }
 ];

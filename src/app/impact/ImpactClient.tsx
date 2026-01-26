@@ -43,6 +43,14 @@ export default function ImpactClient() {
     const [scrapedCampaigns, setScrapedCampaigns] = useState<ScrapedCampaign[]>([]);
     const [searchingCategory, setSearchingCategory] = useState<string | null>(null);
 
+    // New State for Wizard & Reflection
+    const [showWizard, setShowWizard] = useState(false);
+    const [wizardStep, setWizardStep] = useState(0);
+    const [wizardAnswers, setWizardAnswers] = useState<string[]>([]);
+    const [showReflection, setShowReflection] = useState(false);
+    const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+    const [reflectionAnswer, setReflectionAnswer] = useState('');
+
     const allCampaigns = [...CAMPAIGNS, ...scrapedCampaigns];
 
     const filteredCampaigns = allCampaigns.filter(c => {
@@ -74,6 +82,47 @@ export default function ImpactClient() {
             console.error('Search failed:', error);
         } finally {
             setSearchingCategory(null);
+        }
+    };
+
+    const handleCampaignClick = (campaign: Campaign) => {
+        if ((campaign as ScrapedCampaign).source_url) {
+            window.open((campaign as ScrapedCampaign).source_url, '_blank');
+        } else {
+            setSelectedCampaign(campaign);
+            setShowReflection(true);
+        }
+    };
+
+    // Wizard Logic
+    const WIZARD_QUESTIONS = [
+        {
+            q: "What kind of impact do you want to make?",
+            options: ["Help people directly", "Build things", "Change systems", "Teach others"]
+        },
+        {
+            q: "What skill do you want to practice?",
+            options: ["Leadership", "Technical Skills", "Communication", "Problem Solving"]
+        }
+    ];
+
+    const handleWizardSelect = (answer: string) => {
+        const newAnswers = [...wizardAnswers, answer];
+        setWizardAnswers(newAnswers);
+        if (wizardStep < WIZARD_QUESTIONS.length - 1) {
+            setWizardStep(prev => prev + 1);
+        } else {
+            // Finish wizard - mapped simply for demo. In real app, more complex logic.
+            setShowWizard(false);
+            if (newAnswers.includes("Help people directly") || newAnswers.includes("Teach others")) {
+                setFilter('Community');
+            } else if (newAnswers.includes("Build things")) {
+                setFilter('Provision');
+            } else {
+                setFilter('Growth');
+            }
+            // Scroll to grid
+            document.getElementById('campaign-grid')?.scrollIntoView({ behavior: 'smooth' });
         }
     };
 
@@ -124,13 +173,20 @@ export default function ImpactClient() {
                             Adeline doesn't just track tests. We track the correction of brokenness. These campaigns are pre-designed blueprints for real-world impact that count directly toward your graduation.
                         </p>
                         <div className="flex flex-wrap gap-4">
-                            <div className="px-6 py-3 bg-[var(--ochre)] text-white rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-[var(--ochre-dark)] transition-all cursor-pointer">
-                                <Target className="w-4 h-4" />
-                                Start a Campaign
-                            </div>
+                            <button
+                                onClick={() => {
+                                    setWizardStep(0);
+                                    setWizardAnswers([]);
+                                    setShowWizard(true);
+                                }}
+                                className="px-6 py-3 bg-[var(--ochre)] text-white rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:bg-[var(--ochre-dark)] transition-all cursor-pointer hover:scale-105 active:scale-95"
+                            >
+                                <Sparkles className="w-4 h-4" />
+                                Find Your Campaign
+                            </button>
                             <div className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold backdrop-blur-md transition-all cursor-pointer flex items-center gap-2">
                                 <ChevronRight className="w-4 h-4" />
-                                Join a Campaign
+                                Browse All
                             </div>
                         </div>
                     </div>
@@ -180,7 +236,7 @@ export default function ImpactClient() {
                 </div>
 
                 {/* Campaign Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div id="campaign-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredCampaigns.map((campaign) => {
                         const Icon = ICON_MAP[campaign.icon] || Globe;
                         return (
@@ -205,11 +261,28 @@ export default function ImpactClient() {
                                         <h3 className="text-xl font-bold serif text-[var(--forest)] group-hover:text-[var(--burgundy)] transition-colors">{campaign.title}</h3>
                                     </div>
 
-                                    <p className="text-sm text-slate-500 leading-relaxed mb-8 line-clamp-3 italic">
+                                    <p className="text-sm text-slate-500 leading-relaxed mb-6 line-clamp-3 italic">
                                         "{campaign.objective}"
                                     </p>
 
-                                    <div className="space-y-4 mb-10">
+                                    {/* Skills / Learning Goals (New) */}
+                                    {campaign.skills && campaign.skills.length > 0 && (
+                                        <div className="mb-6">
+                                            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1">
+                                                <GraduationCap className="w-3 h-3" />
+                                                Skills You'll Build
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {campaign.skills.slice(0, 3).map((skill, i) => (
+                                                    <span key={i} className="px-2 py-1 bg-[var(--forest)]/5 text-[var(--forest)] rounded text-[9px] font-bold">
+                                                        {skill}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-4 mb-4">
                                         <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
                                             <Zap className="w-4 h-4 text-[var(--burgundy)]" />
                                             Key Metrics for Success
@@ -236,22 +309,14 @@ export default function ImpactClient() {
                                                 +12
                                             </div>
                                         </div>
-                                        {(campaign as ScrapedCampaign).source_url ? (
-                                            <a
-                                                href={(campaign as ScrapedCampaign).source_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center gap-2 px-6 py-3 bg-[var(--forest)]/5 text-[var(--forest)] group-hover:bg-[var(--forest)] group-hover:text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all"
-                                            >
-                                                Visit Website
-                                                <ExternalLink className="w-3 h-3" />
-                                            </a>
-                                        ) : (
-                                            <button className="flex items-center gap-2 px-6 py-3 bg-[var(--forest)]/5 text-[var(--forest)] group-hover:bg-[var(--forest)] group-hover:text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all">
-                                                Step Into Campaign
-                                                <ChevronRight className="w-3 h-3" />
-                                            </button>
-                                        )}
+
+                                        <button
+                                            onClick={() => handleCampaignClick(campaign)}
+                                            className="flex items-center gap-2 px-6 py-3 bg-[var(--forest)]/5 text-[var(--forest)] group-hover:bg-[var(--forest)] group-hover:text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all"
+                                        >
+                                            {(campaign as ScrapedCampaign).source_url ? 'Visit Website' : 'Step Into Campaign'}
+                                            {(campaign as ScrapedCampaign).source_url ? <ExternalLink className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -276,6 +341,95 @@ export default function ImpactClient() {
             <footer className="max-w-7xl mx-auto p-12 text-center">
                 <p className="text-[var(--forest)] font-black uppercase tracking-[0.5em] text-[9px] opacity-20 italic">WORLD RESTORATION ARCHIVES • NEIGHBORLY LOVE • ADELINE ACADEMY</p>
             </footer>
+
+            {/* WIZARD MODAL */}
+            {showWizard && (
+                <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[2rem] p-8 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between mb-8">
+                            <h3 className="text-2xl font-bold serif text-[var(--forest)]">Let's find your path</h3>
+                            <button onClick={() => setShowWizard(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                                <div className="w-5 h-0.5 bg-slate-400 rotate-45 absolute"></div>
+                                <div className="w-5 h-0.5 bg-slate-400 -rotate-45"></div>
+                            </button>
+                        </div>
+
+                        <div className="mb-8">
+                            <div className="flex gap-2 mb-2">
+                                {WIZARD_QUESTIONS.map((_, i) => (
+                                    <div key={i} className={`h-1 flex-1 rounded-full bg-slate-100 ${i <= wizardStep ? 'bg-[var(--ochre)]' : ''}`} />
+                                ))}
+                            </div>
+                            <span className="text-[10px] uppercase font-bold text-slate-400">Question {wizardStep + 1} of {WIZARD_QUESTIONS.length}</span>
+                        </div>
+
+                        <h4 className="text-xl font-medium text-[var(--charcoal)] mb-6">
+                            {WIZARD_QUESTIONS[wizardStep].q}
+                        </h4>
+
+                        <div className="space-y-3">
+                            {WIZARD_QUESTIONS[wizardStep].options.map((opt) => (
+                                <button
+                                    key={opt}
+                                    onClick={() => handleWizardSelect(opt)}
+                                    className="w-full text-left p-4 rounded-xl border border-slate-200 hover:border-[var(--ochre)] hover:bg-[var(--ochre)]/5 transition-all font-medium text-slate-600 hover:text-[var(--forest)] flex items-center justify-between group"
+                                >
+                                    {opt}
+                                    <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* REFLECTION MODAL */}
+            {showReflection && selectedCampaign && (
+                <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[2rem] p-8 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="mb-8 p-6 bg-[var(--forest)]/5 rounded-2xl border border-[var(--forest)]/10">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--ochre)] mb-2 block">Campaign Selected</span>
+                            <h3 className="text-2xl font-bold serif text-[var(--forest)] mb-2">{selectedCampaign.title}</h3>
+                            <p className="text-slate-600 italic">"{selectedCampaign.objective}"</p>
+                        </div>
+
+                        <h4 className="text-lg font-bold text-[var(--charcoal)] mb-4">Before you begin, a moment of reflection...</h4>
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-500 mb-2">
+                                    Why does this specific campaign speak to you right now?
+                                </label>
+                                <textarea
+                                    value={reflectionAnswer}
+                                    onChange={(e) => setReflectionAnswer(e.target.value)}
+                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--sage)]/50 min-h-[120px] resize-none"
+                                    placeholder="I feel called to this because..."
+                                />
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <button
+                                    onClick={() => setShowReflection(false)}
+                                    className="flex-1 py-4 text-slate-400 font-bold hover:text-slate-600 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        // Handle join logic here
+                                        setShowReflection(false);
+                                        // Could show success toast, etc.
+                                    }}
+                                    disabled={!reflectionAnswer.trim()}
+                                    className="flex-1 py-4 bg-[var(--forest)] text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100"
+                                >
+                                    Commit & Start Journey
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
