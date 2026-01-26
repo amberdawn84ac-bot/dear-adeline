@@ -154,13 +154,13 @@ export const handleToolCalls = async (
                 toolParts.push({
                     functionResponse: {
                         name: 'update_student_progress',
-                        response: { 
-                            name: 'update_student_progress', 
-                            content: { 
+                        response: {
+                            name: 'update_student_progress',
+                            content: {
                                 status: 'progress tracked successfully',
                                 credits: args.credits,
                                 category: category
-                            } 
+                            }
                         }
                     }
                 });
@@ -169,12 +169,12 @@ export const handleToolCalls = async (
                 toolParts.push({
                     functionResponse: {
                         name: 'update_student_progress',
-                        response: { 
-                            name: 'update_student_progress', 
-                            content: { 
-                                status: 'failed to track progress', 
-                                error: String(e) 
-                            } 
+                        response: {
+                            name: 'update_student_progress',
+                            content: {
+                                status: 'failed to track progress',
+                                error: String(e)
+                            }
                         }
                     }
                 });
@@ -216,7 +216,7 @@ export const handleToolCalls = async (
                     });
 
                 if (portfolioError) throw new Error(`Error saving to portfolio: ${portfolioError.message}`);
-                
+
                 // 3. Insert into student_skills and update graduation progress
                 for (const skill of skillsData) {
                     // Add to student_skills
@@ -232,14 +232,14 @@ export const handleToolCalls = async (
                         .select('id')
                         .eq('category', skill.category)
                         .single();
-                    
-                    if(requirement) {
+
+                    if (requirement) {
                         const { error: progressError } = await supabase.rpc('update_student_progress', {
                             p_student_id: userId,
                             p_requirement_id: requirement.id,
                             p_credits_to_add: skill.credit_value
                         });
-                        if(progressError) console.error(`Error updating progress for ${skill.category}:`, progressError);
+                        if (progressError) console.error(`Error updating progress for ${skill.category}:`, progressError);
                     }
                 }
 
@@ -326,10 +326,10 @@ export const handleToolCalls = async (
                 // Process Skills for Mastery
                 let masteryResults = [];
                 if (args.skills) {
-                    const skillList = typeof args.skills === 'string' 
-                        ? args.skills.split(',').map((s: string) => s.trim()) 
+                    const skillList = typeof args.skills === 'string'
+                        ? args.skills.split(',').map((s: string) => s.trim())
                         : Array.isArray(args.skills) ? args.skills : [];
-                    
+
                     if (skillList.length > 0) {
                         masteryResults = await MasteryService.processSkills(userId, skillList, supabase);
                     }
@@ -351,12 +351,12 @@ export const handleToolCalls = async (
                 toolParts.push({
                     functionResponse: {
                         name: 'log_activity',
-                        response: { 
-                            name: 'log_activity', 
-                            content: { 
+                        response: {
+                            name: 'log_activity',
+                            content: {
                                 status: 'activity logged successfully',
                                 message: `Logged: ${args.caption} as ${args.translation}. ${masteryResults.length} skills processed.`
-                            } 
+                            }
                         }
                     }
                 });
@@ -365,12 +365,12 @@ export const handleToolCalls = async (
                 toolParts.push({
                     functionResponse: {
                         name: 'log_activity',
-                        response: { 
-                            name: 'log_activity', 
-                            content: { 
-                                status: 'failed to log activity', 
-                                error: String(e) 
-                            } 
+                        response: {
+                            name: 'log_activity',
+                            content: {
+                                status: 'failed to log activity',
+                                error: String(e)
+                            }
                         }
                     }
                 });
@@ -432,6 +432,120 @@ export const handleToolCalls = async (
                             name: 'generate_student_game',
                             content: {
                                 status: 'failed to create game',
+                                error: String(e)
+                            }
+                        }
+                    }
+                });
+            }
+        } else if (call.name === 'share_sketchnote') {
+            const args = call.args as { topic: string; subject?: string; addToJournal?: string };
+            console.log(`[Adeline Sketchnotes]: Searching for "${args.topic}"...`);
+
+            try {
+                // Search for matching sketchnotes
+                let query = supabase
+                    .from('sketchnotes')
+                    .select('*')
+                    .ilike('topic', `%${args.topic}%`);
+
+                if (args.subject) {
+                    query = query.ilike('subject', `%${args.subject}%`);
+                }
+
+                const { data: sketchnotes, error: searchError } = await query.limit(3);
+
+                if (searchError) throw searchError;
+
+                if (!sketchnotes || sketchnotes.length === 0) {
+                    toolParts.push({
+                        functionResponse: {
+                            name: 'share_sketchnote',
+                            response: {
+                                name: 'share_sketchnote',
+                                content: {
+                                    status: 'no sketchnotes found',
+                                    message: `No sketchnotes found for "${args.topic}". Try a different topic.`
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    const sketchnote = sketchnotes[0]; // Use best match
+
+                    // Optionally add to today's journal
+                    let journalMessage = '';
+                    if (args.addToJournal === 'true') {
+                        // Get or create today's journal entry
+                        const today = new Date().toISOString().split('T')[0];
+
+                        const { data: existingEntry } = await supabase
+                            .from('journal_entries')
+                            .select('id')
+                            .eq('student_id', userId)
+                            .eq('entry_date', today)
+                            .maybeSingle();
+
+                        let journalEntryId = existingEntry?.id;
+
+                        if (!journalEntryId) {
+                            // Create today's journal entry
+                            const { data: newEntry } = await supabase
+                                .from('journal_entries')
+                                .insert({
+                                    student_id: userId,
+                                    entry_date: today
+                                })
+                                .select('id')
+                                .single();
+                            journalEntryId = newEntry?.id;
+                        }
+
+                        if (journalEntryId) {
+                            // Attach sketchnote to journal
+                            await supabase
+                                .from('journal_sketchnotes')
+                                .upsert({
+                                    journal_entry_id: journalEntryId,
+                                    sketchnote_id: sketchnote.id
+                                }, {
+                                    onConflict: 'journal_entry_id,sketchnote_id'
+                                });
+                            journalMessage = ' Added to your journal!';
+                        }
+                    }
+
+                    toolParts.push({
+                        functionResponse: {
+                            name: 'share_sketchnote',
+                            response: {
+                                name: 'share_sketchnote',
+                                content: {
+                                    status: 'sketchnote found',
+                                    sketchnote: {
+                                        id: sketchnote.id,
+                                        title: sketchnote.title,
+                                        topic: sketchnote.topic,
+                                        subject: sketchnote.subject,
+                                        file_url: sketchnote.file_url,
+                                        description: sketchnote.description,
+                                        presentation_content: sketchnote.presentation_content
+                                    },
+                                    message: `Found "${sketchnote.title}"!${journalMessage}`
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Sketchnote Search Error:", e);
+                toolParts.push({
+                    functionResponse: {
+                        name: 'share_sketchnote',
+                        response: {
+                            name: 'share_sketchnote',
+                            content: {
+                                status: 'error',
                                 error: String(e)
                             }
                         }

@@ -366,6 +366,19 @@ FORMATTING RULES:
                         },
                         required: ["content", "category"]
                     }
+                },
+                {
+                    name: "share_sketchnote",
+                    description: "Search for and share a visual sketchnote with the student. Sketchnotes are pre-made visual summaries of topics. Optionally add to student's journal. Use when a topic would benefit from a visual summary.",
+                    parameters: {
+                        type: SchemaType.OBJECT,
+                        properties: {
+                            topic: { type: SchemaType.STRING, description: "Topic to search for (e.g., 'fractions', 'photosynthesis')" },
+                            subject: { type: SchemaType.STRING, description: "Subject area (math, science, reading, etc)" },
+                            addToJournal: { type: SchemaType.STRING, description: "Whether to add to student's journal (true/false)" }
+                        },
+                        required: ["topic"]
+                    }
                 }
             ]
         }];
