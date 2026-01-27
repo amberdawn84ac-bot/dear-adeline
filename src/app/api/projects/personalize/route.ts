@@ -54,7 +54,7 @@ Student: ${studentName || 'Student'}, Grade: ${gradeLevel || 'elementary'}
 IMPORTANT: Write a mini-lesson FIRST that teaches the concept, THEN give the project instructions.`;
 
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.0-flash',
             systemInstruction: systemPrompt
         });
 

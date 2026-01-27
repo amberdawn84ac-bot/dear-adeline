@@ -9,8 +9,8 @@ import { autoFormatSketchnote } from '@/lib/sketchnoteUtils';
 import { ModelRouter } from '@/lib/services/modelRouter';
 
 // Use the recommended "flash" model for speed and cost-effectiveness
-const GOOGLE_FLASH_MODEL = 'gemini-1.5-flash';
-const GOOGLE_PRO_MODEL = 'gemini-1.5-pro'; // More capable model for complex tasks
+const GOOGLE_FLASH_MODEL = 'gemini-2.0-flash';
+const GOOGLE_PRO_MODEL = 'gemini-2.5-pro'; // More capable model for complex tasks
 
 
 // Define the log_activity tool schema for Google Generative AI
@@ -23,26 +23,26 @@ const tools = [
         parameters: {
           type: SchemaType.OBJECT,
           properties: {
-            caption: { 
-              type: SchemaType.STRING, 
+            caption: {
+              type: SchemaType.STRING,
               description: "A detailed description of the activity performed by the student. E.g., 'Baked sourdough bread from scratch', 'Built a working model of a solar system', 'Researched the history of feudalism in Japan'.",
               nullable: false
             },
-            translation: { 
-              type: SchemaType.STRING, 
+            translation: {
+              type: SchemaType.STRING,
               description: "The academic translation of the activity, identifying the primary subject area and core academic concept. E.g., 'Chemistry: Fermentation, Reaction Kinetics', 'Astronomy: Orbital Mechanics, Scale Modeling', 'History: Feudal Systems, Cultural Exchange'.",
               nullable: false
             },
-            skills: { 
-              type: SchemaType.ARRAY, 
-              items: { 
-                type: SchemaType.STRING 
-              }, 
+            skills: {
+              type: SchemaType.ARRAY,
+              items: {
+                type: SchemaType.STRING
+              },
               description: "An array of specific skills acquired or demonstrated during the activity. These should be concise and academically relevant. E.g., ['Experimentation', 'Data Analysis', 'Problem Solving', 'Historical Research', 'Baking Fundamentals'].",
               nullable: false
             },
-            grade: { 
-              type: SchemaType.STRING, 
+            grade: {
+              type: SchemaType.STRING,
               description: "The approximate grade level equivalent of the activity or skill. E.g., 'K', '3rd Grade', 'Middle School Science', 'High School Chemistry'.",
               nullable: false
             }
@@ -89,15 +89,15 @@ export async function POST(request: Request) {
 
     let selectedModel;
     switch (route.model) {
-        case 'gemini': // Default gemini case
-            selectedModel = GOOGLE_FLASH_MODEL; // Default to the cheaper model for cost savings
-            break;
-        case 'grok':
-        case 'gpt4':
-        default:
-            console.warn(`⚠️ ${route.model} not yet implemented in Adeline endpoint, falling back to Gemini`);
-            selectedModel = GOOGLE_FLASH_MODEL; // Fallback for unimplemented models
-            break;
+      case 'gemini': // Default gemini case
+        selectedModel = GOOGLE_FLASH_MODEL; // Default to the cheaper model for cost savings
+        break;
+      case 'grok':
+      case 'gpt4':
+      default:
+        console.warn(`⚠️ ${route.model} not yet implemented in Adeline endpoint, falling back to Gemini`);
+        selectedModel = GOOGLE_FLASH_MODEL; // Fallback for unimplemented models
+        break;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,23 +108,23 @@ export async function POST(request: Request) {
     const systemPrompt = generateSystemPrompt(studentInfo, null, history && history.length > 0 ? history[history.length - 1] : null);
 
     const chat = model.startChat({
-        history: [
-            {
-                role: "user",
-                parts: [{ text: systemPrompt }], // Send system prompt as initial user message for chat context
-            },
-            {
-                role: "model",
-                parts: [{ text: "Understood." }], // Acknowledge system prompt
-            },
-            ...(history || []).map((msg: HistoryMessage) => ({ // Add previous chat history
-                role: msg.speaker === 'student' ? 'user' : 'model',
-                parts: [{ text: msg.text }]
-            }))
-        ],
-        generationConfig: {
-            // responseMimeType: "text/plain", // Default to text/plain for normal chat
+      history: [
+        {
+          role: "user",
+          parts: [{ text: systemPrompt }], // Send system prompt as initial user message for chat context
         },
+        {
+          role: "model",
+          parts: [{ text: "Understood." }], // Acknowledge system prompt
+        },
+        ...(history || []).map((msg: HistoryMessage) => ({ // Add previous chat history
+          role: msg.speaker === 'student' ? 'user' : 'model',
+          parts: [{ text: msg.text }]
+        }))
+      ],
+      generationConfig: {
+        // responseMimeType: "text/plain", // Default to text/plain for normal chat
+      },
     });
 
     const result = await chat.sendMessage(prompt);
@@ -160,10 +160,10 @@ export async function POST(request: Request) {
       const toolSuccessResponse = await chat.sendMessage([
         { functionResponse: { name: "log_activity", response: { success: true, message: "Activity successfully logged to cloud database." } } }
       ]);
-      
+
       let messageText = toolSuccessResponse.response.text();
       messageText = autoFormatSketchnote(prompt, messageText);
-      
+
       return NextResponse.json({ message: messageText }, { status: 200 });
 
     } else {

@@ -26,7 +26,7 @@ Category: ${category || 'general'}
 The project should let students APPLY what they learned through hands-on exploration.`;
 
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.0-flash',
             systemInstruction: PROJECT_GENERATION_PROMPT
         });
 

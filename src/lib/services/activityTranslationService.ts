@@ -11,7 +11,7 @@ const ActivityTranslationSchema = z.object({
 export type ActivityTranslation = z.infer<typeof ActivityTranslationSchema>;
 
 export class ActivityTranslationService {
-  private static modelName = 'gemini-1.5-flash';
+  private static modelName = 'gemini-2.0-flash';
 
   // Keyword mappings for fallback skill detection
   private static skillKeywords: Record<string, string[]> = {
