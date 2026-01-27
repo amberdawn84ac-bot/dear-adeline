@@ -8,7 +8,7 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { userId, sessionId, displayName, grade, state } = await req.json();
+    const { userId, sessionId, displayName, grade, state, interests, learningStyle } = await req.json();
 
     // Support both userId (logged-in users) and sessionId (pre-signup users)
     const trackingId = userId && userId !== 'temp' ? userId : null;
@@ -80,13 +80,23 @@ export async function POST(req: Request) {
 
     // Create first question
     const name = displayName || 'friend';
-    // Learning Science: Start with "Interest-Based Learning" to build engagement and lower anxiety (Affective Filter).
-    const firstQuestion = `Hi ${name}! I'm so glad you're here. To help me design the perfect learning path for you, I'd love to know: what are 2 or 3 things you are really curious about right now? (It could be anything - from space to horses to Minecraft!)`;
+    let firstQuestion = `Hi ${name}! I'm so glad you're here. To help me design the perfect learning path for you, I'd love to know: what are 2 or 3 things you are really curious about right now? (It could be anything - from space to horses to Minecraft!)`;
+
+    // Personalize if we have interests
+    if (interests && interests.length > 0) {
+      const interestsStr = interests.join(', ');
+      firstQuestion = `Hi ${name}! It's so cool that you're into ${interestsStr}. I'd love to help you explore those! To get us started, could you tell me a little more about what you like most about ${interests[0]}?`;
+    }
 
     // Create new assessment - use session_id for pre-signup, student_id for logged-in
     const insertData: any = {
       current_subject: 'introduction',
       status: 'in_progress',
+      learning_profile: {
+        interests: interests || [],
+        style: learningStyle || 'mixed',
+        pace: 'moderate' // default
+      },
       responses: {
         "0": {
           question: firstQuestion,
@@ -107,13 +117,9 @@ export async function POST(req: Request) {
           id: trackingId,
           display_name: displayName || 'Student',
           role: 'student', // Default to student
-          // Add other required fields if any? usually email is good but we might not have it here. 
-          // Hopefully email is not NOT NULL in profiles or we can skip it.
-          // If email is required, we might fail. But let's try.
         });
         if (profileError) {
           console.error('Failed to create fallback profile:', profileError);
-          // If this fails, the next insert likely fails too, but we proceed to let it throw standard error.
         }
       }
       // END FIX
