@@ -16,6 +16,20 @@ jest.mock('@/lib/services/masteryService');
 jest.mock('@/lib/services/learningGapService');
 jest.mock('@/lib/services/activitySuggestionService');
 
+jest.mock('next/server', () => ({
+  NextResponse: {
+    json: jest.fn((data: any, init?: any) => ({
+      json: () => Promise.resolve(data),
+      status: init?.status || 200,
+    })),
+  },
+  NextRequest: jest.fn((url: string, init?: any) => ({
+    url,
+    ...init,
+    json: () => Promise.resolve(JSON.parse(init?.body as string)),
+  })),
+}));
+
 describe('/api/logs/translate POST', () => {
   // Shared mock for activity_logs insert chain
   const mockActivityLogsSingle = jest.fn();
@@ -77,10 +91,11 @@ describe('/api/logs/translate POST', () => {
       error: null,
     });
 
-    const req = new NextRequest('http://localhost/api/logs/translate', {
+    const req = {
+      url: 'http://localhost/api/logs/translate',
       method: 'POST',
-      body: JSON.stringify({ caption: 'Cooked stuff' }),
-    });
+      json: async () => ({ caption: 'Cooked stuff' }),
+    } as unknown as NextRequest;
 
     const response = await POST(req);
     const body = await response.json();
@@ -124,10 +139,11 @@ describe('/api/logs/translate POST', () => {
       error: null,
     });
 
-    const req = new NextRequest('http://localhost/api/logs/translate', {
+    const req = {
+      url: 'http://localhost/api/logs/translate',
       method: 'POST',
-      body: JSON.stringify({ caption: 'Made cookies' }),
-    });
+      json: async () => ({ caption: 'Made cookies' }),
+    } as unknown as NextRequest;
 
     const response = await POST(req);
     const body = await response.json();

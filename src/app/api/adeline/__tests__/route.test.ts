@@ -46,12 +46,12 @@ describe('Adeline API Route (Google AI)', () => {
     jest.clearAllMocks();
     mockGetGoogleAIAPIKey.mockReturnValue('test_google_api_key');
     (createClient as jest.Mock).mockReturnValue({
-        auth: {
-            getUser: jest.fn().mockResolvedValue({
-                data: { user: { id: 'test-user-id' } },
-                error: null,
-            }),
-        },
+      auth: {
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: 'test-user-id' } },
+          error: null,
+        }),
+      },
     });
   });
 
@@ -65,6 +65,8 @@ describe('Adeline API Route (Google AI)', () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const request = new (NextRequest as any)('http://localhost/api/adeline', {
+      method: 'POST',
+      body: JSON.stringify({ prompt: 'Tell me a story.' }),
     });
 
     const response = await POST(request);

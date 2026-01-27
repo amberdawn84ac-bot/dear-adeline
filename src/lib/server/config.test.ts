@@ -19,7 +19,7 @@ describe('getGoogleAIAPIKey', () => {
 
   it('should throw an error if GOOGLE_AI_API_KEY is not set', () => {
     delete process.env.GOOGLE_AI_API_KEY;
-    expect(() => getGoogleAIAPIKey()).toThrow('Missing GOOGLE_AI_API_KEY environment variable');
+    expect(() => getGoogleAIAPIKey()).toThrow('Missing GOOGLE_AI_API_KEY or GOOGLE_API_KEY environment variable');
   });
 
   // This test verifies that the API key is not directly exposed in the client-side bundle

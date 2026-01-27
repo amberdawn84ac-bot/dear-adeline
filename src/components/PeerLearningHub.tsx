@@ -1,25 +1,27 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  UserPlus, 
-  MessageSquare, 
-  Star, 
-  Clock, 
-  CheckCircle, 
+import {
+  Users,
+  UserPlus,
+  MessageSquare,
+  Star,
+  Clock,
+  CheckCircle,
   ShieldCheck,
   ChevronRight,
   Search
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { PeerLearningService, LearningPod, MentorshipLog, PeerReview } from '@/lib/services/peerLearningService';
+import { PodWorkspace } from './PodWorkspace';
 
 interface PeerLearningHubProps {
   userId: string;
 }
 
 export function PeerLearningHub({ userId }: PeerLearningHubProps) {
+  const [selectedPod, setSelectedPod] = useState<LearningPod | null>(null);
   const [pods, setPods] = useState<LearningPod[]>([]);
   const [mentoringHours, setMentoringHours] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -40,6 +42,17 @@ export function PeerLearningHub({ userId }: PeerLearningHubProps) {
     setMentoringHours(hours);
     setLoading(false);
   };
+
+  if (selectedPod) {
+    return (
+      <PodWorkspace
+        podId={selectedPod.id}
+        podName={selectedPod.name}
+        userId={userId}
+        onBack={() => setSelectedPod(null)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -86,11 +99,10 @@ export function PeerLearningHub({ userId }: PeerLearningHubProps) {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all ${
-              activeTab === tab.id
-                ? 'bg-white text-purple-600 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === tab.id
+              ? 'bg-white text-purple-600 shadow-sm'
+              : 'text-slate-500 hover:text-slate-800'
+              }`}
           >
             <tab.icon className="w-4 h-4" />
             {tab.label}
@@ -119,7 +131,10 @@ export function PeerLearningHub({ userId }: PeerLearningHubProps) {
                       </div>
                       <h4 className="text-xl font-bold serif text-slate-800 mb-2">{pod.name}</h4>
                       <p className="text-sm text-slate-500 mb-6 leading-relaxed">{pod.description}</p>
-                      <button className="flex items-center gap-2 text-purple-600 font-bold text-sm group-hover:gap-3 transition-all">
+                      <button
+                        onClick={() => setSelectedPod(pod)}
+                        className="flex items-center gap-2 text-purple-600 font-bold text-sm group-hover:gap-3 transition-all"
+                      >
                         Enter Workspace <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>

@@ -22,7 +22,7 @@ describe('MasteryService', () => {
         return {
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ data: [], error: null }), // No existing skill
+              ilike: jest.fn().mockResolvedValue({ data: [], error: null }), // Added ilike mock
             }),
           }),
           insert: jest.fn().mockResolvedValue({ error: null }),
@@ -31,9 +31,27 @@ describe('MasteryService', () => {
       if (table === 'skills') {
         return {
           select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockResolvedValue({ 
-              data: [{ id: 'skill-123', name: 'Baking', credit_value: 0.25 }], 
-              error: null 
+            // Support .eq().maybeSingle() chain if needed
+            eq: jest.fn().mockReturnValue({
+              maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+            // Support .ilike('name', ...).maybeSingle() chain
+            ilike: jest.fn().mockReturnValue({
+              maybeSingle: jest.fn().mockResolvedValue({
+                data: { id: 'skill-123', name: 'Baking', credit_value: 0.25 },
+                error: null
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === 'skill_levels') {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { level: 'mastered' }, error: null }),
+              }),
             }),
           }),
         };
@@ -41,10 +59,13 @@ describe('MasteryService', () => {
       return {};
     });
 
+    // Mock rpc call
+    mockSupabase.rpc = jest.fn().mockResolvedValue({ error: null });
+
     const result = await MasteryService.processSkills('student-1', ['Baking']);
-    
+
     expect(result).toEqual([
-      { skill: 'Baking', status: 'Mastered', creditEarned: 0.25 }
+      { skill: 'Baking', status: 'Mastered', level: 100, creditEarned: 0.25 }
     ]);
   });
 });

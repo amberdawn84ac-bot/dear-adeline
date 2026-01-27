@@ -65,7 +65,7 @@ describe('Student Interests API Route (Get)', () => {
         expect(response.status).toBe(200);
         expect(data).toEqual({ data: { interests: ['coding', 'robots'] } });
         expect(mockSupabase.from).toHaveBeenCalledWith('student_interests');
-        expect(mockSupabase.from().eq).toHaveBeenCalledWith('user_id', 'test_user_id');
+        expect(mockSupabase.from().eq).toHaveBeenCalledWith('student_id', 'test_user_id');
     });
 
     it('should return 401 if the user is not authenticated', async () => {

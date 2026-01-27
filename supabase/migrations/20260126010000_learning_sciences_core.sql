@@ -36,12 +36,13 @@ CREATE POLICY "System can insert ledger" ON credit_ledger
 alter publication supabase_realtime add table credit_ledger;
 
 -- Update Academic Missions for Student Agency
-ALTER TABLE academic_missions
-ADD COLUMN IF NOT EXISTS is_student_initiated BOOLEAN DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS student_proposal_data JSONB DEFAULT '{}'::jsonb,
-ADD COLUMN IF NOT EXISTS deadline TIMESTAMPTZ,
-ADD COLUMN IF NOT EXISTS mentor_feedback TEXT,
-ADD COLUMN IF NOT EXISTS submission_status TEXT DEFAULT 'draft' CHECK (submission_status IN ('draft', 'submitted', 'approved', 'changes_requested'));
+-- Update Academic Missions for Student Agency
+-- ALTER TABLE academic_missions
+-- ADD COLUMN IF NOT EXISTS is_student_initiated BOOLEAN DEFAULT FALSE,
+-- ADD COLUMN IF NOT EXISTS student_proposal_data JSONB DEFAULT '{}'::jsonb,
+-- ADD COLUMN IF NOT EXISTS deadline TIMESTAMPTZ,
+-- ADD COLUMN IF NOT EXISTS mentor_feedback TEXT,
+-- ADD COLUMN IF NOT EXISTS submission_status TEXT DEFAULT 'draft' CHECK (submission_status IN ('draft', 'submitted', 'approved', 'changes_requested'));
 
 -- Function to update aggregated progress when a ledger entry is verified
 CREATE OR REPLACE FUNCTION update_progress_from_ledger()
