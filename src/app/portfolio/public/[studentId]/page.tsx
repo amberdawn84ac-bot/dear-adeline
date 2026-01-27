@@ -7,8 +7,8 @@ const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default async function PublicPortfolioPage({ params }: { params: { studentId: string } }) {
-    const { studentId } = params;
+export default async function PublicPortfolioPage({ params }: { params: Promise<{ studentId: string }> }) {
+    const { studentId } = await params;
 
     // Get student profile - check if portfolio is public
     const { data: profile } = await supabase
