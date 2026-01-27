@@ -151,7 +151,7 @@ export default function OnboardingAssessment({ user }: { user: any }) {
                 throw new Error(data.error);
             }
 
-            if (data.complete) {
+            if (data.completed) {
                 addAdelineMessage(data.completionMessage || "That's everything I need! You did great.");
 
                 // Trigger Learning Plan Generation
