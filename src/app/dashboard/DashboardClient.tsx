@@ -1,7 +1,7 @@
+'use client';
+
 import { ProjectProposalModal } from '@/components/ProjectProposalModal';
 import { useState, useRef, useEffect } from 'react';
-// import { useToast } from '@/components/ui/use-toast';
-
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {

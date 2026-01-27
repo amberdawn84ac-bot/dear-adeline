@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2, Sparkles, X, Send } from 'lucide-react';
