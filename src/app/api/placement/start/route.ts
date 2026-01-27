@@ -8,7 +8,7 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { userId, sessionId, displayName, grade, state, interests, learningStyle } = await req.json();
+    const { userId, sessionId, displayName, grade, state, city, interests, learningStyle } = await req.json();
 
     // Support both userId (logged-in users) and sessionId (pre-signup users)
     const trackingId = userId && userId !== 'temp' ? userId : null;
@@ -123,6 +123,15 @@ export async function POST(req: Request) {
         }
       }
       // END FIX
+
+      // Update profile with location if provided
+      if (city || state) {
+        const updates: any = {};
+        if (city) updates.city = city;
+        if (state) updates.state = state;
+
+        await supabase.from('profiles').update(updates).eq('id', trackingId);
+      }
     }
     if (trackingSessionId) {
       insertData.session_id = trackingSessionId;

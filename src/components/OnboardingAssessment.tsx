@@ -2,14 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Send, Loader2, Check, ArrowRight, Rocket, Gamepad2, Palette, Music, Trophy, Microscope, BookOpen, Globe } from 'lucide-react';
+import { Sparkles, Send, Loader2, Check, ArrowRight, Rocket, Gamepad2, Palette, Music, Trophy, Microscope, BookOpen, Globe, MapPin } from 'lucide-react';
 
 interface Message {
     role: 'adeline' | 'user';
     content: string;
 }
 
-type SetupStep = 'interests' | 'style' | 'chat';
+type SetupStep = 'location' | 'interests' | 'style' | 'chat';
 
 const INTERESTS = [
     { id: 'space', label: 'Space & Universe', icon: Rocket, color: 'bg-indigo-100 text-indigo-600' },
@@ -33,7 +33,9 @@ export default function OnboardingAssessment({ user }: { user: any }) {
     const router = useRouter();
 
     // State
-    const [step, setStep] = useState<SetupStep>('interests');
+    const [step, setStep] = useState<SetupStep>('location');
+    const [city, setCity] = useState('');
+    const [stateLocation, setStateLocation] = useState('');
     const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
     const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
 
@@ -90,6 +92,8 @@ export default function OnboardingAssessment({ user }: { user: any }) {
                 body: JSON.stringify({
                     userId: user.id,
                     displayName: displayName,
+                    city: city,
+                    state: stateLocation,
                     grade: user.user_metadata?.grade_level,
                     interests: selectedInterests.map(id => INTERESTS.find(i => i.id === id)?.label),
                     learningStyle: LEARNING_STYLES.find(s => s.id === selectedStyle)?.description
@@ -204,11 +208,13 @@ export default function OnboardingAssessment({ user }: { user: any }) {
                     <Sparkles className="w-8 h-8 text-white" />
                 </div>
                 <h1 className="text-3xl font-bold text-[var(--forest)] mb-2">
+                    {step === 'location' && "Where are you learning from?"}
                     {step === 'interests' && "What captures your imagination?"}
                     {step === 'style' && "How do you like to learn?"}
                     {step === 'chat' && "Let's personalize your plan"}
                 </h1>
                 <p className="text-[var(--charcoal-light)]">
+                    {step === 'location' && "Tell us your city and state so we can find things near you."}
                     {step === 'interests' && "Pick up to 3 topics you love."}
                     {step === 'style' && "Help Adeline teach you better."}
                     {step === 'chat' && "Chat with Adeline to finish your profile."}
@@ -217,6 +223,48 @@ export default function OnboardingAssessment({ user }: { user: any }) {
 
             {/* Container */}
             <div className="bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-[var(--forest)]/5 min-h-[500px] flex flex-col">
+
+                {/* LOCATION STEP */}
+                {step === 'location' && (
+                    <div className="p-8 flex-1 flex flex-col max-w-lg mx-auto w-full justify-center">
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-[var(--forest)] uppercase tracking-wider flex items-center gap-2">
+                                    <MapPin className="w-4 h-4" /> City
+                                </label>
+                                <input
+                                    type="text"
+                                    value={city}
+                                    onChange={(e) => setCity(e.target.value)}
+                                    placeholder="e.g. Austin"
+                                    className="w-full px-6 py-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:bg-white focus:border-[var(--forest)] outline-none transition-all text-lg"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-[var(--forest)] uppercase tracking-wider flex items-center gap-2">
+                                    <MapPin className="w-4 h-4" /> State
+                                </label>
+                                <input
+                                    type="text"
+                                    value={stateLocation}
+                                    onChange={(e) => setStateLocation(e.target.value)}
+                                    placeholder="e.g. Texas"
+                                    className="w-full px-6 py-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:bg-white focus:border-[var(--forest)] outline-none transition-all text-lg"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-12 flex justify-end">
+                            <button
+                                onClick={() => setStep('interests')}
+                                disabled={!city.trim() || !stateLocation.trim()}
+                                className="flex items-center gap-2 px-8 py-4 bg-[var(--forest)] text-white rounded-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl active:scale-95 font-medium text-lg w-full justify-center"
+                            >
+                                Continue <ArrowRight className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* INTERESTS STEP */}
                 {step === 'interests' && (
