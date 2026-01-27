@@ -306,7 +306,7 @@ CRITICAL RULES:
 5. **Move the Ball Forward**: If the student just answers "yes" or "no" or gives a short answer, confirm and then ASK THE NEXT ASSESSMENT QUESTION.
 
 WHEN TO FINISH:
-After assessing 5-6 math skills, 3-4 reading skills, 2-3 science skills, and 1-2 Hebrew/Biblical checks, say:
+After assessing 2-3 math skills, 1-2 reading skills, 1 science skill, and 1 Hebrew/Biblical check, say:
 "This is so helpful! I have a great idea of where we should start. Give me a moment to build your custom plan..."
 Then call the \`generate_placement_report\` tool.
 

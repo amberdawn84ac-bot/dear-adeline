@@ -1,9 +1,16 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const apiKey = process.env.GOOGLE_API_KEY;
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : undefined;
 
 export async function POST(request: Request) {
     try {
+        if (!genAI) {
+            return NextResponse.json({ error: 'Google API Key Missing' }, { status: 500 });
+        }
+
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
@@ -11,26 +18,30 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { studentId, gradeLevel, state } = await request.json();
-
-        if (!gradeLevel || !state) {
-            return NextResponse.json({ error: 'Grade level and state required' }, { status: 400 });
+        let body;
+        try {
+            body = await request.json();
+        } catch (e) {
+            return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
         }
 
-        const anthropic = new Anthropic({
-            apiKey: process.env.ANTHROPIC_API_KEY,
-        });
+        const { studentId, gradeLevel, state = 'National' } = body;
 
-        const prompt = `Generate a comprehensive yearly learning plan for a ${gradeLevel} student in ${state}.
+        // While gradeLevel is helpful, we can default if missing to ensure generation
+        const targetGrade = gradeLevel || '6th Grade';
 
-Based on ${state} state standards, provide:
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+        const prompt = `Generate a comprehensive yearly learning plan for a ${targetGrade} student in ${state}.
+
+Based on ${state} state standards (or national standards if state is generic), provide:
 
 1. YEARLY GOALS: Major skills and concepts they should master by end of year
 2. QUARTERLY MILESTONES: Break down into 4 quarters
 3. MONTHLY FOCUS AREAS: Key topics for each month
 4. WEEKLY THEMES: General weekly progression
 
-Format as JSON:
+Format as specific JSON only (no markdown code blocks):
 {
   "yearlyGoals": {
     "math": ["goal1", "goal2"],
@@ -63,33 +74,30 @@ Format as JSON:
   ]
 }
 
-Make it aligned with ${state} standards but flexible for homeschool adaptation.`;
+Make it aligned with standards but flexible for homeschool adaptation. Ensure valid JSON.`;
 
-        const response = await anthropic.messages.create({
-            model: 'claude-3-haiku-20240307',
-            max_tokens: 4096,
-            messages: [{ role: 'user', content: prompt }],
-        });
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
 
-        const content = response.content[0];
         let learningPlan;
-
-        if (content.type === 'text') {
-            // Try to extract JSON from the response
-            const jsonMatch = content.text.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                learningPlan = JSON.parse(jsonMatch[0]);
-            } else {
-                learningPlan = { error: 'Could not parse learning plan' };
-            }
+        try {
+            // Clean up potential markdown formatting
+            const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+            learningPlan = JSON.parse(cleanJson);
+        } catch (parseError) {
+            console.error('Failed to parse Gemini response:', responseText);
+            return NextResponse.json({ error: 'Failed to generate valid plan format' }, { status: 500 });
         }
+
+        // Use provided studentId or falling back to current user if matches
+        const targetStudentId = studentId || user.id;
 
         // Save to database
         const { error: saveError } = await supabase
             .from('student_learning_plans')
             .upsert({
-                student_id: studentId,
-                grade_level: gradeLevel,
+                student_id: targetStudentId,
+                grade_level: targetGrade,
                 state: state,
                 yearly_goals: learningPlan.yearlyGoals,
                 quarters: learningPlan.quarters,
@@ -102,6 +110,7 @@ Make it aligned with ${state} standards but flexible for homeschool adaptation.`
 
         if (saveError) {
             console.error('Error saving learning plan:', saveError);
+            return NextResponse.json({ error: 'Database save failed', details: saveError.message }, { status: 500 });
         }
 
         return NextResponse.json({
@@ -109,11 +118,10 @@ Make it aligned with ${state} standards but flexible for homeschool adaptation.`
             learningPlan
         });
 
-    } catch (error: unknown) {
+    } catch (error: any) {
         console.error('Learning plan generation error:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: errorMessage || 'Failed to generate learning plan' },
+            { error: error.message || 'Failed to generate learning plan' },
             { status: 500 }
         );
     }

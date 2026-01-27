@@ -118,11 +118,39 @@ export default function OnboardingAssessment({ user }: { user: any }) {
 
             if (data.complete) {
                 addAdelineMessage(data.completionMessage || "That's everything I need! You did great.");
-                setTimeout(() => {
-                    addAdelineMessage("Building your personalized dashboard now...");
-                    setTimeout(() => {
-                        router.push('/dashboard');
-                    }, 2000);
+
+                // Trigger Learning Plan Generation
+                setTimeout(async () => {
+                    addAdelineMessage("Building your personalized learning plan now... (This might take a moment!)");
+
+                    try {
+                        const report = data.placementReport;
+                        // Extract grade level from report if possible, or fallback
+                        const estimatedGrade = report?.recommendedStartingLevel || user.user_metadata?.grade_level || '6th Grade';
+
+                        await fetch('/api/learning-plan/generate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                studentId: user.id,
+                                gradeLevel: estimatedGrade,
+                                state: user.user_metadata?.state || 'National'
+                            })
+                        });
+
+                        addAdelineMessage("All done! Your dashboard is ready.");
+                        setTimeout(() => {
+                            router.push('/dashboard');
+                        }, 1500);
+
+                    } catch (genError) {
+                        console.error("Plan generation failed:", genError);
+                        // Still redirect so user isn't stuck
+                        addAdelineMessage("I've saved your results! Let's go to the dashboard.");
+                        setTimeout(() => {
+                            router.push('/dashboard');
+                        }, 1500);
+                    }
                 }, 1000);
             } else {
                 addAdelineMessage(data.nextQuestion);
