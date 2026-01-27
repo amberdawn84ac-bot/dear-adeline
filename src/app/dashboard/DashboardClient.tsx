@@ -1,8 +1,7 @@
 import { ProjectProposalModal } from '@/components/ProjectProposalModal';
 import { useState, useRef, useEffect } from 'react';
-// import { useToast } from '@/components/ui/use-toast'; // Commenting out until we find it
+// import { useToast } from '@/components/ui/use-toast';
 
-// ... existing imports ...
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
