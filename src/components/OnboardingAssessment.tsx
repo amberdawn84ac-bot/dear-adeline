@@ -112,6 +112,10 @@ export default function OnboardingAssessment({ user }: { user: any }) {
 
             const data = await result.json();
 
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
             if (data.complete) {
                 addAdelineMessage(data.completionMessage || "That's everything I need! You did great.");
                 setTimeout(() => {
