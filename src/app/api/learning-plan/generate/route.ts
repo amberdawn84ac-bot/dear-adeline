@@ -34,8 +34,16 @@ export async function POST(request: Request) {
 
         const prompt = `Generate a comprehensive yearly learning plan for a ${targetGrade} student in ${state}.
 
-Based on ${state} state standards (or national standards if state is generic), provide:
+CRITICAL REQUIREMENT:
+You MUST align this strictly with ${state} state educational standards. 
+- If ${state} is "Texas", use TEKS.
+- If "Virginia", use SOL.
+- If "New York", use Next Generation Learning Standards.
+- If "National" or generic, use Common Core.
 
+Please CITE specific standard codes where possible in the descriptions (e.g. "TEKS 4.2(B)").
+
+Provide:
 1. YEARLY GOALS: Major skills and concepts they should master by end of year
 2. QUARTERLY MILESTONES: Break down into 4 quarters
 3. MONTHLY FOCUS AREAS: Key topics for each month
@@ -44,7 +52,7 @@ Based on ${state} state standards (or national standards if state is generic), p
 Format as specific JSON only (no markdown code blocks):
 {
   "yearlyGoals": {
-    "math": ["goal1", "goal2"],
+    "math": ["goal1 (Standard Code)", "goal2"],
     "english": ["goal1", "goal2"],
     "science": ["goal1", "goal2"],
     "history": ["goal1", "goal2"],

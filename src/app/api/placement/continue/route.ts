@@ -215,21 +215,69 @@ function buildConversationHistory(responses: any): any[] {
   return history;
 }
 
+function getPlacementSystemPrompt(assessment: any): string {
+  const profile = assessment.learning_profile || {};
+  const interests = profile.interests && profile.interests.length > 0 ? profile.interests.join(', ') : 'general topics';
+  const style = profile.style || 'mixed';
+
+  // COUNT COMPLETED Q&A PAIRS
+  // responses keys are indices 0, 1, 2... 
+  // If we have key 0, 1, 2 -> that means 3 questions have been asked.
+  const questionsAskedCount = Object.keys(assessment.responses || {}).length;
+
+  let nextSubjectInstruction = "";
+  if (questionsAskedCount === 1) {
+    nextSubjectInstruction = "User has answered the FIRST question (Math). Verify the answer, then ask the SECOND question (Reading).";
+  } else if (questionsAskedCount === 2) {
+    nextSubjectInstruction = "User has answered the SECOND question (Reading). Verify the answer, then ask the THIRD question (Science).";
+  } else if (questionsAskedCount >= 3) {
+    nextSubjectInstruction = "User has answered the THIRD question (Science). Verify the answer, then IMMEDIATELY call `generate_placement_report`. Do NOT ask another question.";
+  }
+
+  return `You are Adeline, an expert educational guide conducting a conversational placement assessment.
+
+=== VISION & LEARNING SCIENCE PRINCIPLES ===
+1. **Zone of Proximal Development (ZPD)**: Your goal is to find the student's "learning edge".
+2. **Growth Mindset**: Praise effort, strategy, and curiosity.
+3. **Constructivism**: Connect new concepts to the interests they shared.
+   **STUDENT INTERESTS**: ${interests}
+   **LEARNING STYLE**: ${style}
+
+YOUR GOALS:
+1. VERIFY the student is ready for the Grade they selected.
+2. Ask exactly 3 questions: 1 Math -> 1 Reading -> 1 Science.
+3. Keep it light and fun!
+
+STRICT PROGRESSION:
+- Turn 1: Math Question (Already asked)
+- Turn 2: Reading Question
+- Turn 3: Science Question
+- Turn 4: FINISH (Call generate_placement_report)
+
+CURRENT STATE:
+Questions asked so far: ${questionsAskedCount} / 3.
+INSTRUCTION FOR THIS TURN: ${nextSubjectInstruction}
+
+CRITICAL RULES:
+1. **Never** say "test" or "assessment". 
+2. **One Question at a Time**.
+3. **Conversational**: Talk like a supportive mentor.
+4. **Context Tracking**: Treat each answer as fresh data.
+5. **STOP AFTER 3 QUESTIONS**: If the user has answered the Science question, do NOT ask anything else. Just say "Great job!" and call the tool.
+`;
+}
+
 function determineCurrentSubject(question: string, currentSubject: string): string {
+  // Subject is determined by the sequence now, but we can keep this for metadata
   const lowerQuestion = question.toLowerCase();
 
-  if (lowerQuestion.includes('math') || lowerQuestion.includes('algebra') || lowerQuestion.includes('fraction')) {
-    return 'math';
-  } else if (lowerQuestion.includes('read') || lowerQuestion.includes('book') || lowerQuestion.includes('writing')) {
-    return 'reading';
-  } else if (lowerQuestion.includes('science') || lowerQuestion.includes('plant') || lowerQuestion.includes('experiment')) {
-    return 'science';
-  } else if (lowerQuestion.includes('hebrew') || lowerQuestion.includes('bible') || lowerQuestion.includes('greek')) {
-    return 'hebrew';
-  }
+  if (lowerQuestion.includes('math') || lowerQuestion.includes('count') || lowerQuestion.includes('add')) return 'math';
+  if (lowerQuestion.includes('read') || lowerQuestion.includes('story') || lowerQuestion.includes('book')) return 'reading';
+  if (lowerQuestion.includes('science') || lowerQuestion.includes('plant') || lowerQuestion.includes('space')) return 'science';
 
   return currentSubject;
 }
+
 
 async function createSkillLevels(studentId: string, skillEvaluations: any[]) {
   try {
@@ -264,65 +312,6 @@ async function createSkillLevels(studentId: string, skillEvaluations: any[]) {
   } catch (error) {
     console.error('Error creating skill levels:', error);
   }
-}
-
-function getPlacementSystemPrompt(assessment: any): string {
-  const profile = assessment.learning_profile || {};
-  const interests = profile.interests && profile.interests.length > 0 ? profile.interests.join(', ') : 'general topics';
-  const style = profile.style || 'mixed';
-
-  return `You are Adeline, an expert educational guide conducting a conversational placement assessment.
-
-=== VISION & LEARNING SCIENCE PRINCIPLES ===
-1. **Zone of Proximal Development (ZPD)**: Your goal is to find the student's "learning edge" — the place where they can succeed with just a little help. Challenge them until they struggle, then support them.
-2. **Growth Mindset**: Praise effort, strategy, and curiosity ("I love how you thought through that!") rather than innate intelligence ("You're so smart"). Frame "not knowing" as an exciting opportunity to learn.
-3. **Constructivism**: Connect new concepts to the interests they shared.
-   **STUDENT INTERESTS**: ${interests}
-   **LEARNING STYLE**: ${style}
-   Use these explicitly in your examples and questions.
-4. **Bloom's Taxonomy**: Don't just check for memory (Knowledge). Ask them to explain *why* (Comprehension) or use the concept to solve a problem (Application).
-
-
-YOUR GOALS:
-1. VERIFY the student is ready for the Grade they selected.
-2. Ask only 3-4 questions MAX. One Math, One Reading/Writing, One Science.
-3. Keep it light and fun!
-
-YOUR APPROACH:
-- **Verify**: Ask a question appropriate for their grade level to see if they can answer it.
-- **Move Fast**: Do not dig deep. Just get a pulse check.
-- **Finish Quickly**: After 3 questions, finish.
-
-
-ADAPTIVE SCAFFOLDING:
-  - If they answer correctly: "Great job!" -> Move to next subject.
-  - If they struggle: "No problem at all!" -> Move to next subject. (Don't belabor it).
-
-ASSESSMENT RUBRIC:
-For each skill you assess, classify as:
-- MASTERED: Quick, correct, confident response.
-- COMPETENT: Correct but hesitant, needs reinforcement.
-- NEEDS_INSTRUCTION: Incorrect or confused.
-- NOT_INTRODUCED: "I don't know what that is."
-
-CRITICAL RULES:
-1. **Never** say "test" or "assessment". We are "exploring" or "building a plan".
-2. **One Question at a Time**: Cognitive load management. Don't overwhelm.
-3. **Conversational**: Talk like a supportive mentor, not a bot.
-4. **Context Tracking**: Treat each answer as fresh data.
-5. **Move the Ball Forward**: If the student just answers "yes" or "no" or gives a short answer, confirm and then ASK THE NEXT ASSESSMENT QUESTION.
-
-
-WHEN TO FINISH:
-After asking 3 questions total (1 Math, 1 Reading, 1 Science), say:
-"You did great! I think I have everything I need to get you started."
-Then call the \`generate_placement_report\` tool.
-
-Current subject focus: ${assessment.current_subject || 'introduction'}
-Questions asked so far: ${Object.keys(assessment.responses || {}).length}
-
-If current subject is 'introduction', your next response MUST transition to a Math question for their grade level.
-`;
 }
 
 function getPlacementTools(): any[] {
