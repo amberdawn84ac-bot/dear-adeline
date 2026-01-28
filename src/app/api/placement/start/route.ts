@@ -80,12 +80,12 @@ export async function POST(req: Request) {
 
     // Create first question
     const name = displayName || 'friend';
-    let firstQuestion = `Hi ${name}! I'm so glad you're here. To help me design the perfect learning path for you, I'd love to know: what are 2 or 3 things you are really curious about right now? (It could be anything - from space to horses to Minecraft!)`;
+    let firstQuestion = `Hi ${name}! To get started, I see you're going into ${grade || 'school'}. Let's try a few fun questions to see if that feels like the right fit!`;
 
-    // Personalize if we have interests
+    // Personalize if we have interests - Removed detailed interest question to be faster
     if (interests && interests.length > 0) {
       const interestsStr = interests.join(', ');
-      firstQuestion = `Hi ${name}! It's so cool that you're into ${interestsStr}. I'd love to help you explore those! To get us started, could you tell me a little more about what you like most about ${interests[0]}?`;
+      firstQuestion = `Hi ${name}! I see you're into ${interestsStr} and going into ${grade || 'school'}. Let's try 3 quick questions to see where you're at!`;
     }
 
     // Create new assessment - use session_id for pre-signup, student_id for logged-in

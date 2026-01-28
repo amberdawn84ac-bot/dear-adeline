@@ -9,7 +9,13 @@ interface Message {
     content: string;
 }
 
-type SetupStep = 'location' | 'interests' | 'style' | 'chat';
+type SetupStep = 'location' | 'grade' | 'interests' | 'style' | 'chat';
+
+const GRADES = [
+    'Kindergarten', '1st Grade', '2nd Grade', '3rd Grade', '4th Grade',
+    '5th Grade', '6th Grade', '7th Grade', '8th Grade', '9th Grade',
+    '10th Grade', '11th Grade', '12th Grade'
+];
 
 const INTERESTS = [
     { id: 'space', label: 'Space & Universe', icon: Rocket, color: 'bg-indigo-100 text-indigo-600' },
@@ -36,6 +42,7 @@ export default function OnboardingAssessment({ user }: { user: any }) {
     const [step, setStep] = useState<SetupStep>('location');
     const [city, setCity] = useState('');
     const [stateLocation, setStateLocation] = useState('');
+    const [selectedGrade, setSelectedGrade] = useState('');
     const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
     const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
 
@@ -94,7 +101,7 @@ export default function OnboardingAssessment({ user }: { user: any }) {
                     displayName: displayName,
                     city: city,
                     state: stateLocation,
-                    grade: user.user_metadata?.grade_level,
+                    grade: selectedGrade || user.user_metadata?.grade_level,
                     interests: selectedInterests.map(id => INTERESTS.find(i => i.id === id)?.label),
                     learningStyle: LEARNING_STYLES.find(s => s.id === selectedStyle)?.description
                 })
@@ -209,12 +216,14 @@ export default function OnboardingAssessment({ user }: { user: any }) {
                 </div>
                 <h1 className="text-3xl font-bold text-[var(--forest)] mb-2">
                     {step === 'location' && "Where are you learning from?"}
+                    {step === 'grade' && "What grade are you going into?"}
                     {step === 'interests' && "What captures your imagination?"}
                     {step === 'style' && "How do you like to learn?"}
                     {step === 'chat' && "Let's personalize your plan"}
                 </h1>
                 <p className="text-[var(--charcoal-light)]">
                     {step === 'location' && "Tell us your city and state so we can find things near you."}
+                    {step === 'grade' && "This helps us find the right challenge for you."}
                     {step === 'interests' && "Pick up to 3 topics you love."}
                     {step === 'style' && "Help Adeline teach you better."}
                     {step === 'chat' && "Chat with Adeline to finish your profile."}
@@ -256,9 +265,45 @@ export default function OnboardingAssessment({ user }: { user: any }) {
 
                         <div className="mt-12 flex justify-end">
                             <button
-                                onClick={() => setStep('interests')}
+                                onClick={() => setStep('grade')}
                                 disabled={!city.trim() || !stateLocation.trim()}
                                 className="flex items-center gap-2 px-8 py-4 bg-[var(--forest)] text-white rounded-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl active:scale-95 font-medium text-lg w-full justify-center"
+                            >
+                                Continue <ArrowRight className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* GRADE STEP */}
+                {step === 'grade' && (
+                    <div className="p-8 flex-1 flex flex-col max-w-2xl mx-auto w-full">
+                        <div className="grid grid-cols-3 md:grid-cols-4 gap-3 mb-8">
+                            {GRADES.map((g) => (
+                                <button
+                                    key={g}
+                                    onClick={() => setSelectedGrade(g)}
+                                    className={`p-3 rounded-xl border-2 transition-all text-center font-medium
+                                        ${selectedGrade === g
+                                            ? 'border-[var(--forest)] bg-[var(--forest)] text-white shadow-md transform scale-105'
+                                            : 'border-gray-200 hover:border-[var(--forest)]/50 hover:bg-gray-50 text-gray-700'
+                                        }`}
+                                >
+                                    {g}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="mt-auto flex justify-between items-center">
+                            <button
+                                onClick={() => setStep('location')}
+                                className="text-gray-500 hover:text-[var(--forest)] transition-colors px-4 py-2"
+                            >
+                                Back
+                            </button>
+                            <button
+                                onClick={() => setStep('interests')}
+                                disabled={!selectedGrade}
+                                className="flex items-center gap-2 px-8 py-4 bg-[var(--forest)] text-white rounded-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl active:scale-95 font-medium text-lg"
                             >
                                 Continue <ArrowRight className="w-5 h-5" />
                             </button>
@@ -296,7 +341,7 @@ export default function OnboardingAssessment({ user }: { user: any }) {
                         </div>
                         <div className="mt-auto flex justify-end">
                             <button
-                                onClick={() => setStep('style')}
+                                onClick={() => setStep('grade')}
                                 disabled={selectedInterests.length === 0}
                                 className="flex items-center gap-2 px-8 py-4 bg-[var(--forest)] text-white rounded-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl active:scale-95 font-medium text-lg"
                             >
