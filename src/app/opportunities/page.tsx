@@ -107,6 +107,13 @@ export default function OpportunitiesPage() {
                     scope: selectedScope
                 }),
             });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                console.error('Search API Error:', errData);
+                throw new Error(errData.error || 'Failed to fetch opportunities');
+            }
+
             const data = await res.json();
 
             if (data.opportunities && data.opportunities.length > 0) {
@@ -116,9 +123,13 @@ export default function OpportunitiesPage() {
                     const newOpps = data.opportunities.filter((o: Opportunity) => !existing.has(o.source_url));
                     return [...prev, ...newOpps];
                 });
+            } else {
+                console.log('No opportunities found for this category.');
             }
         } catch (error) {
             console.error('Search failed:', error);
+            // Optionally could use a toast here
+            // alert('Could not generate opportunities at this time. Please try again.');
         } finally {
             setSearchingCategory(null);
         }
@@ -265,8 +276,8 @@ export default function OpportunitiesPage() {
                                             key={scope}
                                             onClick={() => setSelectedScope(scope as any)}
                                             className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedScope === scope
-                                                    ? 'bg-purple-600 text-white'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                ? 'bg-purple-600 text-white'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                 }`}
                                         >
                                             {scope === 'all' ? 'All' : scope.charAt(0).toUpperCase() + scope.slice(1)}
@@ -322,8 +333,8 @@ export default function OpportunitiesPage() {
                                             }}
                                             disabled={isSearching}
                                             className={`relative p-4 rounded-xl border-2 transition-all ${selectedCategory === category.id
-                                                    ? 'border-purple-600 bg-purple-50'
-                                                    : 'border-gray-200 hover:border-purple-300'
+                                                ? 'border-purple-600 bg-purple-50'
+                                                : 'border-gray-200 hover:border-purple-300'
                                                 } ${isSearching ? 'opacity-50' : ''}`}
                                         >
                                             <div className="text-sm font-medium text-gray-900 mb-1">{category.name}</div>
@@ -370,8 +381,8 @@ export default function OpportunitiesPage() {
                                                     </span>
                                                     {opp.scope && (
                                                         <span className={`text-xs font-medium px-3 py-1 rounded-full ${opp.scope === 'local' ? 'bg-blue-100 text-blue-700' :
-                                                                opp.scope === 'national' ? 'bg-green-100 text-green-700' :
-                                                                    'bg-purple-100 text-purple-700'
+                                                            opp.scope === 'national' ? 'bg-green-100 text-green-700' :
+                                                                'bg-purple-100 text-purple-700'
                                                             }`}>
                                                             {opp.scope === 'local' ? '📍 Local' : opp.scope === 'national' ? '🇺🇸 National' : '🌍 International'}
                                                         </span>
@@ -428,8 +439,8 @@ export default function OpportunitiesPage() {
                                                     onClick={() => handleSave(opp.id)}
                                                     disabled={savedIds.includes(opp.id)}
                                                     className={`p-3 rounded-lg transition-colors font-medium text-sm flex items-center justify-center gap-2 ${savedIds.includes(opp.id)
-                                                            ? 'bg-green-100 text-green-600 cursor-default'
-                                                            : 'bg-[var(--forest)] text-white hover:opacity-90 shadow-sm'
+                                                        ? 'bg-green-100 text-green-600 cursor-default'
+                                                        : 'bg-[var(--forest)] text-white hover:opacity-90 shadow-sm'
                                                         }`}
                                                 >
                                                     {savedIds.includes(opp.id) ? (
