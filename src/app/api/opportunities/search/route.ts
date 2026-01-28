@@ -209,9 +209,40 @@ export async function POST(req: Request) {
 
     } catch (error: unknown) {
         console.error('Opportunity generation error:', error);
+
+        // FALLBACK: If AI fails, return existing opportunities from DB for this category
+        console.log('⚠️ AI generation failed, falling back to database search...');
+
+        try {
+            const supabase = await createClient();
+            const { category } = await req.json().catch(() => ({ category: 'all' }));
+
+            let query = supabase
+                .from('opportunities')
+                .select('*')
+                .eq('status', 'active');
+
+            if (category && category !== 'all') {
+                query = query.contains('disciplines', [category]);
+            }
+
+            const { data: fallbackOpps } = await query.limit(20);
+
+            if (fallbackOpps && fallbackOpps.length > 0) {
+                return NextResponse.json({
+                    opportunities: fallbackOpps,
+                    count: fallbackOpps.length,
+                    searched: 0,
+                    source: 'fallback_db'
+                });
+            }
+        } catch (dbError) {
+            console.error('Fallback DB search failed:', dbError);
+        }
+
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json({
-            error: 'Generation failed',
+            error: 'Generation failed and no fallback data found',
             details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
         }, { status: 500 });
     }
