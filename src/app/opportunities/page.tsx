@@ -72,6 +72,35 @@ export default function OpportunitiesPage() {
         }
     }, [loading, opportunities.length]);
 
+    // Debounced search effect
+    useEffect(() => {
+        const searchOpportunities = async () => {
+            if (query.trim().length < 2) return; // Don't search for 1 character
+
+            setLoading(true);
+            try {
+                const res = await fetch(`/api/opportunities/search?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+
+                if (data.opportunities && data.opportunities.length > 0) {
+                    // Merge search results with existing opportunities (avoid duplicates)
+                    setOpportunities(prev => {
+                        const existing = new Set(prev.map(o => o.id));
+                        const newOpps = data.opportunities.filter((o: Opportunity) => !existing.has(o.id));
+                        return [...prev, ...newOpps];
+                    });
+                }
+            } catch (error) {
+                console.error('Search failed:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        const timeoutId = setTimeout(searchOpportunities, 500); // 500ms debounce
+        return () => clearTimeout(timeoutId);
+    }, [query]);
+
     const loadSavedOpportunities = async () => {
         try {
             const res = await fetch('/api/opportunities/saved');

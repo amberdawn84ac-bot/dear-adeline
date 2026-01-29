@@ -165,33 +165,42 @@ export default function OnboardingAssessment({ user }: { user: any }) {
             if (data.completed) {
                 addAdelineMessage(data.completionMessage || "That's everything I need! You did great.");
 
-                // Trigger Learning Plan Generation
+                // Trigger Learning Path Generation (standards-based)
                 setTimeout(async () => {
-                    addAdelineMessage("Building your personalized learning plan based on your grade and state standards... (This might take a moment!)");
+                    addAdelineMessage("Building your personalized learning path based on your grade and state standards... (This might take a moment!)");
 
                     try {
                         const report = data.placementReport;
                         // Use the explicitly selected grade first, then the report recommendation, then metadata
-                        const finalGrade = selectedGrade || report?.recommendedStartingLevel || user.user_metadata?.grade_level || '6th Grade';
-                        const finalState = stateLocation || user.user_metadata?.state || 'National';
+                        const finalGrade = selectedGrade || report?.recommendedStartingLevel || user.user_metadata?.grade_level || '8th Grade';
+                        const finalState = stateLocation || user.user_metadata?.state || 'California';
 
-                        await fetch('/api/learning-plan/generate', {
+                        const pathResponse = await fetch('/api/learning-path', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                studentId: user.id,
-                                gradeLevel: finalGrade,
-                                state: finalState
+                                student_id: user.id,
+                                grade_level: finalGrade,
+                                jurisdiction: finalState,
+                                interests: selectedInterests.map(id => INTERESTS.find(i => i.id === id)?.label).filter(Boolean)
                             })
                         });
 
-                        addAdelineMessage("All done! Your dashboard is ready.");
+                        const pathData = await pathResponse.json();
+
+                        if (pathData.success) {
+                            addAdelineMessage(pathData.message || "All done! Your personalized learning path is ready.");
+                        } else {
+                            console.warn("Path generation returned:", pathData);
+                            addAdelineMessage("All done! Your dashboard is ready.");
+                        }
+
                         setTimeout(() => {
                             router.push('/dashboard');
                         }, 1500);
 
                     } catch (genError) {
-                        console.error("Plan generation failed:", genError);
+                        console.error("Path generation failed:", genError);
                         addAdelineMessage("I've saved your results! Let's go to the dashboard.");
                         setTimeout(() => {
                             router.push('/dashboard');

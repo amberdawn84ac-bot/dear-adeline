@@ -37,6 +37,52 @@ const model = genAI.getGenerativeModel({
     }
 });
 
+// GET: Search opportunities by keyword
+export async function GET(req: Request) {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { searchParams } = new URL(req.url);
+        const query = searchParams.get('q') || '';
+
+        if (!query || query.trim().length === 0) {
+            return NextResponse.json({ opportunities: [], count: 0 });
+        }
+
+        console.log(`🔍 Searching opportunities for query: "${query}"`);
+
+        // Search in title, description, organization, and tags
+        const { data: opportunities, error } = await supabase
+            .from('opportunities')
+            .select('*')
+            .or(`title.ilike.%${query}%,description.ilike.%${query}%,organization.ilike.%${query}%`)
+            .or(`deadline.is.null,deadline.gte.${new Date().toISOString()}`)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        if (error) {
+            console.error('Search error:', error);
+            return NextResponse.json({ error: 'Search failed' }, { status: 500 });
+        }
+
+        console.log(`✅ Found ${opportunities?.length || 0} opportunities`);
+
+        return NextResponse.json({
+            opportunities: opportunities || [],
+            count: opportunities?.length || 0
+        });
+
+    } catch (error) {
+        console.error('Unexpected search error:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+}
+
 export async function POST(req: Request) {
     try {
         const supabase = await createClient();

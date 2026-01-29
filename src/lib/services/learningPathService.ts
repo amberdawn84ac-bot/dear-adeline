@@ -1,6 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { StandardsService, StateStandard } from './standardsService';
+import { StandardsGenerationService } from './standardsGenerationService';
 
 // ============================================
 // TYPES
@@ -99,7 +100,7 @@ export class LearningPathService {
 
         try {
             // 1. Get all standards for this grade and jurisdiction
-            const { data: standards, error: standardsError } = await supabase
+            let { data: standards, error: standardsError } = await supabase
                 .from('state_standards')
                 .select('*')
                 .eq('jurisdiction', jurisdiction)
@@ -112,8 +113,67 @@ export class LearningPathService {
                 return null;
             }
 
+            // 1b. If no standards found, try to SEED them on-demand
             if (!standards || standards.length === 0) {
-                console.warn(`No standards found for ${jurisdiction} grade ${gradeLevel}`);
+                console.log(`No standards found for ${jurisdiction} grade ${gradeLevel}, attempting to seed...`);
+                // Use a dedicated supabase client if provided, otherwise the one we created
+                // Note: verify if StandardsGenerationService needs a specific client? 
+                // It takes a SupabaseClient, so we pass 'supabase'
+                const seeded = await StandardsGenerationService.seedStandards(jurisdiction, gradeLevel, supabase);
+
+                if (seeded) {
+                    // Retry fetch
+                    const { data: seededStandards } = await supabase
+                        .from('state_standards')
+                        .select('*')
+                        .eq('jurisdiction', jurisdiction)
+                        .eq('grade_level', gradeLevel)
+                        .order('subject')
+                        .order('standard_code');
+
+                    if (seededStandards && seededStandards.length > 0) {
+                        standards = seededStandards;
+                    }
+                }
+            }
+
+            // Fallback 1: Try California (Common Core) for same grade
+            if (!standards || standards.length === 0) {
+                console.warn(`No standards found for ${jurisdiction} grade ${gradeLevel} (seeding failed or skipped), falling back to California`);
+                const { data: fallbackStandards } = await supabase
+                    .from('state_standards')
+                    .select('*')
+                    .eq('jurisdiction', 'California')
+                    .eq('grade_level', gradeLevel)
+                    .order('subject')
+                    .order('standard_code');
+
+                if (fallbackStandards && fallbackStandards.length > 0) {
+                    standards = fallbackStandards;
+                    jurisdiction = 'California';
+                }
+            }
+
+            // Fallback 2: Try Grade 8 (Demo Content) if still nothing
+            if (!standards || standards.length === 0) {
+                console.warn(`No standards found for grade ${gradeLevel}, falling back to Grade 8 demo content`);
+                const { data: fallbackStandards } = await supabase
+                    .from('state_standards')
+                    .select('*')
+                    .eq('jurisdiction', 'California')
+                    .eq('grade_level', '8')
+                    .order('subject')
+                    .order('standard_code');
+
+                if (fallbackStandards && fallbackStandards.length > 0) {
+                    standards = fallbackStandards;
+                    jurisdiction = 'California';
+                    gradeLevel = '8';
+                }
+            }
+
+            if (!standards || standards.length === 0) {
+                console.warn(`No standards found for ${jurisdiction} grade ${gradeLevel} (including fallbacks)`);
                 return null;
             }
 

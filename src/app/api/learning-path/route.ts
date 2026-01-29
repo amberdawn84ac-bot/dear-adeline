@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
 
         if (!path) {
             return NextResponse.json(
-                { error: 'Failed to generate learning path. No standards may be available for this grade/state combination.' },
+                { error: `Failed to generate learning path. No standards found for Grade ${grade_level} in ${jurisdiction}. Please try Grade 8, or states CA, TX, FL.` },
                 { status: 400 }
             );
         }
@@ -126,9 +126,14 @@ export async function POST(request: NextRequest) {
         // Get summary
         const summary = await LearningPathService.getPathSummary(targetStudentId, supabase);
 
+        let message = `Learning path generated with ${path.pathData.length} standards.`;
+        if (path.jurisdiction !== jurisdiction || path.gradeLevel !== grade_level) {
+            message += ` Note: exact standards for ${jurisdiction} Grade ${grade_level} were not available, so we provided a similar path for ${path.jurisdiction} Grade ${path.gradeLevel} as a starting point.`;
+        }
+
         return NextResponse.json({
             success: true,
-            message: `Learning path generated with ${path.pathData.length} standards`,
+            message,
             path,
             summary
         });
