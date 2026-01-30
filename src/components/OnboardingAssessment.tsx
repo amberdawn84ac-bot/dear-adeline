@@ -175,12 +175,24 @@ export default function OnboardingAssessment({ user }: { user: any }) {
                         const finalGrade = selectedGrade || report?.recommendedStartingLevel || user.user_metadata?.grade_level || '8th Grade';
                         const finalState = stateLocation || user.user_metadata?.state || 'California';
 
+                        // Convert "8th Grade" format to just "8" for database
+                        const gradeNumber = finalGrade.match(/\d+/)?.[0] || '8';
+
+                        // Update profile with grade
+                        await supabase
+                            .from('profiles')
+                            .update({
+                                grade_level: gradeNumber,
+                                state_standards: finalState
+                            })
+                            .eq('id', user.id);
+
                         const pathResponse = await fetch('/api/learning-path', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 student_id: user.id,
-                                grade_level: finalGrade,
+                                grade_level: gradeNumber,
                                 jurisdiction: finalState,
                                 interests: selectedInterests.map(id => INTERESTS.find(i => i.id === id)?.label).filter(Boolean)
                             })

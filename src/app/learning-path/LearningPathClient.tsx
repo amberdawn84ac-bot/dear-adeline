@@ -245,9 +245,6 @@ export default function LearningPathClient({
                                 <MapIcon className="w-5 h-5 text-[var(--sage)]" />
                                 Your Learning Path
                             </h2>
-                            <span className="text-sm text-[var(--charcoal-light)]">
-                                {path.jurisdiction === 'California' ? 'Common Core (CCSS/NGSS)' : path.jurisdiction} • Grade {path.gradeLevel}
-                            </span>
                         </div>
 
                         <div className="p-6">
