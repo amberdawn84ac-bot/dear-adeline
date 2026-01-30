@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sparkles, Send, Loader2, Check, ArrowRight, Rocket, Gamepad2, Palette, Music, Trophy, Microscope, BookOpen, Globe, MapPin } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 interface Message {
     role: 'adeline' | 'user';
@@ -53,6 +54,7 @@ export default function OnboardingAssessment({ user }: { user: any }) {
     const [error, setError] = useState('');
     const [assessmentId, setAssessmentId] = useState<string | null>(null);
 
+    const supabase = createClient();
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
