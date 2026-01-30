@@ -314,40 +314,18 @@ export class LearningPathService {
         studentId: string,
         supabaseClient?: SupabaseClient
     ): Promise<NextFocusSuggestion | null> {
-        const supabase = supabaseClient || await createClient();
+        const path = await this.getPath(studentId, supabaseClient);
+        if (!path || !path.milestones) return null;
 
-        // Get the next upcoming or in-progress milestone
-        const { data } = await supabase
-            .rpc('get_next_milestone', { p_student_id: studentId });
+        const currentMilestone = path.milestones.find(m => m.status === 'in_progress');
+        if (!currentMilestone) return null;
 
-        if (!data || !data[0]) {
-            return null;
-        }
-
-        const milestone = data[0];
-
-        // Get the path for interest context
-        const path = await this.getPath(studentId, supabase);
-        const interests = path?.interests || [];
-
-        // Find an interest connection if possible
-        const interestMappings = await this.getInterestMappings(interests, supabase);
-        const subjectMappings = interestMappings.filter(
-            m => m.subject.toLowerCase() === milestone.subject.toLowerCase()
-        );
-
-        const connection = subjectMappings[0];
-
+        // Return the milestone as the focus
         return {
-            standardId: milestone.standard_id,
-            standardCode: milestone.standard_code,
-            subject: milestone.subject,
-            statementText: milestone.statement_text,
-            suggestedApproach: connection?.approachDescription || 'Traditional lesson approach',
-            interestConnection: connection?.interest || null,
-            reason: connection
-                ? `This connects to your interest in ${connection.interest}!`
-                : `This is the next standard in your ${milestone.subject} progress.`
+            standardId: currentMilestone.id,
+            subject: currentMilestone.standards?.[0]?.subject || 'Learning',
+            statementText: currentMilestone.title,
+            reason: currentMilestone.description
         };
     }
 
