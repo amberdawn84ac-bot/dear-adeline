@@ -456,24 +456,36 @@ FORMATTING RULES:
                 },
                 {
                     name: "update_learning_path",
-                    description: "Update the student's learning path adaptation. Call this when: 1) Student expresses a new interest, 2) Student makes a choice between options you offered, 3) You learn new info about them (pace, style), 4) Milestone is completed.",
+                    description: "Update student's learning path when: 1) Student shows new interest ('I love volcanoes!'), 2) Student completes a milestone, 3) You learn something new about their learning style. This adds new milestones or marks progress.",
                     parameters: {
                         type: SchemaType.OBJECT,
                         properties: {
                             action: {
                                 type: SchemaType.STRING,
                                 enum: ["add_interests", "complete_milestone", "record_choice", "new_info"],
-                                description: "Type of update to perform"
+                                description: "Type of update"
                             },
                             interests: {
                                 type: SchemaType.ARRAY,
                                 items: { type: SchemaType.STRING },
-                                description: "List of new interests to add (for add_interests action)"
+                                description: "New interests to add (for add_interests action)"
                             },
-                            milestone_id: { type: SchemaType.STRING, description: "ID of completed milestone (for complete_milestone action)" },
-                            engagement_score: { type: SchemaType.NUMBER, description: "1-10 score of engagement (for complete_milestone)" },
-                            choice: { type: SchemaType.STRING, description: "The choice the student made (for record_choice)" },
-                            new_info: { type: SchemaType.STRING, description: "The new information learned (for new_info)" }
+                            milestone_id: {
+                                type: SchemaType.STRING,
+                                description: "ID of completed milestone (for complete_milestone action)"
+                            },
+                            engagement_score: {
+                                type: SchemaType.NUMBER,
+                                description: "Student engagement score 1-10 (for complete_milestone action)"
+                            },
+                            choice: {
+                                type: SchemaType.STRING,
+                                description: "The choice the student made (for record_choice)"
+                            },
+                            new_info: {
+                                type: SchemaType.STRING,
+                                description: "New information learned about student (for new_info)"
+                            }
                         },
                         required: ["action"]
                     }

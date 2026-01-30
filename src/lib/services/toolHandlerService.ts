@@ -599,6 +599,137 @@ export const handleToolCalls = async (
                     }
                 });
             }
+        } else if (call.name === 'update_learning_path') {
+            const args = call.args as any;
+            console.log(`[Adeline Path]: Updating learning path - ${args.action}`);
+
+            try {
+                // Get current path
+                const { data: currentPath } = await supabase
+                    .from('student_learning_paths')
+                    .select('*')
+                    .eq('student_id', userId)
+                    .single();
+
+                if (!currentPath) {
+                    throw new Error('No learning path found');
+                }
+
+                let updatedPath = currentPath;
+
+                if (args.action === 'add_interests') {
+                    // Student showed new interest - add related milestones
+                    const newInterests = args.interests || [];
+                    const allInterests = [...(currentPath.interests || []), ...newInterests];
+
+                    // Use AI to generate 2-3 new milestones based on new interests
+                    const { data: standards } = await supabase
+                        .from('state_standards')
+                        .select('*')
+                        .eq('jurisdiction', currentPath.jurisdiction)
+                        .eq('grade_level', currentPath.grade_level)
+                        .limit(50);
+
+                    if (standards && standards.length > 0) {
+                        const { LearningPathService } = await import('@/lib/services/learningPathService');
+                        const { milestones: newMilestones } = await (LearningPathService as any).designLearningPath(
+                            standards,
+                            newInterests,
+                            currentPath.grade_level,
+                            'moderate'
+                        ) || { milestones: [] };
+
+                        if (newMilestones && newMilestones.length > 0) {
+                            // Add to existing milestones
+                            const existingMilestones = currentPath.milestones || [];
+                            const maxSequence = Math.max(...existingMilestones.map((m: any) => m.sequenceOrder), 0);
+
+                            const milestonesToAdd = newMilestones.slice(0, 3).map((m: any, index: number) => ({
+                                ...m,
+                                sequenceOrder: maxSequence + index + 1,
+                                status: 'upcoming'
+                            }));
+
+                            updatedPath = {
+                                ...currentPath,
+                                interests: allInterests,
+                                milestones: [...existingMilestones, ...milestonesToAdd]
+                            };
+                        } else {
+                            // Just update interests if no new milestones could be generated
+                            updatedPath = {
+                                ...currentPath,
+                                interests: allInterests
+                            };
+                        }
+                    }
+                } else if (args.action === 'complete_milestone') {
+                    // Mark milestone complete
+                    const milestones = currentPath.milestones || [];
+                    const updated = milestones.map((m: any) =>
+                        m.id === args.milestone_id
+                            ? { ...m, status: 'completed', completedAt: new Date().toISOString(), engagementScore: args.engagement_score }
+                            : m
+                    );
+
+                    // Move to next milestone
+                    const nextMilestone = updated.find((m: any) => m.status === 'upcoming');
+                    if (nextMilestone) {
+                        nextMilestone.status = 'in_progress';
+                        updatedPath = {
+                            ...currentPath,
+                            milestones: updated,
+                            current_milestone_id: nextMilestone.id
+                        };
+                    } else {
+                        updatedPath = {
+                            ...currentPath,
+                            milestones: updated
+                        };
+                    }
+                } else if (args.action === 'record_choice') {
+                    // Record student choice for adaptation
+                    updatedPath = {
+                        ...currentPath,
+                        learning_style: currentPath.learning_style || {},
+                        ...(args.choice && { last_choice: args.choice })
+                    };
+                } else if (args.action === 'new_info') {
+                    // Record new information about student
+                    updatedPath = {
+                        ...currentPath,
+                        ...(args.new_info && { notes: (currentPath.notes || '') + '\n' + args.new_info })
+                    };
+                }
+
+                // Save updated path
+                await supabase
+                    .from('student_learning_paths')
+                    .update(updatedPath)
+                    .eq('student_id', userId);
+
+                toolParts.push({
+                    functionResponse: {
+                        name: 'update_learning_path',
+                        response: {
+                            name: 'update_learning_path',
+                            content: { status: 'path updated successfully' }
+                        }
+                    }
+                });
+
+            } catch (e) {
+                console.error('Path update error:', e);
+                toolParts.push({
+                    functionResponse: {
+                        name: 'update_learning_path',
+                        response: {
+                            name: 'update_learning_path',
+                            content: { status: 'failed to update path', error: String(e) }
+                        }
+                    }
+                });
+            }
         } else {
             // Fallback for unknown tools
             console.warn(`⚠️ Unknown tool called: ${call.name}`);
