@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
         // Get summary
         const summary = await LearningPathService.getPathSummary(targetStudentId, supabase);
 
-        let message = `Learning path generated with ${path.pathData.length} standards.`;
+        let message = `Learning path generated with ${path.milestones.length} milestones.`;
         if (path.jurisdiction !== jurisdiction || path.gradeLevel !== grade_level) {
             const displayJurisdiction = path.jurisdiction === 'California' ? 'Common Core (CCSS/NGSS)' : path.jurisdiction;
             message += ` Note: exact standards for ${jurisdiction} Grade ${grade_level} were not available, so we're using ${displayJurisdiction} Grade ${path.gradeLevel} standards as a starting point.`;

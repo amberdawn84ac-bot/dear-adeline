@@ -215,11 +215,14 @@ Track progress by using the log_activity tool with relevant skills after the stu
                     supabase
                 );
 
+                const currentMilestone = learningPath.milestones?.find(m => m.status === 'in_progress') ||
+                                        learningPath.milestones?.find(m => m.status === 'upcoming');
+
                 systemInstruction += `\n\n=== PERSONALIZED LEARNING PATH ===
 
 Student Interests: ${learningPath.interests.join(', ')}
-Current Focus: ${learningPath.currentFocusArea || 'Not yet set'}
-Progress: ${summary?.completed || 0}/${summary?.totalStandards || 0} standards (${summary?.percentComplete || 0}%)
+Current Focus: ${currentMilestone?.title || 'Not yet set'}
+Progress: ${summary?.completed || 0}/${summary?.totalStandards || 0} milestones (${summary?.percentComplete || 0}%)
 Learning Pace: ${learningPath.pace}
 
 TEACHING APPROACHES FOR THIS STUDENT'S INTERESTS:

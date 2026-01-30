@@ -217,7 +217,9 @@ export default function LearningPathClient({
                     </div>
                     <div>
                         <div className="text-lg font-bold text-[var(--charcoal)] truncate max-w-[200px]">
-                            {path.currentFocusArea || 'Not Set'}
+                            {path.milestones?.find(m => m.status === 'in_progress')?.title ||
+                             path.milestones?.find(m => m.status === 'upcoming')?.title ||
+                             'Not Set'}
                         </div>
                         <div className="text-sm text-[var(--charcoal-light)]">Current Focus</div>
                     </div>
@@ -249,13 +251,13 @@ export default function LearningPathClient({
 
                         <div className="p-6">
                             <div className="space-y-6 relative before:absolute before:left-8 before:top-4 before:bottom-4 before:w-0.5 before:bg-gray-200">
-                                {path.pathData.map((item, index) => {
-                                    const isCompleted = item.status === 'completed';
-                                    const isUpcoming = item.status === 'upcoming';
-                                    const isInProgress = item.status === 'in_progress';
+                                {(path.milestones || []).map((milestone, index) => {
+                                    const isCompleted = milestone.status === 'completed';
+                                    const isUpcoming = milestone.status === 'upcoming';
+                                    const isInProgress = milestone.status === 'in_progress';
 
                                     return (
-                                        <div key={item.standardId} className="relative flex gap-6 group">
+                                        <div key={milestone.id} className="relative flex gap-6 group">
                                             <div className={`
                                 relative z-10 w-16 h-16 rounded-full flex items-center justify-center shrink-0 border-4
                                 ${isCompleted ? 'bg-green-100 border-green-50 text-green-600' : ''}
@@ -275,21 +277,23 @@ export default function LearningPathClient({
                                                 <div className="flex justify-between items-start mb-1">
                                                     <span className={`text-xs font-bold px-2 py-0.5 rounded ${isInProgress ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
                                                         }`}>
-                                                        {item.subject} • {item.standardCode}
+                                                        Milestone {milestone.sequenceOrder} • {milestone.estimatedWeeks}w
                                                     </span>
-                                                    {item.interestConnection && (
-                                                        <span className="text-xs flex items-center gap-1 text-purple-600 font-medium">
-                                                            <Sparkles className="w-3 h-3" />
-                                                            via {item.interestConnection}
+                                                    {milestone.standardIds && (
+                                                        <span className="text-xs text-gray-500">
+                                                            {milestone.standardIds.length} standards
                                                         </span>
                                                     )}
                                                 </div>
-                                                <h3 className={`font-medium mb-1 ${isCompleted ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
-                                                    {item.statementText}
+                                                <h3 className={`font-semibold text-lg mb-1 ${isCompleted ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                                                    {milestone.title}
                                                 </h3>
-                                                {item.suggestedApproach && isInProgress && (
+                                                <p className="text-sm text-gray-600 mb-2">
+                                                    {milestone.description}
+                                                </p>
+                                                {milestone.approachSummary && isInProgress && (
                                                     <div className="mt-3 text-sm bg-white p-3 rounded-lg border border-blue-100 text-blue-800">
-                                                        💡 <strong>Try this:</strong> {item.suggestedApproach}
+                                                        💡 <strong>How we'll learn:</strong> {milestone.approachSummary}
                                                     </div>
                                                 )}
                                             </div>

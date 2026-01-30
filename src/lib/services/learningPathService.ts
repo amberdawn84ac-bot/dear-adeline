@@ -206,29 +206,39 @@ export class LearningPathService {
             // 3. Get interest mappings for personalization
             const interestMappings = await this.getInterestMappings(interests, supabase);
 
-            // 4. Build ordered path - prioritize standards that connect to interests
-            const pathData = this.orderStandardsByInterests(
+            // 4. Use AI to design engaging learning path (5-10 initial milestones)
+            const pathDesign = await this.designLearningPath(
                 standards,
-                progressMap,
-                interestMappings,
-                interests
+                interests,
+                gradeLevel,
+                'moderate'  // Default pace
             );
+
+            // Fallback to default path if AI fails
+            const { milestones, reasoning } = pathDesign || this.createDefaultPath(standards, 'moderate');
+
+            if (!milestones || milestones.length === 0) {
+                console.error('Failed to design path');
+                return null;
+            }
 
             // 5. Create the learning path record
             const { data: path, error: pathError } = await supabase
                 .from('student_learning_paths')
                 .upsert({
                     student_id: studentId,
-                    jurisdiction,
+                    jurisdiction: jurisdiction,
                     grade_level: gradeLevel,
-                    path_data: pathData,
-                    interests,
-                    current_focus_area: pathData[0]?.subject || null,
-                    current_standard_id: pathData[0]?.standardId || null,
+                    interests: interests,
+                    pace: 'moderate',
+                    current_milestone_id: milestones[0].id,
                     status: 'active',
+                    milestones: milestones, // Store as JSONB
+                    design_reasoning: reasoning,
                     updated_at: new Date().toISOString()
                 }, {
-                    onConflict: 'student_id'
+                    onConflict: 'student_id',
+                    ignoreDuplicates: false
                 })
                 .select()
                 .single();
@@ -238,22 +248,22 @@ export class LearningPathService {
                 return null;
             }
 
-            // 6. Create milestones for each standard
-            const milestones = pathData.map((item, index) => ({
-                path_id: path.id,
-                standard_id: item.standardId,
-                sequence_order: index + 1,
-                status: index === 0 ? 'in_progress' : 'upcoming',
-                interest_connection: item.interestConnection || null
-            }));
-
-            await supabase
-                .from('learning_path_milestones')
-                .upsert(milestones, {
-                    onConflict: 'path_id,standard_id'
-                });
-
-            return this.formatPath(path, pathData);
+            // 6. Return formatted path
+            return {
+                id: path.id,
+                studentId: path.student_id,
+                jurisdiction: path.jurisdiction,
+                gradeLevel: path.grade_level,
+                interests: path.interests || [],
+                learningStyle: path.learning_style,
+                pace: path.pace || 'moderate',
+                currentMilestoneId: path.current_milestone_id,
+                status: path.status,
+                milestones: path.milestones || [],
+                designReasoning: path.design_reasoning,
+                createdAt: path.created_at,
+                updatedAt: path.updated_at
+            };
         } catch (error) {
             console.error('Exception generating learning path:', error);
             return null;
@@ -279,7 +289,21 @@ export class LearningPathService {
             return null;
         }
 
-        return this.formatPath(path, path.path_data);
+        return {
+            id: path.id,
+            studentId: path.student_id,
+            jurisdiction: path.jurisdiction,
+            gradeLevel: path.grade_level,
+            interests: path.interests || [],
+            learningStyle: path.learning_style,
+            pace: path.pace || 'moderate',
+            currentMilestoneId: path.current_milestone_id,
+            status: path.status,
+            milestones: path.milestones || [],
+            designReasoning: path.design_reasoning,
+            createdAt: path.created_at,
+            updatedAt: path.updated_at
+        };
     }
 
     /**
@@ -597,12 +621,16 @@ export class LearningPathService {
         const path = await this.getPath(studentId, supabase);
         if (!path) return null;
 
-        const milestones = await this.getMilestones(studentId, undefined, supabase);
+        const milestones = path.milestones || [];
 
         const completed = milestones.filter(m => m.status === 'completed').length;
         const inProgress = milestones.filter(m => m.status === 'in_progress').length;
         const upcoming = milestones.filter(m => m.status === 'upcoming').length;
         const total = milestones.length;
+
+        // Get current focus from the in-progress or first upcoming milestone
+        const currentMilestone = milestones.find(m => m.status === 'in_progress') ||
+                                 milestones.find(m => m.status === 'upcoming');
 
         return {
             totalStandards: total,
@@ -610,7 +638,7 @@ export class LearningPathService {
             inProgress,
             upcoming,
             percentComplete: total > 0 ? Math.round((completed / total) * 100) : 0,
-            currentFocus: path.currentFocusArea,
+            currentFocus: currentMilestone?.title || null,
             interests: path.interests
         };
     }
@@ -843,21 +871,23 @@ Respond with JSON:
         });
     }
 
-    private static formatPath(dbPath: any, pathData: PathStandard[]): LearningPath {
-        return {
-            id: dbPath.id,
-            studentId: dbPath.student_id,
-            jurisdiction: dbPath.jurisdiction,
-            gradeLevel: dbPath.grade_level,
-            interests: dbPath.interests || [],
-            learningStyle: dbPath.learning_style,
-            pace: dbPath.pace,
-            currentFocusArea: dbPath.current_focus_area,
-            currentStandardId: dbPath.current_standard_id,
-            status: dbPath.status,
-            pathData,
-            createdAt: dbPath.created_at,
-            updatedAt: dbPath.updated_at
-        };
-    }
+    // DEPRECATED: Old formatPath method - no longer used with milestone-based paths
+    // Kept temporarily for reference during migration
+    // private static formatPath(dbPath: any, pathData: PathStandard[]): LearningPath {
+    //     return {
+    //         id: dbPath.id,
+    //         studentId: dbPath.student_id,
+    //         jurisdiction: dbPath.jurisdiction,
+    //         gradeLevel: dbPath.grade_level,
+    //         interests: dbPath.interests || [],
+    //         learningStyle: dbPath.learning_style,
+    //         pace: dbPath.pace,
+    //         currentFocusArea: dbPath.current_focus_area,
+    //         currentStandardId: dbPath.current_standard_id,
+    //         status: dbPath.status,
+    //         pathData,
+    //         createdAt: dbPath.created_at,
+    //         updatedAt: dbPath.updated_at
+    //     };
+    // }
 }
