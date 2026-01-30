@@ -15,10 +15,10 @@ export interface LearningPath {
     interests: string[];
     learningStyle: string | null;
     pace: 'accelerated' | 'moderate' | 'relaxed';
-    currentFocusArea: string | null;
-    currentStandardId: string | null;
+    currentMilestoneId: string | null; // Changed from currentStandardId
     status: 'active' | 'paused' | 'completed';
-    pathData: PathStandard[];
+    milestones: PathMilestone[]; // Changed from pathData
+    designReasoning?: string; // Why AI chose this sequence
     createdAt: string;
     updatedAt: string;
 }
@@ -45,6 +45,20 @@ export interface Milestone {
     approachUsed: string | null;
     interestConnection: string | null;
     engagementScore: number | null;
+}
+
+export interface PathMilestone {
+    id: string;
+    title: string; // Kid-friendly name
+    description: string; // Engaging description
+    standardIds: string[]; // Which standards this covers
+    standards?: StateStandard[]; // Full standard objects
+    estimatedWeeks: number;
+    approachSummary: string; // Teaching approach
+    status: 'upcoming' | 'in_progress' | 'completed';
+    sequenceOrder: number;
+    completedAt?: string;
+    engagementScore?: number; // 1-10
 }
 
 export interface InterestMapping {
@@ -653,6 +667,141 @@ export class LearningPathService {
             // Otherwise maintain subject grouping
             return a.subject.localeCompare(b.subject);
         });
+    }
+
+    /**
+     * Use Gemini AI to design a coherent learning path with 5-10 kid-friendly milestones
+     * Transforms 100+ standards into engaging adventure
+     */
+    private static async designLearningPath(
+        standards: StateStandard[],
+        interests: string[],
+        gradeLevel: string,
+        pace: 'accelerated' | 'moderate' | 'relaxed'
+    ): Promise<{ milestones: PathMilestone[]; reasoning: string } | null> {
+        try {
+            const { GoogleGenerativeAI } = await import('@google/generative-ai');
+            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+            const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+            // Group standards by subject for context
+            const subjectGroups = standards.reduce((acc, std) => {
+                if (!acc[std.subject]) acc[std.subject] = [];
+                acc[std.subject].push(std);
+                return acc;
+            }, {} as Record<string, StateStandard[]>);
+
+            const subjectSummary = Object.entries(subjectGroups)
+                .map(([subject, stds]) => `${subject}: ${stds.length} standards`)
+                .join(', ');
+
+            const prompt = `You are a learning path designer for a ${gradeLevel}th grader.
+
+STUDENT INTERESTS: ${interests.join(', ') || 'General learning'}
+PACE: ${pace}
+AVAILABLE STANDARDS: ${subjectSummary}
+
+Your task: Design 5-10 engaging learning milestones that cover these ${standards.length} standards.
+
+CRITICAL REQUIREMENTS:
+1. Use KID-FRIENDLY titles (NOT standard codes like "CCSS.MATH.8.EE.1")
+   - Good: "Master the Number Line", "Explore Geometric Patterns"
+   - Bad: "Algebra Standards", "Mathematics Unit 3"
+2. Make descriptions exciting and relatable to their interests
+3. Group related standards into coherent themes
+4. Order milestones in a logical learning sequence
+5. Each milestone should cover 5-20 standards
+6. Estimate realistic time (1-4 weeks per milestone based on pace)
+7. Connect to student interests wherever possible
+
+STANDARDS DATA:
+${standards.slice(0, 50).map(s => `${s.id}|${s.subject}|${s.standard_code}|${s.statement_text.substring(0, 100)}`).join('\n')}
+${standards.length > 50 ? `... and ${standards.length - 50} more standards` : ''}
+
+Respond with JSON:
+{
+  "reasoning": "Brief explanation of your design approach",
+  "milestones": [
+    {
+      "title": "Kid-friendly title",
+      "description": "Engaging 1-2 sentence description",
+      "standardIds": ["standard-id-1", "standard-id-2", ...],
+      "estimatedWeeks": 2,
+      "approachSummary": "How we'll learn this (project-based, games, etc.)",
+      "sequenceOrder": 1
+    }
+  ]
+}`;
+
+            const result = await model.generateContent(prompt);
+            const responseText = result.response.text();
+
+            // Parse JSON from response (handle markdown code blocks)
+            const jsonMatch = responseText.match(/```json\n?([\s\S]*?)\n?```/) ||
+                            responseText.match(/```\n?([\s\S]*?)\n?```/);
+            const jsonText = jsonMatch ? jsonMatch[1] : responseText;
+            const parsed = JSON.parse(jsonText.trim());
+
+            // Map standardIds to actual standard objects
+            const standardsMap = new Map(standards.map(s => [s.id, s]));
+
+            const milestones: PathMilestone[] = parsed.milestones.map((m: any, idx: number) => ({
+                id: `milestone-${idx + 1}`,
+                title: m.title,
+                description: m.description,
+                standardIds: m.standardIds,
+                standards: m.standardIds
+                    .map((id: string) => standardsMap.get(id))
+                    .filter(Boolean) as StateStandard[],
+                estimatedWeeks: m.estimatedWeeks || 2,
+                approachSummary: m.approachSummary || 'Interactive learning',
+                status: idx === 0 ? 'in_progress' : 'upcoming',
+                sequenceOrder: m.sequenceOrder || idx + 1
+            }));
+
+            return {
+                milestones,
+                reasoning: parsed.reasoning
+            };
+        } catch (error) {
+            console.error('AI path design failed:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Fallback: Create a simple default path when AI fails
+     * Groups standards by subject into basic milestones
+     */
+    private static createDefaultPath(
+        standards: StateStandard[],
+        pace: 'accelerated' | 'moderate' | 'relaxed'
+    ): { milestones: PathMilestone[]; reasoning: string } {
+        // Group by subject
+        const subjectGroups = standards.reduce((acc, std) => {
+            if (!acc[std.subject]) acc[std.subject] = [];
+            acc[std.subject].push(std);
+            return acc;
+        }, {} as Record<string, StateStandard[]>);
+
+        // Create a milestone per subject
+        const milestones: PathMilestone[] = Object.entries(subjectGroups)
+            .map(([subject, stds], idx) => ({
+                id: `milestone-${idx + 1}`,
+                title: `${subject} Foundations`,
+                description: `Learn core ${subject.toLowerCase()} concepts and skills`,
+                standardIds: stds.map(s => s.id),
+                standards: stds,
+                estimatedWeeks: Math.ceil(stds.length / (pace === 'accelerated' ? 10 : pace === 'relaxed' ? 5 : 7)),
+                approachSummary: 'Progressive skill building with practice',
+                status: idx === 0 ? 'in_progress' : 'upcoming',
+                sequenceOrder: idx + 1
+            }));
+
+        return {
+            milestones,
+            reasoning: 'Default path organized by subject area'
+        };
     }
 
     private static reorderPathByInterests(
