@@ -122,10 +122,10 @@ export default function LearningPathClient({
                                 onChange={(e) => setSelectedState(e.target.value)}
                                 className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[var(--sage)] outline-none"
                             >
-                                <option value="Oklahoma">Oklahoma</option>
-                                <option value="Texas">Texas</option>
-                                <option value="California">California</option>
+                                <option value="California">Common Core (CCSS/NGSS)</option>
+                                <option value="Texas">Texas (TEKS)</option>
                                 <option value="Florida">Florida</option>
+                                <option value="Oklahoma">Oklahoma (will use Common Core)</option>
                             </select>
                         </div>
 
@@ -246,7 +246,7 @@ export default function LearningPathClient({
                                 Your Learning Path
                             </h2>
                             <span className="text-sm text-[var(--charcoal-light)]">
-                                {path.jurisdiction} • Grade {path.gradeLevel}
+                                {path.jurisdiction === 'California' ? 'Common Core (CCSS/NGSS)' : path.jurisdiction} • Grade {path.gradeLevel}
                             </span>
                         </div>
 

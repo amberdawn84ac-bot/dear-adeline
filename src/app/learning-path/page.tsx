@@ -25,8 +25,8 @@ export default async function LearningPathPage() {
         return redirect('/login');
     }
 
-    // Determine student's state - check multiple sources
-    const studentState = user.user_metadata?.state || profile.state_standards || 'Oklahoma';
+    // Determine student's state - check multiple sources, default to California (Common Core)
+    const studentState = user.user_metadata?.state || profile.state_standards || 'California';
 
     // Get current learning path
     const learningPath = await LearningPathService.getPath(user.id, supabase);

@@ -128,7 +128,8 @@ export async function POST(request: NextRequest) {
 
         let message = `Learning path generated with ${path.pathData.length} standards.`;
         if (path.jurisdiction !== jurisdiction || path.gradeLevel !== grade_level) {
-            message += ` Note: exact standards for ${jurisdiction} Grade ${grade_level} were not available, so we provided a similar path for ${path.jurisdiction} Grade ${path.gradeLevel} as a starting point.`;
+            const displayJurisdiction = path.jurisdiction === 'California' ? 'Common Core (CCSS/NGSS)' : path.jurisdiction;
+            message += ` Note: exact standards for ${jurisdiction} Grade ${grade_level} were not available, so we're using ${displayJurisdiction} Grade ${path.gradeLevel} standards as a starting point.`;
         }
 
         return NextResponse.json({
