@@ -14,10 +14,13 @@ import {
     GraduationCap
 } from 'lucide-react';
 import { LearningPath, NextFocusSuggestion } from '@/lib/services/learningPathService';
+import { LearningAdventure } from '@/components/LearningAdventure';
+import { ParentPathView } from '@/components/ParentPathView';
 
 interface LearningPathClientProps {
     profile: any;
     studentState: string;
+    isParent: boolean;
     initialPath: LearningPath | null;
     initialSummary: any;
     initialNextFocus: NextFocusSuggestion | null;
@@ -26,6 +29,7 @@ interface LearningPathClientProps {
 export default function LearningPathClient({
     profile,
     studentState,
+    isParent,
     initialPath,
     initialSummary,
     initialNextFocus
@@ -238,135 +242,21 @@ export default function LearningPathClient({
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Path Visualization */}
-                <div className="lg:col-span-2">
-                    <div className="bg-white rounded-2xl shadow-lg border border-[var(--sage-light)] overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-[var(--charcoal)] flex items-center gap-2">
-                                <MapIcon className="w-5 h-5 text-[var(--sage)]" />
-                                Your Learning Path
-                            </h2>
-                        </div>
-
-                        <div className="p-6">
-                            <div className="space-y-6 relative before:absolute before:left-8 before:top-4 before:bottom-4 before:w-0.5 before:bg-gray-200">
-                                {(path.milestones || []).map((milestone, index) => {
-                                    const isCompleted = milestone.status === 'completed';
-                                    const isUpcoming = milestone.status === 'upcoming';
-                                    const isInProgress = milestone.status === 'in_progress';
-
-                                    return (
-                                        <div key={milestone.id} className="relative flex gap-6 group">
-                                            <div className={`
-                                relative z-10 w-16 h-16 rounded-full flex items-center justify-center shrink-0 border-4
-                                ${isCompleted ? 'bg-green-100 border-green-50 text-green-600' : ''}
-                                ${isInProgress ? 'bg-blue-100 border-blue-50 text-blue-600 ring-2 ring-blue-100 ring-offset-2' : ''}
-                                ${isUpcoming ? 'bg-gray-50 border-white text-gray-300' : ''}
-                            `}>
-                                                {isCompleted ? <CheckCircle2 className="w-8 h-8" /> :
-                                                    isInProgress ? <BookOpen className="w-8 h-8" /> :
-                                                        <Circle className="w-8 h-8" />}
-                                            </div>
-
-                                            <div className={`
-                                flex-1 p-4 rounded-xl border transition-all
-                                ${isInProgress ? 'bg-blue-50/50 border-blue-100 shadow-md' : 'bg-white border-gray-100 hover:border-gray-200'}
-                                ${isCompleted ? 'opacity-75' : ''}
-                            `}>
-                                                <div className="flex justify-between items-start mb-1">
-                                                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${isInProgress ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
-                                                        }`}>
-                                                        Milestone {milestone.sequenceOrder} • {milestone.estimatedWeeks}w
-                                                    </span>
-                                                    {milestone.standardIds && (
-                                                        <span className="text-xs text-gray-500">
-                                                            {milestone.standardIds.length} standards
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <h3 className={`font-semibold text-lg mb-1 ${isCompleted ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
-                                                    {milestone.title}
-                                                </h3>
-                                                <p className="text-sm text-gray-600 mb-2">
-                                                    {milestone.description}
-                                                </p>
-                                                {milestone.approachSummary && isInProgress && (
-                                                    <div className="mt-3 text-sm bg-white p-3 rounded-lg border border-blue-100 text-blue-800">
-                                                        💡 <strong>How we'll learn:</strong> {milestone.approachSummary}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Sidebar */}
-                <div className="space-y-6">
-                    {/* Interests */}
-                    <div className="bg-white rounded-xl p-6 shadow-sm border border-[var(--cream-dark)]">
-                        <h3 className="font-bold text-[var(--charcoal)] mb-4 flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-purple-500" />
-                            Interests & Passions
-                        </h3>
-                        <p className="text-sm text-[var(--charcoal-light)] mb-4">
-                            Adeline adapts your path based on what you love. Add more to see the path change!
-                        </p>
-                        <div className="flex flex-wrap gap-2 mb-4">
-                            {path.interests.map(int => (
-                                <span key={int} className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-sm border border-purple-100">
-                                    {int}
-                                </span>
-                            ))}
-                        </div>
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                value={newInterest}
-                                onChange={(e) => setNewInterest(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && addInterest()}
-                                placeholder="Add interest..."
-                                className="flex-1 p-2 rounded-lg border border-gray-200 outline-none text-sm"
-                            />
-                            <button
-                                onClick={addInterest}
-                                className="bg-purple-100 text-purple-700 p-2 rounded-lg hover:bg-purple-200 transition-colors"
-                            >
-                                <Plus className="w-4 h-4" />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Next Up */}
-                    {initialNextFocus && (
-                        <div className="bg-[var(--ochre)]/10 rounded-xl p-6 border border-[var(--ochre)]/20">
-                            <h3 className="font-bold text-[var(--ochre)] mb-2 flex items-center gap-2">
-                                <ArrowRight className="w-5 h-5" />
-                                Recommended Next
-                            </h3>
-                            <div className="bg-white p-4 rounded-lg shadow-sm">
-                                <div className="text-sm font-medium text-gray-500 mb-1">{initialNextFocus.subject}</div>
-                                <div className="font-bold text-gray-800 mb-2">{initialNextFocus.statementText}</div>
-                                <div className="text-sm text-gray-600 italic">"{initialNextFocus.reason}"</div>
-                            </div>
-                            <button
-                                onClick={() => {
-                                    // Pass the standard to dashboard/chat via query params
-                                    const message = encodeURIComponent(`I'm ready to learn about: ${initialNextFocus.statementText}`);
-                                    router.push(`/dashboard?message=${message}`);
-                                }}
-                                className="w-full mt-4 bg-[var(--ochre)] text-white font-bold py-2 rounded-lg hover:brightness-110 transition-all"
-                            >
-                                Go to Lesson
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </div>
+            {/* Path Display - Different views for students vs parents */}
+            {path && (
+                isParent ? (
+                    <ParentPathView
+                        milestones={path.milestones || []}
+                        jurisdiction={path.jurisdiction}
+                        gradeLevel={path.gradeLevel}
+                    />
+                ) : (
+                    <LearningAdventure
+                        milestones={path.milestones || []}
+                        studentName={profile.display_name}
+                    />
+                )
+            )}
         </div>
     );
 }

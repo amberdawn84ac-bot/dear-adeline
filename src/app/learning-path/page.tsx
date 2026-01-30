@@ -25,6 +25,9 @@ export default async function LearningPathPage() {
         return redirect('/login');
     }
 
+    // Detect if user is parent/teacher
+    const isParent = profile.role === 'teacher' || profile.role === 'admin';
+
     // Determine student's state - check multiple sources, default to California (Common Core)
     const studentState = user.user_metadata?.state || profile.state_standards || 'California';
 
@@ -38,6 +41,7 @@ export default async function LearningPathPage() {
             <LearningPathClient
                 profile={profile}
                 studentState={studentState}
+                isParent={isParent}
                 initialPath={learningPath}
                 initialSummary={summary}
                 initialNextFocus={nextFocus}
