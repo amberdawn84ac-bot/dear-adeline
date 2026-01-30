@@ -229,6 +229,9 @@ export default function DashboardClient({
         }
     }, [activeConversation]);
 
+    const [input, setInput] = useState('');
+    const [isTyping, setIsTyping] = useState(false);
+
     // Auto-send message from query parameter (from learning path "Go to Lesson" button)
     useEffect(() => {
         const messageParam = searchParams?.get('message');
@@ -242,9 +245,6 @@ export default function DashboardClient({
             }, 100);
         }
     }, [searchParams, isClient, autoSentMessage, isTyping]);
-
-    const [input, setInput] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [activeGame, setActiveGame] = useState<string | null>(null);
