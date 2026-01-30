@@ -25,6 +25,9 @@ export default async function LearningPathPage() {
         return redirect('/login');
     }
 
+    // Determine student's state - check multiple sources
+    const studentState = user.user_metadata?.state || profile.state_standards || 'Oklahoma';
+
     // Get current learning path
     const learningPath = await LearningPathService.getPath(user.id, supabase);
     const summary = await LearningPathService.getPathSummary(user.id, supabase);
@@ -34,6 +37,7 @@ export default async function LearningPathPage() {
         <div className="min-h-screen bg-[var(--cream)]">
             <LearningPathClient
                 profile={profile}
+                studentState={studentState}
                 initialPath={learningPath}
                 initialSummary={summary}
                 initialNextFocus={nextFocus}

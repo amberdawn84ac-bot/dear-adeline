@@ -3,7 +3,7 @@
 import { ProjectProposalModal } from '@/components/ProjectProposalModal';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
     Sparkles,
     Send,
@@ -197,6 +197,7 @@ export default function DashboardClient({
     standardsProgress, // New prop
 }: DashboardClientProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [messages, setMessages] = useState<Message[]>([]);
     const [isClient, setIsClient] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -205,6 +206,7 @@ export default function DashboardClient({
     const [saveWarning, setSaveWarning] = useState<string | null>(null);
     // const { toast } = useToast();
     const toast = (props: any) => console.log('Toast:', props); // Mock toast for now
+    const [autoSentMessage, setAutoSentMessage] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
@@ -226,6 +228,20 @@ export default function DashboardClient({
             setCurrentChatId(activeConversation.id);
         }
     }, [activeConversation]);
+
+    // Auto-send message from query parameter (from learning path "Go to Lesson" button)
+    useEffect(() => {
+        const messageParam = searchParams?.get('message');
+        if (messageParam && isClient && !autoSentMessage && !isTyping) {
+            setAutoSentMessage(true);
+            // Set the message in the input and send it
+            setInput(decodeURIComponent(messageParam));
+            // Wait a tick for the input to be set, then send
+            setTimeout(() => {
+                handleSendMessage(decodeURIComponent(messageParam));
+            }, 100);
+        }
+    }, [searchParams, isClient, autoSentMessage, isTyping]);
 
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);

@@ -17,6 +17,7 @@ import { LearningPath, NextFocusSuggestion } from '@/lib/services/learningPathSe
 
 interface LearningPathClientProps {
     profile: any;
+    studentState: string;
     initialPath: LearningPath | null;
     initialSummary: any;
     initialNextFocus: NextFocusSuggestion | null;
@@ -24,6 +25,7 @@ interface LearningPathClientProps {
 
 export default function LearningPathClient({
     profile,
+    studentState,
     initialPath,
     initialSummary,
     initialNextFocus
@@ -34,8 +36,8 @@ export default function LearningPathClient({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Setup state
-    const [selectedState, setSelectedState] = useState(profile.state_standards || 'Oklahoma');
+    // Setup state - use the studentState prop from server (which checks user_metadata and profile)
+    const [selectedState, setSelectedState] = useState(studentState);
     const [selectedGrade, setSelectedGrade] = useState('8');
     const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
     const [newInterest, setNewInterest] = useState('');
@@ -351,7 +353,11 @@ export default function LearningPathClient({
                                 <div className="text-sm text-gray-600 italic">"{initialNextFocus.reason}"</div>
                             </div>
                             <button
-                                onClick={() => router.push('/chat')}
+                                onClick={() => {
+                                    // Pass the standard to dashboard/chat via query params
+                                    const message = encodeURIComponent(`I'm ready to learn about: ${initialNextFocus.statementText}`);
+                                    router.push(`/dashboard?message=${message}`);
+                                }}
                                 className="w-full mt-4 bg-[var(--ochre)] text-white font-bold py-2 rounded-lg hover:brightness-110 transition-all"
                             >
                                 Go to Lesson

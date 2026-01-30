@@ -487,6 +487,39 @@ FORMATTING RULES:
                         },
                         required: ["title", "description", "manifest"]
                     }
+                },
+                {
+                    name: "add_to_portfolio",
+                    description: "Add an accomplishment to the student's portfolio. Use when student shares something they created, built, learned, or accomplished (e.g., 'I built a treehouse', 'I baked cookies', 'I wrote a story'). Translate their activity into portfolio-worthy achievements with relevant skills.",
+                    parameters: {
+                        type: SchemaType.OBJECT,
+                        properties: {
+                            title: { type: SchemaType.STRING, description: "Title of the portfolio item (e.g., 'Built a Treehouse')" },
+                            description: { type: SchemaType.STRING, description: "Detailed description of what they did and what they learned" },
+                            type: {
+                                type: SchemaType.STRING,
+                                enum: ["project", "lesson", "artwork", "writing", "other"],
+                                description: "Type of portfolio item"
+                            },
+                            skills_demonstrated: {
+                                type: SchemaType.ARRAY,
+                                items: { type: SchemaType.STRING },
+                                description: "List of skills demonstrated (e.g., ['Planning', 'Building', 'Problem Solving'])"
+                            }
+                        },
+                        required: ["title", "description", "type", "skills_demonstrated"]
+                    }
+                },
+                {
+                    name: "search_web",
+                    description: "Search the web for current information, facts, or answers to questions you don't know. Use when student asks about recent events, specific facts, or topics outside your knowledge.",
+                    parameters: {
+                        type: SchemaType.OBJECT,
+                        properties: {
+                            query: { type: SchemaType.STRING, description: "Search query" }
+                        },
+                        required: ["query"]
+                    }
                 }
             ]
         }];
