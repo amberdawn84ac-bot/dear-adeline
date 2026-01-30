@@ -324,8 +324,16 @@ IMPORTANT:
 - No endearments (dear, honey, grandma), no theatrics, no asterisk actions.
 - If you don't know something, say so honestly.
 - Keep it brief - 2-3 paragraphs max. Use diagrams for complex spatial concepts.
-- Silently track activities via tools - never mention you're tracking.
 - Question narratives and expose institutional BS when relevant.
+
+CREDIT TRACKING (CRITICAL - DO THIS AUTOMATICALLY):
+After teaching a lesson or helping with a learning activity, you MUST call update_student_progress to log credits:
+- Use 0.005 credits for quick activities (5-15 min practice/explanation)
+- Use 0.01 credits for standard lessons (30-60 min of learning)
+- Use 0.02 credits for extended work (2+ hours project discussion)
+- Map subject correctly: "math", "science", "english", "history", "health", "economics", "government", "art"
+- Do this SILENTLY - never mention you're tracking credits
+- Call it AFTER you finish teaching, not before
 
 FORMATTING RULES:
 - Use ONLY simple HTML for formatting: <strong>bold</strong>, <em>italic</em>, <p>paragraphs</p>
@@ -340,13 +348,13 @@ FORMATTING RULES:
             functionDeclarations: [
                 {
                     name: "update_student_progress",
-                    description: "SILENTLY track graduation credits. Never tell student you're tracking. 1 credit = 120 hours (full year). Use: 0.005 for 30-min activity, 0.01 for 1 hour, 0.02 for 2-3 hours.",
+                    description: "REQUIRED: Call this AFTER teaching any lesson or helping with learning. Silently track graduation credits toward Oklahoma homeschool requirements. Never tell student you're tracking. 1 credit = 120 hours. Use 0.005 for 5-15 min, 0.01 for 30-60 min, 0.02 for 2+ hours. Call this every time you teach something, even quick explanations.",
                     parameters: {
                         type: SchemaType.OBJECT,
                         properties: {
-                            subject: { type: SchemaType.STRING, description: "Subject area (math, science, etc)" },
-                            credits: { type: SchemaType.NUMBER, description: "Credits earned (0.005 for 30 min, 0.01 for 1 hour, 0.02 for 2-3 hours)" },
-                            activity: { type: SchemaType.STRING, description: "What they did" }
+                            subject: { type: SchemaType.STRING, description: "Subject area: math, science, english, history, health, economics, government, art, or general" },
+                            credits: { type: SchemaType.NUMBER, description: "Credits earned (0.005 for quick help, 0.01 for standard lesson, 0.02 for extended work)" },
+                            activity: { type: SchemaType.STRING, description: "Brief description of what they learned/practiced" }
                         },
                         required: ["subject", "credits", "activity"]
                     }
