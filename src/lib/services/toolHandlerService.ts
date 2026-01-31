@@ -194,17 +194,13 @@ export const handleToolCalls = async (
             console.log(`[Adeline Portfolio]: Adding "${args.title}" to portfolio...`);
 
             try {
-                // 1. Get skill IDs and credit values from skill names
-                const { data: skillsData, error: skillsError } = await supabase
+                // Try to look up skills (but don't fail if they don't exist)
+                const { data: skillsData } = await supabase
                     .from('skills')
-                    .select('id, category, credit_value')
-                    .in('name', args.skills_demonstrated);
+                    .select('id, category, credit_value, name')
+                    .in('name', args.skills_demonstrated || []);
 
-                if (skillsError) throw new Error(`Error fetching skills: ${skillsError.message}`);
-
-                const skillIds = skillsData.map(s => s.id);
-
-                // 2. Insert into portfolio_items
+                // Insert portfolio item with skill names as tags (works even if skills table is empty)
                 const { error: portfolioError } = await supabase
                     .from('portfolio_items')
                     .insert({
@@ -212,41 +208,56 @@ export const handleToolCalls = async (
                         title: args.title,
                         description: args.description,
                         type: args.type,
-                        skills_demonstrated: skillIds,
+                        tags: args.skills_demonstrated || [], // Store skill names as tags
+                        skills_demonstrated: skillsData && skillsData.length > 0
+                            ? skillsData.map(s => s.id)
+                            : null, // Only store IDs if we found matching skills
                     });
 
-                if (portfolioError) throw new Error(`Error saving to portfolio: ${portfolioError.message}`);
+                if (portfolioError) {
+                    console.error("Portfolio insert error:", portfolioError);
+                    throw new Error(`Error saving to portfolio: ${portfolioError.message}`);
+                }
 
-                // 3. Insert into student_skills and update graduation progress
-                for (const skill of skillsData) {
-                    // Add to student_skills
-                    await supabase.from('student_skills').insert({
-                        student_id: userId,
-                        skill_id: skill.id,
-                        source_type: 'ai_lesson', // or another appropriate source
-                    }).select();
+                console.log(`✅ Portfolio item saved: "${args.title}"`);
 
-                    // Update graduation progress
-                    const { data: requirement } = await supabase
-                        .from('graduation_requirements')
-                        .select('id')
-                        .eq('category', skill.category)
-                        .single();
+                // Optional: Update student_skills and graduation progress if skills were found
+                if (skillsData && skillsData.length > 0) {
+                    for (const skill of skillsData) {
+                        // Add to student_skills (ignore duplicates)
+                        await supabase.from('student_skills').insert({
+                            student_id: userId,
+                            skill_id: skill.id,
+                            source_type: 'portfolio_item',
+                        }).select();
 
-                    if (requirement) {
-                        const { error: progressError } = await supabase.rpc('update_student_progress', {
-                            p_student_id: userId,
-                            p_requirement_id: requirement.id,
-                            p_credits_to_add: skill.credit_value
-                        });
-                        if (progressError) console.error(`Error updating progress for ${skill.category}:`, progressError);
+                        // Update graduation progress if requirement exists
+                        const { data: requirement } = await supabase
+                            .from('graduation_requirements')
+                            .select('id')
+                            .eq('category', skill.category)
+                            .maybeSingle();
+
+                        if (requirement) {
+                            await supabase.rpc('update_student_progress', {
+                                p_student_id: userId,
+                                p_requirement_id: requirement.id,
+                                p_credits_to_add: skill.credit_value || 0.05
+                            });
+                        }
                     }
                 }
 
                 toolParts.push({
                     functionResponse: {
                         name: 'add_to_portfolio',
-                        response: { name: 'add_to_portfolio', content: { status: 'portfolio item added successfully' } }
+                        response: {
+                            name: 'add_to_portfolio',
+                            content: {
+                                status: 'success',
+                                message: `Added "${args.title}" to portfolio with skills: ${args.skills_demonstrated?.join(', ')}`
+                            }
+                        }
                     }
                 });
 
@@ -255,7 +266,7 @@ export const handleToolCalls = async (
                 toolParts.push({
                     functionResponse: {
                         name: 'add_to_portfolio',
-                        response: { name: 'add_to_portfolio', content: { status: 'failed to save portfolio item', error: String(e) } }
+                        response: { name: 'add_to_portfolio', content: { status: 'error', error: String(e) } }
                     }
                 });
             }
