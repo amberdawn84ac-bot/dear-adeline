@@ -87,35 +87,42 @@ export const handleToolCalls = async (
             console.log(`[Adeline Tracking]: Logging ${args.credits} credits for ${args.subject}...`);
 
             try {
-                // Map subject to graduation requirement category
+                // Map subject to graduation requirement category (must match database category values)
                 const subjectToCategoryMap: Record<string, string> = {
-                    'math': 'Math',
-                    'mathematics': 'Math',
-                    'science': "God's Creation & Science",
-                    'biology': "God's Creation & Science",
-                    'chemistry': "God's Creation & Science",
-                    'physics': "God's Creation & Science",
-                    'health': 'Health/Naturopathy',
-                    'naturopathy': 'Health/Naturopathy',
-                    'food': 'Food Systems',
-                    'agriculture': 'Food Systems',
-                    'farming': 'Food Systems',
-                    'government': 'Government/Economics',
-                    'economics': 'Government/Economics',
-                    'civics': 'Government/Economics',
-                    'justice': 'Justice',
-                    'law': 'Justice',
-                    'discipleship': 'Discipleship',
-                    'theology': 'Discipleship',
-                    'bible': 'Discipleship',
-                    'history': 'History',
-                    'english': 'English/Lit',
-                    'literature': 'English/Lit',
-                    'writing': 'English/Lit',
-                    'reading': 'English/Lit'
+                    'math': 'math',
+                    'mathematics': 'math',
+                    'science': 'creation_science',
+                    'biology': 'creation_science',
+                    'chemistry': 'creation_science',
+                    'physics': 'creation_science',
+                    'nature': 'creation_science',
+                    'health': 'health_naturopathy',
+                    'naturopathy': 'health_naturopathy',
+                    'wellness': 'health_naturopathy',
+                    'food': 'food_systems',
+                    'agriculture': 'food_systems',
+                    'farming': 'food_systems',
+                    'cooking': 'food_systems',
+                    'government': 'gov_econ',
+                    'economics': 'gov_econ',
+                    'civics': 'gov_econ',
+                    'business': 'gov_econ',
+                    'justice': 'justice',
+                    'law': 'justice',
+                    'ethics': 'justice',
+                    'discipleship': 'discipleship',
+                    'theology': 'discipleship',
+                    'bible': 'discipleship',
+                    'faith': 'discipleship',
+                    'history': 'history',
+                    'english': 'english_lit',
+                    'literature': 'english_lit',
+                    'writing': 'english_lit',
+                    'reading': 'english_lit',
+                    'language': 'english_lit'
                 };
 
-                const category = subjectToCategoryMap[args.subject.toLowerCase()] || args.subject;
+                const category = subjectToCategoryMap[args.subject.toLowerCase()] || 'english_lit'; // Default to english_lit if unknown
 
                 // Get the graduation requirement for this category
                 const { data: requirement, error: reqError } = await supabase
