@@ -50,11 +50,11 @@ The project should let students APPLY what they learned through hands-on explora
 
         throw new Error('No valid JSON found in response');
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Project Generation Error:', error);
         return NextResponse.json({
             error: 'Failed to generate project',
-            details: error?.message || 'Unknown error'
+            details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
 }

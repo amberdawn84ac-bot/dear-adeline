@@ -52,7 +52,16 @@ Generate 15-20 key standards. Return ONLY valid JSON, no markdown.`;
         console.log(`  Generated ${standards.length} standards`);
 
         // Insert into database
-        const records = standards.map((s: any) => ({
+interface Standard {
+    code: string;
+    subject: string;
+    statement: string;
+    description: string;
+}
+.
+.
+.
+        const records = standards.map((s: Standard) => ({
             standard_code: s.code,
             jurisdiction: 'California',
             subject: s.subject,

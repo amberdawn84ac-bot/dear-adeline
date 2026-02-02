@@ -18,12 +18,12 @@ jest.mock('@/lib/services/activitySuggestionService');
 
 jest.mock('next/server', () => ({
   NextResponse: {
-    json: jest.fn((data: any, init?: any) => ({
+    json: jest.fn((data: unknown, init?: ResponseInit) => ({
       json: () => Promise.resolve(data),
       status: init?.status || 200,
     })),
   },
-  NextRequest: jest.fn((url: string, init?: any) => ({
+  NextRequest: jest.fn((url: string, init?: RequestInit) => ({
     url,
     ...init,
     json: () => Promise.resolve(JSON.parse(init?.body as string)),

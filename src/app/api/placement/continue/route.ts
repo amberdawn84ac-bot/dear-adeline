@@ -204,13 +204,12 @@ function buildConversationHistory(responses: any): any[] {
     }
   }
 
-  // Ensure history starts with a user message
-  if (history.length > 0 && history[0].role === 'model') {
-    history.unshift({
-      role: 'user',
-      parts: [{ text: 'Start assessment.' }]
-    });
+  // The last part might be a model question without a user answer.
+  // We need to remove it from the history that we send to the model.
+  if (history.length > 0 && history[history.length - 1].role === 'model') {
+      history.pop();
   }
+
 
   return history;
 }

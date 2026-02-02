@@ -126,10 +126,10 @@ Make it aligned with standards but flexible for homeschool adaptation. Ensure va
             learningPlan
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Learning plan generation error:', error);
         return NextResponse.json(
-            { error: error.message || 'Failed to generate learning plan' },
+            { error: error instanceof Error ? error.message : 'Failed to generate learning plan' },
             { status: 500 }
         );
     }

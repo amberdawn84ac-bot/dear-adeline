@@ -46,11 +46,11 @@ The lesson should TEACH the concepts the student needs to know BEFORE they start
 
         throw new Error('No valid JSON found in response');
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Lesson Generation Error:', error);
         return NextResponse.json({
             error: 'Failed to generate lesson',
-            details: error?.message || 'Unknown error'
+            details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
 }

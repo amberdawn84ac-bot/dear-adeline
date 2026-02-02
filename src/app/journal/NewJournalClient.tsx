@@ -13,13 +13,21 @@ interface Project {
     next_steps: string[];
 }
 
+interface JournalEntry {
+    entry_date: string;
+    text_notes: string;
+    learned_today: string[];
+    mood: string;
+}
+
 export default function NewJournalClient() {
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [todayEntry, setTodayEntry] = useState<any>(null);
+    const [todayEntry, setTodayEntry] = useState<JournalEntry | null>(null);
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
 
     const loadDailyData = useCallback(async () => {
+        setLoading(true);
         const dateStr = currentDate.toISOString().split('T')[0];
         const response = await fetch(`/api/journal/daily?date=${dateStr}`);
         const data = await response.json();
@@ -35,10 +43,13 @@ export default function NewJournalClient() {
 
     useEffect(() => {
         loadDailyData();
-        loadProjects();
-    }, [loadDailyData, loadProjects]);
+    }, [loadDailyData]);
 
-    const handleSaveEntry = async (entryData: any) => {
+    useEffect(() => {
+        loadProjects();
+    }, [loadProjects]);
+
+    const handleSaveEntry = async (entryData: JournalEntry) => {
         await fetch('/api/journal/daily', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

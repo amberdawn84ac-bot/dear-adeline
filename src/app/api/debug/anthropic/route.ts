@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic, { APIError } from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
@@ -13,7 +13,6 @@ export async function GET() {
             'claude-3-opus-20240229',
             'claude-3-haiku-20240307',
             'claude-3-5-sonnet-20240620',
-            'claude-3-5-sonnet-20241022',
         ];
 
         const results = [];
@@ -33,7 +32,10 @@ export async function GET() {
                 });
             } catch (error: unknown) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-                const statusCode = (error instanceof Error && 'status' in error) ? (error as any).status : undefined;
+                let statusCode: number | undefined;
+                if (error instanceof APIError) {
+                    statusCode = error.status;
+                }
                 results.push({
                     model,
                     status: 'FAILED',
