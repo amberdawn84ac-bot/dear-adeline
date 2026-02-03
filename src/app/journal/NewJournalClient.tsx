@@ -22,9 +22,9 @@ interface JournalEntry {
 
 export default function NewJournalClient() {
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [loading, setLoading] = useState(true);
     const [todayEntry, setTodayEntry] = useState<JournalEntry | null>(null);
     const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
 
     const loadDailyData = useCallback(async () => {
         setLoading(true);
@@ -83,6 +83,11 @@ export default function NewJournalClient() {
     const isToday = currentDate.toDateString() === new Date().toDateString();
     const isFuture = currentDate > new Date();
 
+    const handleSummarize = () => {
+        // TODO: Implement journal summarization with GenUI
+        console.log('Summarize feature coming soon!');
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center">
@@ -131,6 +136,12 @@ export default function NewJournalClient() {
                                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <ChevronRight className="w-5 h-5 text-gray-600" />
+                            </button>
+                            <button
+                                onClick={handleSummarize}
+                                className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium hover:bg-blue-200 transition-colors text-sm ml-4"
+                            >
+                                Summarize
                             </button>
                         </div>
                     </div>
@@ -221,3 +232,5 @@ export default function NewJournalClient() {
         </div>
     );
 }
+
+

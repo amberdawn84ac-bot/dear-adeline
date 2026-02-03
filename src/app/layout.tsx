@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import { Providers } from "@/components/Providers";
+import { FloatingActionBar } from "@/components/FloatingActionBar";
 
 export const metadata: Metadata = {
   title: "Dear Adeline | Personalized AI-Powered Learning",
@@ -36,7 +37,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
-        <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&family=Fredoka:wght@400;500;600;700&family=Comic+Neue:wght@400;700&family=Patrick+Hand&family=Caveat:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&family=Fredoka:wght@400;500;600;700&family=Comic+Neue:wght@400;700&family=Patrick+Hand&family=Caveat:wght@4400;700&family=Architects+Daughter&display=swap" rel="stylesheet" />
         <style dangerouslySetInnerHTML={{
           __html: `
           :root {
@@ -53,6 +54,7 @@ export default async function RootLayout({
         <Providers>
           {children}
         </Providers>
+        <FloatingActionBar />
       </body>
     </html>
   );

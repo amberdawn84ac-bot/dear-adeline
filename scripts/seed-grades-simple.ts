@@ -58,9 +58,6 @@ interface Standard {
     statement: string;
     description: string;
 }
-.
-.
-.
         const records = standards.map((s: Standard) => ({
             standard_code: s.code,
             jurisdiction: 'California',

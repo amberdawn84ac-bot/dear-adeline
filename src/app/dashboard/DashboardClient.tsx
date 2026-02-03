@@ -1,53 +1,18 @@
 'use client';
 
-import { ProjectProposalModal } from '@/components/ProjectProposalModal';
-import { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { useState, useEffect, useRef } from 'react';
 import {
-    Sparkles,
-    Send,
-    Brain,
-    BookOpen,
-    GraduationCap,
-    Target,
-    Trophy,
-    Palette,
-    Settings,
-    LogOut,
-    ChevronRight,
-    ChevronDown,
-    Book,
-    FlaskRound,
-    History,
-    Lightbulb,
-    Gamepad2,
-    FolderOpen,
-    AlertTriangle,
-    CheckCircle2,
-    Loader2,
-    Menu,
-    Plus,
-    Rocket,
-    X,
-    Home,
-    Library,
-    User as UserIcon,
-    Heart,
-    Leaf,
-    FlaskConical,
-    Scale,
-    Globe,
-    Calculator,
-    Shield,
-    ArrowRight,
-    BarChart3,
-    Camera,
-    Map,
+  FlaskConical, Heart, Leaf, BarChart3, Scale, Sparkles, Globe, BookOpen, Calculator,
+  Lightbulb, Gamepad2, Target, Home, FolderOpen, AlertTriangle, ArrowRight, Book,
+  Brain, Camera, CheckCircle2, ChevronDown, FlaskRound, GraduationCap, Loader2,
+  LogOut, Map, Menu, Rocket, Send, Settings, Trophy, Library, History as HistoryIcon, X
 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
-import { GameCenter } from '@/components/GameCenter';
+import { createClient } from '@/lib/supabase/client';
+import { ComposedPageRenderer } from '@/components/genui/ComposedPageRenderer';
+import { ComposedUIPage } from '@/lib/services/genUIOrchestrator';
 import { SandboxedGame } from '@/components/SandboxedGame';
 import { Whiteboard } from '@/components/Whiteboard';
 import { TypingGame } from '@/components/TypingGame';
@@ -63,6 +28,8 @@ import AdelineSketchnote from '@/components/AdelineSketchnote';
 import StandardsProgressWidget from '@/components/StandardsProgressWidget';
 import { CompetencyView } from '@/components/CompetencyView';
 import { PlacementReportView } from '@/components/PlacementReportView';
+import { GameCenter } from '@/components/GameCenter';
+import { ProjectProposalModal } from '@/components/ProjectProposalModal';
 
 // Moved from DashboardClient to prevent re-declaration on every render
 const dailyScriptures = [
@@ -199,6 +166,7 @@ export default function DashboardClient({
     const router = useRouter();
     const searchParams = useSearchParams();
     const [messages, setMessages] = useState<Message[]>([]);
+    const [composedPage, setComposedPage] = useState<ComposedUIPage | null>(null);
     const [isClient, setIsClient] = useState(false);
     const [loading, setLoading] = useState(false);
     const [opportunities, setOpportunities] = useState<any[]>([]);
@@ -332,9 +300,47 @@ export default function DashboardClient({
             setLoading(false);
         }
     };
+    
+    const fetchComposedPage = async (message: string) => {
+        setLoading(true);
+        setIsTyping(true);
+        setMessages([]); // Clear traditional messages to make room for the UI page
+        setComposedPage(null);
+
+        try {
+            const response = await fetch('/api/copilotkit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch composed page');
+            }
+
+            const pageData: ComposedUIPage = await response.json();
+            setComposedPage(pageData);
+
+        } catch (error) {
+            console.error('Error fetching composed page:', error);
+            // Revert to a standard error message in the chat
+            setMessages([{ role: 'assistant', content: 'I had trouble composing that experience. Please try again.', timestamp: new Date() }]);
+        } finally {
+            setLoading(false);
+            setIsTyping(false);
+        }
+    };
 
     const handleSendMessage = async (textOverride?: string, imageData?: string) => {
         const messageText = textOverride || input.trim();
+        
+        // Route to the GenUI orchestrator if the magic command is used
+        if (messageText.startsWith('/compose')) {
+            setInput('');
+            fetchComposedPage(messageText);
+            return;
+        }
+
         if ((!messageText && !imageData) || isTyping) return;
 
         setLoading(true);
@@ -344,6 +350,11 @@ export default function DashboardClient({
             content: messageText,
             timestamp: new Date(),
         };
+        
+        // Clear any composed page when sending a regular message
+        if (composedPage) {
+            setComposedPage(null);
+        }
 
         const updatedMessages = [...messages, userMessage];
         setMessages(updatedMessages);
@@ -553,7 +564,7 @@ export default function DashboardClient({
                                         <span className="text-sm">Science</span>
                                     </Link>
                                     <Link href="/textbooks/history" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all ${isClient && window.location.pathname === '/textbooks/history' ? 'bg-[var(--forest)]/10 text-[var(--forest)] font-bold' : 'text-[var(--charcoal-light)] hover:bg-[var(--cream)]'}`}>
-                                        <History className="w-4 h-4" />
+                                        <HistoryIcon className="w-4 h-4" />
                                         <span className="text-sm">History</span>
                                     </Link>
                                 </div>
@@ -686,91 +697,97 @@ export default function DashboardClient({
                             )}
 
                             <div className="flex-1 p-4 space-y-4 overflow-y-auto max-h-[70vh]">
-                                {messages.map((m, i) => {
-                                    const content = m.content || '';
-                                    // Parse potential scripture tag
-                                    const scriptureMatch = content.match(/<SCRIPTURE>(.*?)<\/SCRIPTURE>/s);
-                                    let cleanContent = content;
-                                    let scriptureInfo = null;
+                                {composedPage ? (
+                                    <ComposedPageRenderer composedPage={composedPage} />
+                                ) : (
+                                    <>
+                                        {messages.map((m, i) => {
+                                            const content = m.content || '';
+                                            // Parse potential scripture tag
+                                            const scriptureMatch = content.match(/<SCRIPTURE>(.*?)<\/SCRIPTURE>/s);
+                                            let cleanContent = content;
+                                            let scriptureInfo = null;
 
-                                    if (scriptureMatch) {
-                                        scriptureInfo = scriptureMatch[1];
-                                        cleanContent = m.content.replace(/<SCRIPTURE>.*?<\/SCRIPTURE>/s, '').trim();
-                                    }
+                                            if (scriptureMatch) {
+                                                scriptureInfo = scriptureMatch[1];
+                                                cleanContent = m.content.replace(/<SCRIPTURE>.*?<\/SCRIPTURE>/s, '').trim();
+                                            }
 
-                                    return (
-                                        <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`chat-bubble ${m.role === 'user' ? 'user' : 'ai'}`}>
-                                                {scriptureInfo && (
-                                                    <div className="mb-4 p-4 bg-[var(--ochre)]/10 border-l-4 border-[var(--ochre)] rounded-r-xl italic font-serif text-[var(--burgundy)] text-lg animate-in fade-in slide-in-from-left-2">
-                                                        "{scriptureInfo}"
+                                            return (
+                                                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                    <div className={`chat-bubble ${m.role === 'user' ? 'user' : 'ai'}`}>
+                                                        {scriptureInfo && (
+                                                            <div className="mb-4 p-4 bg-[var(--ochre)]/10 border-l-4 border-[var(--ochre)] rounded-r-xl italic font-serif text-[var(--burgundy)] text-lg animate-in fade-in slide-in-from-left-2">
+                                                                "{scriptureInfo}"
+                                                            </div>
+                                                        )}
+                                                        {m.role === 'assistant' ? (
+                                                            shouldUseSketchnote(cleanContent) ? (
+                                                                <AdelineSketchnote content={cleanContent} />
+                                                            ) : (
+                                                                <MessageContent content={cleanContent} />
+                                                            )
+                                                        ) : (
+                                                            <p className="whitespace-pre-wrap text-sm leading-relaxed">{cleanContent}</p>
+                                                        )}
+
+                                                        {m.type === 'whiteboard_anim' && (
+                                                            <button
+                                                                onClick={() => { setWorkspaceView('whiteboard'); setWorkspaceData(m.animationData); }}
+                                                                className="mt-3 w-full bg-[#76946a]/10 text-[#76946a] py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-[#76946a]/20 hover:bg-[#76946a]/20 transition-all"
+                                                            >
+                                                                View Adeline's Illustration
+                                                            </button>
+                                                        )}
+
+                                                        {m.type === 'worksheet' && (
+                                                            <button
+                                                                onClick={() => { setWorkspaceView('worksheet'); setWorkspaceData(m.worksheetData); }}
+                                                                className="mt-3 w-full bg-indigo-50 text-indigo-600 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-indigo-100 hover:bg-indigo-100 transition-all"
+                                                            >
+                                                                Open Discovery Sheet
+                                                            </button>
+                                                        )}
+
+                                                        {m.type === 'code_lesson' && (
+                                                            <button
+                                                                onClick={() => { setWorkspaceView('code'); setWorkspaceData(m.code); }}
+                                                                className="mt-3 w-full bg-slate-900 text-indigo-300 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/10 hover:bg-slate-800 transition-all"
+                                                            >
+                                                                Open Code Workshop
+                                                            </button>
+                                                        )}
+
+                                                        {m.skills && m.skills.length > 0 && (
+                                                            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-[var(--cream-dark)]/20">
+                                                                {m.skills.map((skill, j) => (
+                                                                    <span key={j} className="text-[10px] font-bold uppercase tracking-wider bg-white/50 text-slate-600 px-2 py-1 rounded-md border border-slate-200/50 flex items-center gap-1">
+                                                                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                                                                        {skill}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
-                                                {m.role === 'assistant' ? (
-                                                    shouldUseSketchnote(cleanContent) ? (
-                                                        <AdelineSketchnote content={cleanContent} />
-                                                    ) : (
-                                                        <MessageContent content={cleanContent} />
-                                                    )
-                                                ) : (
-                                                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{cleanContent}</p>
-                                                )}
-
-                                                {m.type === 'whiteboard_anim' && (
-                                                    <button
-                                                        onClick={() => { setWorkspaceView('whiteboard'); setWorkspaceData(m.animationData); }}
-                                                        className="mt-3 w-full bg-[#76946a]/10 text-[#76946a] py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-[#76946a]/20 hover:bg-[#76946a]/20 transition-all"
-                                                    >
-                                                        View Adeline's Illustration
-                                                    </button>
-                                                )}
-
-                                                {m.type === 'worksheet' && (
-                                                    <button
-                                                        onClick={() => { setWorkspaceView('worksheet'); setWorkspaceData(m.worksheetData); }}
-                                                        className="mt-3 w-full bg-indigo-50 text-indigo-600 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-indigo-100 hover:bg-indigo-100 transition-all"
-                                                    >
-                                                        Open Discovery Sheet
-                                                    </button>
-                                                )}
-
-                                                {m.type === 'code_lesson' && (
-                                                    <button
-                                                        onClick={() => { setWorkspaceView('code'); setWorkspaceData(m.code); }}
-                                                        className="mt-3 w-full bg-slate-900 text-indigo-300 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/10 hover:bg-slate-800 transition-all"
-                                                    >
-                                                        Open Code Workshop
-                                                    </button>
-                                                )}
-
-                                                {m.skills && m.skills.length > 0 && (
-                                                    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-[var(--cream-dark)]/20">
-                                                        {m.skills.map((skill, j) => (
-                                                            <span key={j} className="text-[10px] font-bold uppercase tracking-wider bg-white/50 text-slate-600 px-2 py-1 rounded-md border border-slate-200/50 flex items-center gap-1">
-                                                                <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                                                                {skill}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                )}
+                                                </div>
+                                            );
+                                        })}
+                                        {isTyping && (
+                                            <div className="flex justify-start">
+                                                <div className="bg-slate-50 px-4 py-3 rounded-2xl flex gap-1 animate-pulse">
+                                                    <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
+                                                    <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
+                                                    <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    );
-                                })}
-                                {isTyping && (
-                                    <div className="flex justify-start">
-                                        <div className="bg-slate-50 px-4 py-3 rounded-2xl flex gap-1 animate-pulse">
-                                            <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
-                                            <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
-                                            <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
-                                        </div>
-                                    </div>
+                                        )}
+                                    </>
                                 )}
                                 <div ref={messagesEndRef} />
                             </div>
 
                             <div className="p-4 bg-slate-50 border-t border-[var(--cream-dark)]">
-                                {messages.length <= 1 && (
+                                {messages.length <= 1 && !composedPage && (
                                     <div className="grid grid-cols-2 gap-2 mb-4">
                                         {quickPrompts.map((p, i) => (
                                             <button
@@ -791,7 +808,7 @@ export default function DashboardClient({
                                         type="text"
                                         value={input}
                                         onChange={(e) => setInput(e.target.value)}
-                                        placeholder="Message Adeline..."
+                                        placeholder={composedPage ? "Interact with the journal page or ask a question..." : "Message Adeline..."}
                                         className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm ring-[var(--sage)] focus:ring-2 focus:outline-none"
                                     />
                                     <button

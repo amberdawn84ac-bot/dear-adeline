@@ -19,8 +19,8 @@
     "db:migrate": "npx supabase migration new"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.20",
     "@anthropic-ai/sdk": "^0.71.2",
-    "@copilotkit/a2ui-renderer": "^1.51.3",
     "@google/genai": "^1.34.0",
     "@google/generative-ai": "^0.24.1",
     "@modelcontextprotocol/sdk": "^1.25.2",

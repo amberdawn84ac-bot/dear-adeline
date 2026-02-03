@@ -323,8 +323,11 @@ export class LearningPathService {
         // Return the milestone as the focus
         return {
             standardId: currentMilestone.id,
+            standardCode: currentMilestone.standards?.[0]?.standard_code || '',
             subject: currentMilestone.standards?.[0]?.subject || 'Learning',
             statementText: currentMilestone.title,
+            suggestedApproach: '',
+            interestConnection: null,
             reason: currentMilestone.description
         };
     }
