@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { useDashboardExperience } from '@/contexts/DashboardExperienceContext';
 
 //================================================================================
 // ActionButton Component
@@ -43,31 +44,26 @@ const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, onClick }) => 
  * key experiences.
  */
 export const FloatingActionBar: React.FC = () => {
+  const { triggerGenUIExperience } = useDashboardExperience();
 
-  // TODO: These handlers will be wired up to the GenUIOrchestrator.
-  // For now, they log to the console to confirm functionality.
   const handleExplore = () => {
     console.log("Action triggered: Explore");
-    // This would eventually trigger a call to the orchestrator, e.g.:
-    // orchestrator.composePage("I want to explore my interests", context);
+    triggerGenUIExperience("I want to explore something new and interesting");
   };
 
   const handleLesson = () => {
     console.log("Action triggered: Lesson");
-    // This would trigger the next lesson in the student's learning path.
-    // orchestrator.composePage("Start my next lesson", context);
+    triggerGenUIExperience("I want to learn about money and how it works");
   };
-  
+
   const handleScout = () => {
     console.log("Action triggered: Scout");
-    // This would activate the "Opportunity Scout" mode.
-    // orchestrator.composePage("Scout for opportunities", context);
+    triggerGenUIExperience("Help me find opportunities to learn");
   };
 
   const handleJournal = () => {
     console.log("Action triggered: Journal");
-    // This would compose a reflective journal page for the day.
-    // orchestrator.composePage("Summarize my day", context);
+    triggerGenUIExperience("Help me reflect on what I learned today");
   };
 
   return (

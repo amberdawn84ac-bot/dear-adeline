@@ -25,9 +25,11 @@ export async function POST(req: NextRequest) {
       ? mockStudentContext.currentInterests.join(', ')
       : 'general learning';
 
+    console.log('Received GenUI request:', message);
+
     // Use AI SDK to stream structured object from Gemini
     const result = streamObject({
-      model: google('gemini-2.0-flash-exp'),
+      model: google('gemini-1.5-flash-latest'),
       schema: ComposedUIPageModel,
       prompt: `You are Adeline, an AI tutor composing an interactive, personalized learning experience.
 
@@ -74,8 +76,12 @@ IMPORTANT:
 
   } catch (error) {
     console.error('GenUI Orchestration API error:', error);
+    console.error('Error details:', JSON.stringify(error, null, 2));
     return new Response(
-      JSON.stringify({ error: 'Failed to compose UI experience.' }),
+      JSON.stringify({
+        error: 'Failed to compose UI experience.',
+        details: error instanceof Error ? error.message : String(error)
+      }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
